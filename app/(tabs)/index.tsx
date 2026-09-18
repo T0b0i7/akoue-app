@@ -5,6 +5,7 @@ import { colors, spacingX, spacingY } from "@/constants/theme";
 import Typo from "@/components/typo";
 
 import { useAuth } from "@/context/auth-context";
+import { useLocale } from "@/context/locale-context";
 import ScreenWrapper from "@/components/screen-wrapper";
 import { verticalScale } from "@/utils/styling";
 import * as Icons from "phosphor-react-native";
@@ -17,6 +18,7 @@ import { TransactionList } from "@/components/transaction-list";
 
 const Home = () => {
   const { user } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
 
   // Fetch recent transactions data
@@ -41,7 +43,7 @@ const Home = () => {
         <View style={styles.header}>
           <View style={{ gap: 4 }}>
             <Typo size={16} color={colors.neutral400}>
-              Hello,
+              {t("hello")}
             </Typo>
             <Typo size={20} fontWeight={"500"}>
               {user?.name}
@@ -72,8 +74,8 @@ const Home = () => {
           <TransactionList
             data={recentTransactions}
             loading={recentTransactionsLoading}
-            emptyListMessage="No transactions at the moment!"
-            title="Recent Transactions"
+            emptyListMessage={t("noTransactions")}
+            title={t("recentTransactions")}
           />
         </ScrollView>
 

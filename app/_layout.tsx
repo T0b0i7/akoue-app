@@ -2,13 +2,15 @@ import { Stack } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import { colors } from "@/constants/theme";
 import { AuthProvider } from "@/context/auth-context";
+import { LocaleProvider } from "@/context/locale-context";
 
 import "./global.css";
 
 export default function RootLayout() {
 	return (
 		<AuthProvider>
-			<View style={styles.appBackground}>
+			<LocaleProvider>
+				<View style={styles.appBackground}>
 				<Stack
 					screenOptions={{
 						headerShown: false,
@@ -69,7 +71,8 @@ export default function RootLayout() {
 						}}
 					/>
 				</Stack>
-			</View>
+				</View>
+			</LocaleProvider>
 		</AuthProvider>
 	);
 }

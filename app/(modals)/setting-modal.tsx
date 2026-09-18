@@ -9,12 +9,15 @@ import * as Icons from "phosphor-react-native"
 import React, { useState } from "react"
 import { StyleSheet, Switch, TouchableOpacity, View } from "react-native"
 import Animated, { FadeInDown } from "react-native-reanimated"
+import { useLocale } from "@/context/locale-context"
 
 const SettingsModal = () => {
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const { t, language, setLanguage } = useLocale()
+  const isFR = language === "fr"
   const settings: OptionType[] = [
     {
-      title: "Dark Mode",
+      title: t("darkMode"),
       icon: <Icons.Moon size={26} color={colors.white} weight="fill" />,
       type: "switch",
       value: isDarkMode,
@@ -22,24 +25,33 @@ const SettingsModal = () => {
       bgColor: "#6366f1",
     },
     {
-      title: "Notification",
+      title: t("notification"),
       icon: <Icons.Bell size={26} color={colors.white} weight="fill" />,
       type: "arrow",
       bgColor: "#8b5cf6",
     },
     {
-      title: "Language",
+      title: "Français",
       icon: <Icons.Translate size={26} color={colors.white} weight="fill" />,
-      type: "text",
-      value: "English",
+      type: "switch",
+      value: isFR,
+      onChange: (value: boolean) => setLanguage(value ? "fr" : "en"),
       bgColor: "#ec4899",
     },
     {
-      title: "Version",
+      title: "English",
+      icon: <Icons.Translate size={26} color={colors.white} weight="fill" />,
+      type: "switch",
+      value: !isFR,
+      onChange: (value: boolean) => setLanguage(value ? "en" : "fr"),
+      bgColor: "#0ea5e9",
+    },
+    {
+      title: t("version"),
       icon: <Icons.Info size={26} color={colors.white} weight="fill" />,
       type: "text",
       value: "1.0.0",
-      bgColor: "#0ea5e9",
+      bgColor: "#6366f1",
     },
   ]
 
@@ -47,7 +59,12 @@ const SettingsModal = () => {
     switch (item.type) {
       case "switch":
         return (
-          <Switch value={item.value as boolean} onValueChange={item.onChange} />
+          <Switch
+            value={item.value as boolean}
+            onValueChange={item.onChange}
+            trackColor={{ false: colors.neutral600, true: colors.primary }}
+            thumbColor={colors.white}
+          />
         )
       case "arrow":
         return (
@@ -72,7 +89,7 @@ const SettingsModal = () => {
     <ModalWrapper>
       <View style={styles.container}>
         <Header
-          title="Settings"
+          title={t("settings")}
           leftIcon={<BackButton />}
           style={{ marginBottom: spacingY._10 }}
         />

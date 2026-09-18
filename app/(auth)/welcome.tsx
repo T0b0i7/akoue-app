@@ -7,9 +7,11 @@ import { StyleSheet, TouchableOpacity, View } from "react-native"
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated"
 
 import { useRouter } from "expo-router"
+import { useLocale } from "@/context/locale-context"
 
 const Welcome = () => {
   const router = useRouter()
+  const { t } = useLocale()
   return (
     <ScreenWrapper>
       <View style={styles.container}>
@@ -20,7 +22,7 @@ const Welcome = () => {
             style={styles.loginbutton}
           >
             <Typo fontWeight={"500"} color={colors.textLight}>
-              Login
+              {t("login")}
             </Typo>
           </TouchableOpacity>
 
@@ -39,10 +41,10 @@ const Welcome = () => {
             style={{ alignItems: "center" }}
           >
             <Typo size={30} fontWeight={"800"} color={colors.textLight}>
-              Always take control
+              {t("alwaysTakeControl")}
             </Typo>
             <Typo size={30} fontWeight={"800"} color={colors.textLight}>
-              of your finances
+              {t("ofYourFinances")}
             </Typo>
           </Animated.View>
           <Animated.View
@@ -53,10 +55,10 @@ const Welcome = () => {
             style={{ alignItems: "center", gap: 2 }}
           >
             <Typo size={16} color={colors.textLight}>
-              Finances must be arranged to set a better
+              {t("financesMustBeArranged")}
             </Typo>
             <Typo size={16} color={colors.textLight}>
-              lifestyle in future
+              {t("lifestyleInFuture")}
             </Typo>
           </Animated.View>
           <Animated.View
@@ -69,7 +71,7 @@ const Welcome = () => {
             {/* custom buttom from components */}
             <ButtonComponent onPress={() => router.navigate("/(auth)/sign-up")}>
               <Typo size={22} color={colors.textLight} fontWeight={"600"}>
-                Get Started
+                {t("getStarted")}
               </Typo>
             </ButtonComponent>
           </Animated.View>

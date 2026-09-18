@@ -9,21 +9,21 @@ import * as Icons from "phosphor-react-native"
 import Button from "@/components/button"
 import { useRouter } from "expo-router"
 import { useAuth } from "@/context/auth-context"
+import { useLocale } from "@/context/locale-context"
 import { z, ZodError } from "zod"
-
-const loginSchema = z.object({
-  email: z.email({ message: "Please enter a valid email address" }),
-  password: z
-    .string()
-    .min(6, { message: "Password must be at least 6 characters" }),
-})
 
 const Login = () => {
   const router = useRouter()
   const { login: loginUser } = useAuth()
+  const { t } = useLocale()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+
+  const loginSchema = z.object({
+    email: z.email({ message: t("pleaseEnterValidEmail") }),
+    password: z.string().min(6, { message: t("passwordMin6") }),
+  })
 
   const handleSubmit = async () => {
     try {
@@ -31,15 +31,15 @@ const Login = () => {
       setLoading(true)
       const res = await loginUser(parsed.email.trim(), parsed.password)
       if (!res.success) {
-        Alert.alert("Error", res.msg || "Something went wrong")
+        Alert.alert(t("error"), res.msg || t("somethingWentWrong"))
       } else {
         router.replace("/(tabs)")
       }
     } catch (err) {
       if (err instanceof ZodError) {
-        Alert.alert("Validation Error", err.issues[0].message)
+        Alert.alert(t("validationError"), err.issues[0].message)
       } else {
-        Alert.alert("Error", "Network error, please try again")
+        Alert.alert(t("error"), t("networkError"))
       }
     } finally {
       setLoading(false)
@@ -55,16 +55,16 @@ const Login = () => {
             style={styles.logo}
           />
           <Typo size={42} fontWeight={"800"}>
-            Finote
+            Akouè
           </Typo>
           <Typo size={18} color={colors.neutral400}>
-            Spend smarter, Live easy
+            {t("spendSmarter")}
           </Typo>
         </View>
 
         <View style={styles.form}>
           <Input
-            placeholder="Enter your email"
+            placeholder={t("enterEmail")}
             onChangeText={(value) => {
               setEmail(value)
             }}
@@ -77,7 +77,7 @@ const Login = () => {
             }
           />
           <Input
-            placeholder="Enter your password"
+            placeholder={t("enterPassword")}
             type="password"
             onChangeText={(value) => {
               setPassword(value)
@@ -92,20 +92,20 @@ const Login = () => {
           />
           <Button onPress={handleSubmit} loading={loading}>
             <Typo fontWeight={"700"} color={colors.white} size={21}>
-              Login
+              {t("login")}
             </Typo>
           </Button>
           <View style={styles.authOptions}>
             <Pressable onPress={() => router.navigate("/(auth)/sign-up")}>
               <Typo size={15} color={colors.primary} fontWeight={"700"}>
-                Create an account
+                {t("createAccount")}
               </Typo>
             </Pressable>
             <Pressable
               onPress={() => router.navigate("/(auth)/forgot-password")}
             >
               <Typo size={15} color={colors.primary} fontWeight={"700"}>
-                Forgot password
+                {t("forgotPassword")}
               </Typo>
             </Pressable>
           </View>

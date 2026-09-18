@@ -14,12 +14,14 @@ import {
 } from "@/utils/common"
 import { verticalScale } from "@/utils/styling"
 import * as Icons from "phosphor-react-native"
+import { useLocale } from "@/context/locale-context"
 import React, { useEffect, useMemo, useState } from "react"
 import { ScrollView, StyleSheet, View } from "react-native"
 import { Dropdown } from "react-native-element-dropdown"
 import Animated, { FadeInDown } from "react-native-reanimated"
 
 const ExchangeRateModal = () => {
+  const { t } = useLocale()
   const [currencies, setCurrencies] = useState<CurrencyType[]>([])
   const [baseCurrency, setBaseCurrency] = useState<string>("VND")
   const [amount, setAmount] = useState<string>("")
@@ -61,7 +63,7 @@ const ExchangeRateModal = () => {
     <ModalWrapper>
       <View style={styles.container}>
         <Header
-          title={"Exchange Rate"}
+          title={t("exchangeRate")}
           leftIcon={<BackButton />}
           style={{ marginBottom: spacingY._10 }}
         />
@@ -73,7 +75,7 @@ const ExchangeRateModal = () => {
           {/* Currency Selection */}
           <View style={styles.inputContainer}>
             <Typo size={16} fontWeight="600" color={colors.neutral200}>
-              Select Currency
+              {t("selectCurrency")}
             </Typo>
             <Dropdown
               style={styles.dropdownContainer}
@@ -99,13 +101,13 @@ const ExchangeRateModal = () => {
           {/* Amount Input */}
           <View style={styles.inputContainer}>
             <Typo size={16} fontWeight="600" color={colors.neutral200}>
-              Amount
+              {t("amount")}
             </Typo>
             <Input
               value={formatNumberInput(amount)}
               onChangeText={handleAmountChange}
               keyboardType="numeric"
-              placeholder="Enter amount"
+              placeholder={t("enterAmount")}
               type="normal"
             />
           </View>
@@ -115,7 +117,7 @@ const ExchangeRateModal = () => {
             <Input
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholder="Search currency..."
+              placeholder={t("searchCurrency")}
               type="normal"
               icon={
                 <Icons.MagnifyingGlass size={20} color={colors.neutral400} />
@@ -127,7 +129,7 @@ const ExchangeRateModal = () => {
           <View style={styles.inputContainer}>
             <View style={styles.listHeader}>
               <Typo size={16} fontWeight="600" color={colors.neutral200}>
-                Conversion Result
+                {t("conversionResult")}
               </Typo>
             </View>
             <View style={styles.listContainer}>
@@ -171,7 +173,7 @@ const ExchangeRateModal = () => {
                     color={colors.neutral400}
                     style={{ textAlign: "center", marginTop: spacingY._15 }}
                   >
-                    No available currency
+                    {t("noCurrency")}
                   </Typo>
                 )
               )}

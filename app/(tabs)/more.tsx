@@ -2,6 +2,7 @@ import ScreenWrapper from "@/components/screen-wrapper"
 import Typo from "@/components/typo"
 import { colors, radius, spacingX } from "@/constants/theme"
 import { useAuth } from "@/context/auth-context"
+import { useLocale } from "@/context/locale-context"
 import { getProfileImage } from "@/services/images-service"
 import { OptionType } from "@/types"
 import { verticalScale } from "@/utils/styling"
@@ -12,21 +13,21 @@ import React from "react"
 import { Alert, StyleSheet, TouchableOpacity, View } from "react-native"
 import Animated, { FadeInDown, FadeInRight } from "react-native-reanimated"
 
-const features: OptionType[] = [
+const getFeatures = (t:any): OptionType[] => [
   {
-    title: "Statistics",
+    title: t("statistics"),
     icon: <Icons.ChartBar size={26} color={colors.white} weight="fill" />,
     bgColor: "#8b5cf6",
     routeName: "/statistics",
   },
   {
-    title: "My Wallets",
+    title: t("myWallets"),
     icon: <Icons.Folders size={26} color={colors.white} weight="fill" />,
     bgColor: "#ec4899",
     routeName: "/wallet",
   },
   {
-    title: "Export Data",
+    title: t("exportData"),
     icon: <Icons.FileArrowUp size={26} color={colors.white} weight="fill" />,
     bgColor: "#0ea5e9",
     // routeName: "/(modals)/exportDataModal",
@@ -34,9 +35,9 @@ const features: OptionType[] = [
   },
 ]
 
-const utilities: OptionType[] = [
+const getUtilities = (t:any): OptionType[] => [
   {
-    title: "Exchange Rate",
+    title: t("exchangeRate"),
     icon: (
       <Icons.CurrencyCircleDollar
         size={26}
@@ -48,14 +49,14 @@ const utilities: OptionType[] = [
     routeName: "/(modals)/exchange-rate-modal",
   },
   {
-    title: "Loan Calculator",
+    title: t("loanCalculator"),
     icon: <Icons.Percent size={26} color={colors.white} weight="fill" />,
     bgColor: "#10b981",
     // routeName: "/(modals)/loanCalculatorModal",
     routeName: "commingsoon",
   },
   {
-    title: "Split Bill",
+    title: t("splitBill"),
     icon: <Icons.UsersThree size={26} color={colors.white} weight="fill" />,
     bgColor: "#6366f1",
     // routeName: "/(modals)/splitBillModal",
@@ -63,15 +64,15 @@ const utilities: OptionType[] = [
   },
 ]
 
-const settings: OptionType[] = [
+const getSettings = (t:any): OptionType[] => [
   {
-    title: "Update Profile",
+    title: t("updateProfile"),
     icon: <Icons.HardDrives size={26} color={colors.white} weight="fill" />,
     routeName: "/(modals)/update-profile-modal",
     bgColor: colors.neutral600,
   },
   {
-    title: "Settings",
+    title: t("settings"),
     icon: <Icons.GearSix size={26} color={colors.white} weight="fill" />,
     routeName: "/(modals)/setting-modal",
     bgColor: "#6366f1",
@@ -80,15 +81,19 @@ const settings: OptionType[] = [
 
 const More = () => {
   const { user } = useAuth()
+  const { t } = useLocale()
   const router = useRouter()
+  const features = getFeatures(t)
+  const utilities = getUtilities(t)
+  const settings = getSettings(t)
 
   const handlePress = (item: OptionType) => {
     if (!item.routeName) return
 
     item?.routeName === "commingsoon"
       ? Alert.alert(
-          "Notification",
-          "This feature is under development. Come back later!",
+          t("comingSoonTitle"),
+          t("comingSoonMsg"),
         )
       : router.push(item?.routeName as any)
   }
@@ -130,7 +135,7 @@ const More = () => {
             color={colors.neutral350}
             style={styles.sectionTitle}
           >
-            Features
+            {t("features")}
           </Typo>
           <View style={styles.gridRow}>
             {features.map((item, index) => (
@@ -177,7 +182,7 @@ const More = () => {
             color={colors.neutral350}
             style={styles.sectionTitle}
           >
-            Utilities
+            {t("utilities")}
           </Typo>
           <View style={styles.gridRow}>
             {utilities.map((item, index) => (

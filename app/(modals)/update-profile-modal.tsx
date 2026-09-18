@@ -6,6 +6,7 @@ import ModalWrapper from "@/components/modal-wrapper"
 import Typo from "@/components/typo"
 import { colors, spacingX, spacingY } from "@/constants/theme"
 import { useAuth } from "@/context/auth-context"
+import { useLocale } from "@/context/locale-context"
 import { getProfileImage } from "@/services/images-service"
 import { updateUser } from "@/services/user-service"
 import { UserDataType } from "@/types"
@@ -24,6 +25,7 @@ import {
 
 const EditProfileModal = () => {
   const { user, updateUserData } = useAuth()
+  const { t } = useLocale()
   // const router = useRouter()
   const [userData, setUserData] = useState<UserDataType>({
     name: "",
@@ -54,7 +56,7 @@ const EditProfileModal = () => {
   const handleSubmit = async () => {
     let { name, image } = userData
     if (!name.trim()) {
-      Alert.alert("Warning", "Please enter your name")
+      Alert.alert(t("warning"), t("pleaseEnterName"))
       return
     }
 
@@ -64,7 +66,7 @@ const EditProfileModal = () => {
     if (res.success) {
       updateUserData(user?.uid as string)
     } else {
-      Alert.alert("Error", res.msg || "Update failed")
+      Alert.alert(t("error"), res.msg || t("updateFailed"))
     }
   }
 
@@ -72,7 +74,7 @@ const EditProfileModal = () => {
     <ModalWrapper>
       <View style={styles.container}>
         <Header
-          title="Update profile"
+          title={t("updateProfile")}
           leftIcon={<BackButton />}
           style={{ marginBottom: spacingY._10 }}
         />
@@ -96,9 +98,9 @@ const EditProfileModal = () => {
             </TouchableOpacity>
           </View>
           <View style={styles.inputContainer}>
-            <Typo color={colors.neutral200}>Name</Typo>
+            <Typo color={colors.neutral200}>{t("name")}</Typo>
             <Input
-              placeholder="Enter your name"
+              placeholder={t("enterName")}
               value={userData.name}
               onChangeText={(value) =>
                 setUserData({ ...userData, name: value })
@@ -110,7 +112,7 @@ const EditProfileModal = () => {
       <View style={styles.footer}>
         <Button onPress={handleSubmit} loading={loading} style={{ flex: 1 }}>
           <Typo color={colors.white} fontWeight={"700"}>
-            Update
+            {t("update")}
           </Typo>
         </Button>
       </View>

@@ -8,6 +8,7 @@ import ScreenWrapper from "@/components/screen-wrapper";
 import { TransactionList } from "@/components/transaction-list";
 import { colors, radius, spacingX, spacingY } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
+import { useLocale } from "@/context/locale-context";
 import {
 	fetchMonthlyStats,
 	fetchWeeklyStats,
@@ -18,6 +19,7 @@ import { scale, verticalScale } from "@/utils/styling";
 const isIos = Platform.OS === "ios";
 
 export default function Statistic() {
+	const { t } = useLocale();
 	const [activeIndex, setActiveIndex] = useState(0);
 	const { user } = useAuth();
 	const [chartData, setChartData] = useState([]);
@@ -48,7 +50,7 @@ export default function Statistic() {
 			setTransactions(result?.data?.transactions);
 		} else {
 			console.log(result.msg);
-			Alert.alert("Error", result.msg);
+			Alert.alert(t("error"), result.msg);
 		}
 	};
 
@@ -62,7 +64,7 @@ export default function Statistic() {
 			setTransactions(result?.data?.transactions);
 		} else {
 			console.log(result.msg);
-			Alert.alert("Error", result.msg);
+			Alert.alert(t("error"), result.msg);
 		}
 	};
 
@@ -76,7 +78,7 @@ export default function Statistic() {
 			setTransactions(result?.data?.transactions);
 		} else {
 			console.log(result.msg);
-			Alert.alert("Error", result.msg);
+			Alert.alert(t("error"), result.msg);
 		}
 	};
 
@@ -84,10 +86,10 @@ export default function Statistic() {
 		<ScreenWrapper>
 			<View style={styles.container}>
 				<View style={styles.header}>
-					<HeaderComponent title="Statistics" />
+					<HeaderComponent title={t("statistics")} />
 				</View>
 				<SegmentedControl
-					values={["Weekly", "Monthly", "Yearly"]}
+					values={[t("weekly"), t("monthly"), t("yearly")]}
 					selectedIndex={activeIndex}
 					onChange={(event: any) => {
 						setActiveIndex(event.nativeEvent.selectedSegmentIndex);
@@ -144,8 +146,8 @@ export default function Statistic() {
 					{/* //transaction list */}
 					<TransactionList
 						data={transactions}
-						title="Transactions"
-						emptyListMessage="No transaction for this period"
+						title={t("transactions")}
+						emptyListMessage={t("noTransactionPeriod")}
 					/>
 				</ScrollView>
 			</View>

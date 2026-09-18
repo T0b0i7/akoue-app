@@ -1,115 +1,75 @@
 import { ResponseType, WalletType } from "@/types";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  query,
-  setDoc,
-  where,
-  writeBatch,
-} from "firebase/firestore";
-import { firestore } from "@/config/firebase";
-import { uploadFileToCloudinary } from "./images-service";
+import { supabase } from "@/config/supabase";
+import { uploadFileToSupabase } from "./images-service";
 
-export const createOrUpdateWallet = async (
-  walletData: Partial<WalletType>
-): Promise<ResponseType> => {
+export const createOrUpdateWallet = async (walletData: Partial<WalletType>): Promise<ResponseType> => {
   try {
-    let walletToSave = { ...walletData };
-    if (walletData.image && walletData?.image?.uri) {
-      const imageUploadRes = await uploadFileToCloudinary(
-        walletData.image,
-        "wallets"
-      );
-      if (!imageUploadRes.success) {
-        console.log("Failed to upload wallets image", imageUploadRes.msg);
-        return {
-          success: false,
-          msg:"Failed to upload wallets image",
-        };
-      }
-
-      walletToSave.image = imageUploadRes.data;
-    }
-    if (!walletToSave?.id) {
-      //this means its new wallet
-      walletToSave.amount = 0;
-      walletToSave.totalIncome = 0;
-      walletToSave.totalExpenses = 0;
-      walletToSave.created = new Date();
+    let imageUrl = walletData.image;
+    if (walletData.image && (walletData.image as any)?.uri) {
+      const res = await uploadFileToSupabase(walletData.image as any, "wallets");
+      if (!res.success) return { success: false, msg: "Failed to upload wallet image" };
+      imageUrl = res.data;
     }
 
-    const walletRef = walletData?.id
-      ? doc(firestore, "wallets", walletData?.id)
-      : doc(collection(firestore, "wallets"));
+    const { data: { user } } = await supabase.auth.getUser();
+    const uid = walletData.uid || user?.id;
+    if (!uid) return { success: false, msg: "User not authenticated" };
 
-    await setDoc(walletRef, walletToSave, { merge: true }); 
-    //with merge update only provided wallet data
-    return { success: true, data: { ...walletToSave, id: walletRef.id } };
+    if (!walletData.id) {
+      const { data, error } = await supabase
+        .from("wallets")
+        .insert({
+          uid,
+          name: walletData.name,
+          image: imageUrl,
+          amount: 0,
+          totalIncome: 0,
+          totalExpenses: 0,
+        })
+        .select()
+        .single();
+      if (error) return { success: false, msg: error.message };
+      return { success: true, data: { ...data, id: data.id } };
+    } else {
+      const { data, error } = await supabase
+        .from("wallets")
+        .update({ name: walletData.name, image: imageUrl, amount: walletData.amount, totalIncome: walletData.totalIncome, totalExpenses: walletData.totalExpenses })
+        .eq("id", walletData.id)
+        .select()
+        .single();
+      if (error) return { success: false, msg: error.message };
+      return { success: true, data: { ...data, id: data.id } };
+    }
   } catch (error: any) {
-    console.log("Error creating or updating wallet", error);
-    return {
-      success: false,
-      msg: error.message || "Could not create or update wallet",
-    };
+    return { success: false, msg: error.message || "Could not create or update wallet" };
   }
 };
 
-//Delete Wallet service
 export const deleteWallet = async (walletId: string): Promise<ResponseType> => {
   try {
-    const walletRef = doc(firestore, "wallets", walletId);
-    await deleteDoc(walletRef);
-
-    // Delete all transaction related to this wallet
-    deleteTransactionByWalletId(walletId);
+    // Delete related transactions first (FK cascade would also handle, but explicit)
+    await deleteTransactionByWalletId(walletId);
+    const { error } = await supabase.from("wallets").delete().eq("id", walletId);
+    if (error) return { success: false, msg: error.message };
     return { success: true, data: "Wallet deleted successfully" };
   } catch (error: any) {
-    console.log("Error Deleting the Wallet", error.message);
-    return {
-      success: false,
-      msg: error.message || "Could not delete the wallet",
-    };
+    return { success: false, msg: error.message };
   }
 };
 
-//Delete Transaction based on wallet Id
-export const deleteTransactionByWalletId = async (
-  walletId: string
-): Promise<ResponseType> => {
+export const deleteTransactionByWalletId = async (walletId: string): Promise<ResponseType> => {
   try {
-    let hasMoreTransactions = true;
-
-    while (hasMoreTransactions) {
-      const transactionQuery = query(
-        collection(firestore, "transactions"),
-        where("walletId", "==", walletId)
-      );
-      const transactionSnapShot = await getDocs(transactionQuery);
-      if (transactionSnapShot.size == 0) {
-        hasMoreTransactions = false;
-        break;
-      }
-
-      const batch = writeBatch(firestore);
-      transactionSnapShot.forEach((transactiondoc) => {
-        batch.delete(transactiondoc.ref);
-      });
-      await batch.commit();
-      console.log(
-        `${transactionSnapShot.size} transactions deleted in this batch`
-      );
-    }
-
+    const { error } = await supabase.from("transactions").delete().eq("walletId", walletId);
+    if (error) return { success: false, msg: error.message };
     return { success: true, msg: "All transaction deleted" };
   } catch (error: any) {
-    console.log("Error Deleting the Transaction", error.message);
-    return {
-      success: false,
-      msg:
-        error.message ||
-        "Could not delete the Transaction based on this walletId",
-    };
+    return { success: false, msg: error.message };
   }
+};
+
+// Helper to fetch wallets for current user
+export const fetchWallets = async (uid: string) => {
+  const { data, error } = await supabase.from("wallets").select("*").eq("uid", uid).order("created_at", { ascending: false });
+  if (error) return { success: false, msg: error.message };
+  return { success: true, data };
 };
