@@ -10,12 +10,14 @@ import { useFirestoreData } from "@/hooks/use-firestore-data";
 import { WalletType } from "@/types";
 import { orderBy, where } from "firebase/firestore";
 import { useAuth } from "@/context/auth-context";
+import { useLocale } from "@/context/locale-context";
 import WalletListItem from "@/components/wallet-list-item";
 import Loading from "@/components/loading";
 
 export default function Wallet() {
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useLocale();
 
   const {
     data: wallets,
@@ -45,7 +47,7 @@ export default function Wallet() {
               $ {getTotalBalance()?.toFixed(2)}
             </Typo>
             <Typo size={16} color={colors.neutral350}>
-              Total Balance
+              {t("totalBalance")}
             </Typo>
           </View>
         </View>
@@ -53,7 +55,7 @@ export default function Wallet() {
         <View style={styles.wallet}>
           <View style={styles.flexRow}>
             <Typo size={20} fontWeight={"500"}>
-              My Wallets
+              {t("myWallets")}
             </Typo>
             <TouchableOpacity
               onPress={() => router.push("/(modals)/wallet-modal")}

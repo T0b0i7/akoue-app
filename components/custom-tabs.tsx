@@ -1,5 +1,4 @@
-// This package is required for the blur effect
-import { BlurView } from "@react-native-community/blur";
+import { BlurView } from "expo-blur";
 import * as Icons from "phosphor-react-native";
 import {
 	Platform,
@@ -52,10 +51,10 @@ export default function CustomTabs({ state, descriptors, navigation }: any) {
           - On 'android', we render a regular View with a semi-transparent
             background, which avoids the native ViewManager error.
         */}
-				{Platform.OS === "ios" ? (
-					<BlurView style={styles.blurView} blurType="dark" blurAmount={15} />
-				) : (
+				{Platform.OS === "web" ? (
 					<View style={styles.androidFallback} />
+				) : (
+					<BlurView style={styles.blurView} intensity={30} tint="dark" />
 				)}
 
 				{state.routes.map((route: any, index: any): any => {

@@ -10,11 +10,13 @@ import { ScrollView, StyleSheet, View } from "react-native"
 
 import { TransactionList } from "@/components/transaction-list"
 import { useAuth } from "@/context/auth-context"
+import { useLocale } from "@/context/locale-context"
 import { useFirestoreData } from "@/hooks/use-firestore-data"
 import { orderBy, where } from "firebase/firestore"
 
 const SearchModal = () => {
   const { user } = useAuth()
+  const { t } = useLocale()
 
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState("")
@@ -47,7 +49,7 @@ const SearchModal = () => {
     <ModalWrapper bg={colors.neutral900}>
       <View style={styles.container}>
         <HeaderComponent
-          title={"Search"}
+          title={t("search")}
           leftIcon={<BackButton />}
           style={{ marginBottom: spacingY._10 }}
         />
@@ -56,7 +58,7 @@ const SearchModal = () => {
         {/* inputContainer */}
         <View style={styles.inputContainer}>
           <TextInput
-            placeholder="Search transaction or wallet"
+            placeholder={t("searchPlaceholder")}
             value={search}
             placeholderTextColor={colors.neutral400}
             inputStyle={{ color: colors.neutral100 }}
@@ -70,7 +72,7 @@ const SearchModal = () => {
           <TransactionList
             loading={loading}
             data={filteredTransactions}
-            emptyListMessage="No transaction found for this search!"
+            emptyListMessage={t("noTransactionSearch")}
           />
         </ScrollView>
       </View>

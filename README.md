@@ -141,15 +141,29 @@
 
 ## 🧰 Setup
 
-1. Make sure [Git](https://git-scm.com/downloads) and [Node.js](https://nodejs.org/en/) are installed.
-2. Fork this repository on GitHub and clone **your fork** to your local machine:
+ 1. Make sure [Git](https://git-scm.com/downloads), [Node.js](https://nodejs.org/en/) (>=18) et [pnpm](https://pnpm.io/installation) (`npm i -g pnpm`) sont installés.
+ 2. Fork ce repository et clone ton fork :
 
-   ```bash
-   git clone https://github.com/<your-username>/finote-app.git
-   cd finote-app
-   ```
-3. Open the terminal in the project root and run `pnpm install` to install dependencies.
-4. Start the development server with `pnpm dev`.
+    ```bash
+    git clone https://github.com/<your-username>/finote-app.git
+    cd finote-app
+    ```
+ 3. Installe les dépendances (projet sur SSD recommandé — HDD très lent avec pnpm) :
+
+    ```bash
+    pnpm install
+    # Si erreur "Ignored build scripts" avec pnpm 11+ :
+    pnpm config set dangerously-allow-all-builds true
+    pnpm install
+    ```
+ 4. Lance le serveur de développement :
+
+    ```bash
+    pnpm start          # Expo DevTools + QR code
+    pnpm android        # ou pnpm ios / pnpm web
+    ```
+
+ > **Note Windows HDD :** Le projet + le store pnpm (`C:\pnpm-store`) doivent être sur SSD. Sur HDD, `pnpm install` prend 20-30min à cause des hard links. Config : `pnpm config set store-dir C:\pnpm-store`.
 <!-- 5. Visit **[http://localhost:3000](http://localhost:3000)** in your browser to see it live 🚀. -->
 
 ## 🔧 Contributing

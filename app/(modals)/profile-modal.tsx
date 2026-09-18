@@ -4,6 +4,7 @@ import ModalWrapper from "@/components/modal-wrapper"
 import Typo from "@/components/typo"
 import { colors, radius, spacingX, spacingY } from "@/constants/theme"
 import { useAuth } from "@/context/auth-context"
+import { useLocale } from "@/context/locale-context"
 import { getProfileImage } from "@/services/images-service"
 import { OptionType } from "@/types"
 import { verticalScale } from "@/utils/styling"
@@ -16,23 +17,24 @@ import Animated, { FadeInDown } from "react-native-reanimated"
 
 const ProfileModal = () => {
   const { user, logout } = useAuth()
+  const { t } = useLocale()
   const router = useRouter()
 
   const accountOptions: OptionType[] = [
     {
-      title: "Update Profile",
+      title: t("updateProfile"),
       icon: <Icons.User size={26} color={colors.white} weight="fill" />,
       routeName: "/(modals)/update-profile-modal",
       bgColor: "#6366f1",
     },
     {
-      title: "Change Password",
+      title: t("changePassword"),
       icon: <Icons.Lock size={26} color={colors.white} weight="fill" />,
       routeName: "/(modals)/change-password-modal",
       bgColor: "#f59e0b",
     },
     {
-      title: "Logout",
+      title: t("logout"),
       icon: <Icons.Power size={26} color={colors.white} weight="fill" />,
       // routeName: "",
       bgColor: "#e11d48",
@@ -45,16 +47,16 @@ const ProfileModal = () => {
   }
 
   const showLogoutAlert = () => {
-    Alert.alert("Confirm", "Are you sure you want to logout?", [
+    Alert.alert(t("confirmLogoutTitle"), t("confirmLogoutMsg"), [
       {
-        text: "Cancel",
+        text: t("cancel"),
         style: "cancel",
         onPress: () => {
           // console.log("cancel logout")
         },
       },
       {
-        text: "Logout",
+        text: t("logout"),
         style: "destructive",
         onPress: () => handleLogout(),
       },
@@ -62,7 +64,7 @@ const ProfileModal = () => {
   }
 
   const handlePress = (item: OptionType) => {
-    if (item.title === "Logout") {
+    if (item.title === t("logout")) {
       showLogoutAlert()
     }
 
@@ -73,7 +75,7 @@ const ProfileModal = () => {
     <ModalWrapper>
       <View style={styles.container}>
         <Header
-          title={"Account"}
+          title={t("account")}
           leftIcon={<BackButton />}
           style={{ marginBottom: spacingY._10 }}
         />

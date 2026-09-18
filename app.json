@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "Finote",
-    "slug": "finote",
+    "name": "Akouè",
+    "slug": "akoue-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./public/images/favicon.png",
-    "scheme": "finote",
+    "scheme": "akoue",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.aayushbharti.finote",
+      "bundleIdentifier": "com.akoue.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -21,7 +21,7 @@
         "backgroundColor": "#171717"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.aayushbharti.finote"
+      "package": "com.akoue.app"
     },
     "web": {
       "bundler": "metro",
@@ -46,8 +46,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "31e19f61-270e-4d8d-bd95-1af9d39bd933"
+        "projectId": "79585acb-c04c-4b7b-96c4-96338df4ae8c"
       }
-    }
+    },
+    "owner": "tobias07"
   }
 }

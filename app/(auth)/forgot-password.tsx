@@ -10,16 +10,18 @@ import * as Icons from "phosphor-react-native";
 import Button from "@/components/button";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "expo-router";
+import { useLocale } from "@/context/locale-context";
 
 const ForgotPassword = () => {
   const router = useRouter();
   const { forgotPassword } = useAuth();
+  const { t } = useLocale();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
     if (!email) {
-      Alert.alert("Warning", "Please enter your email");
+      Alert.alert(t("warning"), t("pleaseEnterEmail"));
       return;
     }
     setLoading(true);
@@ -27,14 +29,11 @@ const ForgotPassword = () => {
     setLoading(false);
 
     if (res.success) {
-      Alert.alert(
-        "Success",
-        "A link to reset your password has been sent to your email"
-      );
+      Alert.alert(t("success"), t("resetLinkSent"));
       router.back();
     }
     if (!res.success) {
-      Alert.alert("Error", res.msg);
+      Alert.alert(t("error"), res.msg);
       setEmail("");
     }
   };
@@ -46,17 +45,16 @@ const ForgotPassword = () => {
 
         <View style={styles.headerContainer}>
           <Typo size={24} fontWeight={"800"}>
-            Forgot Password
+            {t("forgotPasswordTitle")}
           </Typo>
           <Typo style={{ textAlign: "center" }}>
-            Please enter your email address, we will send you a link to reset
-            your password.
+            {t("forgotPasswordDesc")}
           </Typo>
         </View>
 
         <View style={styles.form}>
           <Input
-            placeholder="Enter your email"
+            placeholder={t("enterEmail")}
             value={email}
             onChangeText={(value: string) => {
               setEmail(value);
@@ -71,7 +69,7 @@ const ForgotPassword = () => {
           />
           <Button onPress={handleSubmit} loading={loading}>
             <Typo fontWeight={"700"} color={colors.white} size={21}>
-              Reset Password
+              {t("resetPassword")}
             </Typo>
           </Button>
         </View>

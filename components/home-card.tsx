@@ -1,5 +1,6 @@
 import { colors, spacingX, spacingY } from "@/constants/theme"
 import { useAuth } from "@/context/auth-context"
+import { useLocale } from "@/context/locale-context"
 import { useFirestoreData } from "@/hooks/use-firestore-data"
 import { WalletType } from "@/types"
 import { scale, verticalScale } from "@/utils/styling"
@@ -17,6 +18,7 @@ import Typo from "./typo"
 
 const HomeCard = () => {
   const { user } = useAuth()
+  const { t } = useLocale()
 
   // Fetch wallet data
   const walletConstraints = user?.uid
@@ -52,7 +54,7 @@ const HomeCard = () => {
           {/* //total balance section */}
           <View style={styles.totalBalanceRow}>
             <Typo size={17} color={colors.neutral800} fontWeight={"500"}>
-              Total Balance
+              {t("totalBalance")}
             </Typo>
             <TouchableOpacity onPress={() => router.push("/(tabs)/more")}>
               <Icons.DotsThreeOutline
@@ -79,7 +81,7 @@ const HomeCard = () => {
                 />
               </View>
               <Typo size={16} color={colors.neutral700} fontWeight={"500"}>
-                Income
+                {t("income")}
               </Typo>
             </View>
             <View style={{ alignSelf: "center" }}>
@@ -100,7 +102,7 @@ const HomeCard = () => {
                 />
               </View>
               <Typo size={16} color={colors.neutral700} fontWeight={"500"}>
-                Expenses
+                {t("expenses")}
               </Typo>
             </View>
             <View style={{ alignSelf: "center" }}>

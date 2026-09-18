@@ -87,3 +87,30 @@ export const transactionTypes = [
   { label: "Expense", value: "expense" },
   { label: "Income", value: "income" },
 ];
+
+export const getTransactionTypes = (t: (k:string)=>string) => [
+  { label: t("expense"), value: "expense" },
+  { label: t("income"), value: "income" },
+];
+
+export const getExpenseCategories = (t: (k:string)=>string): ExpenseCategoriesType => ({
+  groceries: { label: t("groceries"), value: "groceries", icon: expenseCategories.groceries.icon, bgColor: expenseCategories.groceries.bgColor },
+  rent: { label: t("rent"), value: "rent", icon: expenseCategories.rent.icon, bgColor: expenseCategories.rent.bgColor },
+  utilities: { label: t("utilitiesCat"), value: "utilities", icon: expenseCategories.utilities.icon, bgColor: expenseCategories.utilities.bgColor },
+  transportation: { label: t("transportation"), value: "transportation", icon: expenseCategories.transportation.icon, bgColor: expenseCategories.transportation.bgColor },
+  entertainment: { label: t("entertainment"), value: "entertainment", icon: expenseCategories.entertainment.icon, bgColor: expenseCategories.entertainment.bgColor },
+  dining: { label: t("dining"), value: "dining", icon: expenseCategories.dining.icon, bgColor: expenseCategories.dining.bgColor },
+  health: { label: t("health"), value: "health", icon: expenseCategories.health.icon, bgColor: expenseCategories.health.bgColor },
+  insurance: { label: t("insurance"), value: "insurance", icon: expenseCategories.insurance.icon, bgColor: expenseCategories.insurance.bgColor },
+  savings: { label: t("savings"), value: "savings", icon: expenseCategories.savings.icon, bgColor: expenseCategories.savings.bgColor },
+  clothing: { label: t("clothing"), value: "clothing", icon: expenseCategories.clothing.icon, bgColor: expenseCategories.clothing.bgColor },
+  personal: { label: t("personal"), value: "personal", icon: expenseCategories.personal.icon, bgColor: expenseCategories.personal.bgColor },
+  others: { label: t("others"), value: "others", icon: expenseCategories.others.icon, bgColor: expenseCategories.others.bgColor },
+});
+
+export const getIncomeCategory = (t: (k:string)=>string): CategoryType => ({
+  label: t("income"),
+  value: "income",
+  icon: incomeCategory.icon,
+  bgColor: incomeCategory.bgColor,
+});

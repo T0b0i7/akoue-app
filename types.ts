@@ -35,7 +35,7 @@ export type OptionType = {
   icon: React.ReactNode;
   bgColor: string;
   routeName?: string;
-  type?: "switch" | "arrow" | "text";
+  type?: "switch" | "arrow" | "text" | "custom";
   value?: boolean | string;
   onPress?: () => void;
   onChange?: (value: boolean) => void;

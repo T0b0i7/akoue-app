@@ -6,6 +6,7 @@ import ModalWrapper from "@/components/modal-wrapper"
 import Typo from "@/components/typo"
 import { colors, spacingX, spacingY } from "@/constants/theme"
 import { useAuth } from "@/context/auth-context"
+import { useLocale } from "@/context/locale-context"
 import { scale, verticalScale } from "@/utils/styling"
 import { useRouter } from "expo-router"
 import * as Icons from "phosphor-react-native"
@@ -14,6 +15,7 @@ import { Alert, ScrollView, StyleSheet, View } from "react-native"
 
 const ChangePasswordModal = () => {
   const { updatePassword } = useAuth()
+  const { t } = useLocale()
   const router = useRouter()
   const [passwords, setPasswords] = useState({
     oldPassword: "",
@@ -26,17 +28,17 @@ const ChangePasswordModal = () => {
     const { oldPassword, newPassword, confirmPassword } = passwords
 
     if (!oldPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
-      Alert.alert("Warning", "Please fill all the fields")
+      Alert.alert(t("warning"), t("pleaseFillAllFields"))
       return
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert("Warning", "New password does not match")
+      Alert.alert(t("warning"), t("newPasswordNotMatch"))
       return
     }
 
     if (newPassword.length < 6) {
-      Alert.alert("Warning", "New password must be at least 6 characters")
+      Alert.alert(t("warning"), t("newPasswordMin6"))
       return
     }
 
@@ -45,16 +47,16 @@ const ChangePasswordModal = () => {
     setLoading(false)
 
     if (res.success) {
-      Alert.alert("Success", "Password updated successfully", [
+      Alert.alert(t("success"), t("passwordUpdated"), [
         {
-          text: "OK",
+          text: t("ok"),
           onPress: () => {
             router.back()
           },
         },
       ])
     } else {
-      Alert.alert("Error", res.msg || "Failed to update password")
+      Alert.alert(t("error"), res.msg || t("failedUpdatePassword"))
     }
   }
 
@@ -62,15 +64,15 @@ const ChangePasswordModal = () => {
     <ModalWrapper>
       <View style={styles.container}>
         <Header
-          title="Change password"
+          title={t("changePassword")}
           leftIcon={<BackButton />}
           style={{ marginBottom: spacingY._10 }}
         />
         <ScrollView contentContainerStyle={styles.form}>
           <View style={styles.inputContainer}>
-            <Typo color={colors.neutral200}>Old password</Typo>
+            <Typo color={colors.neutral200}>{t("oldPassword")}</Typo>
             <Input
-              placeholder="Enter old password"
+              placeholder={t("enterOldPassword")}
               value={passwords.oldPassword}
               onChangeText={(value) =>
                 setPasswords({ ...passwords, oldPassword: value })
@@ -86,9 +88,9 @@ const ChangePasswordModal = () => {
             />
           </View>
           <View style={styles.inputContainer}>
-            <Typo color={colors.neutral200}>New password</Typo>
+            <Typo color={colors.neutral200}>{t("newPassword")}</Typo>
             <Input
-              placeholder="Enter new password"
+              placeholder={t("enterNewPassword")}
               value={passwords.newPassword}
               type="password"
               onChangeText={(value) =>
@@ -104,9 +106,9 @@ const ChangePasswordModal = () => {
             />
           </View>
           <View style={styles.inputContainer}>
-            <Typo color={colors.neutral200}>Confirm new password</Typo>
+            <Typo color={colors.neutral200}>{t("confirmNewPassword")}</Typo>
             <Input
-              placeholder="Enter new password again"
+              placeholder={t("enterNewPasswordAgain")}
               value={passwords.confirmPassword}
               type="password"
               onChangeText={(value) =>
@@ -126,7 +128,7 @@ const ChangePasswordModal = () => {
       <View style={styles.footer}>
         <Button onPress={handleSubmit} loading={loading} style={{ flex: 1 }}>
           <Typo color={colors.white} fontWeight={"700"}>
-            Update
+            {t("update")}
           </Typo>
         </Button>
       </View>
