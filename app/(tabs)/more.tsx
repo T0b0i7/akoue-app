@@ -61,8 +61,7 @@ const getUtilities = (t:any): OptionType[] => [
     title: t("splitBill"),
     icon: <Icons.UsersThree size={26} color={colors.white} weight="fill" />,
     bgColor: "#6366f1",
-    // routeName: "/(modals)/splitBillModal",
-    routeName: "commingsoon",
+    routeName: "/(modals)/split-bill-modal",
   },
 ]
 
