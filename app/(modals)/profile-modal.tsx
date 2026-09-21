@@ -44,8 +44,9 @@ const ProfileModal = () => {
   const handleLogout = async () => {
     const res = await logout()
     if (res.success) {
-      router.dismissAll()
-      router.replace("/(auth)/welcome" as any)
+      // Laisse auth-context rediriger via !user && !inAuth → welcome
+      // Pas de dismissAll sur web (cause removeChild crash)
+      setTimeout(() => router.replace("/(auth)/welcome" as any), 150)
     } else {
       Alert.alert(t("error"), res.msg || "Déconnexion échouée")
     }

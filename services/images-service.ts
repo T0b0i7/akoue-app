@@ -9,7 +9,16 @@ export const uploadFileToSupabase = async (
     if (typeof file === "string") return { success: true, data: file };
     if (typeof file !== "string" && file.uri) {
       const uri = file.uri;
-      const ext = uri.split(".").pop()?.split("?")[0] || "jpg";
+      // blob: et data: n'ont pas d'extension — forcer jpg, sinon extraire proprement
+      let ext = "jpg";
+      if (uri.startsWith("blob:") || uri.startsWith("data:")) {
+        ext = uri.includes("png") ? "png" : "jpg";
+      } else {
+        const clean = uri.split("?")[0].split("#")[0];
+        const last = clean.split("/").pop() || "";
+        const maybeExt = last.includes(".") ? last.split(".").pop() : "";
+        if (maybeExt && /^[a-z0-9]{2,4}$/i.test(maybeExt)) ext = maybeExt.toLowerCase();
+      }
       const fileName = `${folderName}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
       // Fetch as blob/arrayBuffer for React Native
