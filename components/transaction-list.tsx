@@ -6,9 +6,8 @@ import {
   TransactionType,
 } from "@/types"
 import { verticalScale } from "@/utils/styling"
-import { FlashList } from "@shopify/flash-list"
+import { FlatList } from "react-native"
 import { useRouter } from "expo-router"
-import { Timestamp } from "firebase/firestore"
 import React from "react"
 import { StyleSheet, TouchableOpacity, View } from "react-native"
 import Animated, { FadeInDown } from "react-native-reanimated"
@@ -25,6 +24,8 @@ export const TransactionList = ({
 
   const router = useRouter()
   const handleClick = (item: TransactionType) => {
+    const d: any = item?.date;
+    const iso = d?.toDate ? d.toDate().toISOString() : d ? new Date(d).toISOString() : new Date().toISOString();
     router.push({
       pathname: "/(modals)/transaction-modal",
       params: {
@@ -32,7 +33,7 @@ export const TransactionList = ({
         type: item?.type,
         amount: item?.amount.toString(),
         category: item?.category,
-        date: (item?.date as Timestamp)?.toDate()?.toISOString(),
+        date: iso,
         description: item?.description,
         image: item?.image,
         uid: item?.uid,
@@ -49,7 +50,7 @@ export const TransactionList = ({
         </Typo>
       )}
       <View style={styles.list}>
-        <FlashList
+        <FlatList
           data={data}
           renderItem={({ item, index }) => (
             <TransactionItem
@@ -58,7 +59,7 @@ export const TransactionList = ({
               handleClick={handleClick}
             />
           )}
-          estimatedItemSize={60}
+          keyExtractor={(item) => item.id!}
         />
       </View>
       {!loading && data.length === 0 && (
@@ -92,14 +93,11 @@ const TransactionItem = ({
   const IconComponent = category.icon
 
   //format transaction date
-  const date = (item?.date as Timestamp)
-    ?.toDate()
-    ?.toLocaleDateString("en-US", {
-      hour: "numeric",
-      minute: "numeric",
-      day: "numeric",
-      month: "short",
-    })
+  const date = (() => {
+    const d: any = item?.date;
+    const jsDate = d?.toDate ? d.toDate() : d ? new Date(d) : null;
+    return jsDate?.toLocaleDateString("en-US", { hour: "numeric", minute: "numeric", day: "numeric", month: "short" });
+  })()
 
   return (
     <Animated.View

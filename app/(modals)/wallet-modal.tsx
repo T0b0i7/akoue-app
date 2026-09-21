@@ -48,8 +48,6 @@ const WalletModal = () => {
       Alert.alert(t("wallet"), t("pleaseEnterWalletName"))
       return
     }
-    console.log("wallet", wallet)
-    // Si pas d'image, on laisse null — Supabase stocke null, l'UI affiche l'avatar par défaut
     const finalImage = typeof image === "string" ? image : (image as any)?.uri ?? null
     const data: WalletType = {
       name,

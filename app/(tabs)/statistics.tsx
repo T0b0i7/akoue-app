@@ -49,8 +49,7 @@ export default function Statistic() {
 			setChartData(result?.data?.stats);
 			setTransactions(result?.data?.transactions);
 		} else {
-			console.log(result.msg);
-			Alert.alert(t("error"), result.msg);
+						Alert.alert(t("error"), result.msg);
 		}
 	};
 
@@ -63,8 +62,7 @@ export default function Statistic() {
 			setChartData(result?.data?.stats);
 			setTransactions(result?.data?.transactions);
 		} else {
-			console.log(result.msg);
-			Alert.alert(t("error"), result.msg);
+						Alert.alert(t("error"), result.msg);
 		}
 	};
 
@@ -77,8 +75,7 @@ export default function Statistic() {
 			setChartData(result?.data?.stats);
 			setTransactions(result?.data?.transactions);
 		} else {
-			console.log(result.msg);
-			Alert.alert(t("error"), result.msg);
+						Alert.alert(t("error"), result.msg);
 		}
 	};
 
@@ -194,3 +191,4 @@ const styles = StyleSheet.create({
 		gap: spacingY._10,
 	},
 });
+
