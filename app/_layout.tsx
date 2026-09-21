@@ -5,6 +5,8 @@ import { StyleSheet, View } from "react-native";
 import { colors } from "@/constants/theme";
 import { AuthProvider } from "@/context/auth-context";
 import { LocaleProvider } from "@/context/locale-context";
+import { ToastProvider } from "@/context/toast-context";
+import { AppToast } from "@/components/app-toast";
 import { useOTAUpdate } from "@/hooks/use-ota-update";
 
 import "./global.css";
@@ -23,10 +25,12 @@ export default function RootLayout() {
   }, []);
 
 	return (
-		<AuthProvider>
-			<LocaleProvider>
-				<OTAWatcher />
-				<View style={styles.appBackground}>
+		<ToastProvider>
+			<AuthProvider>
+				<LocaleProvider>
+					<OTAWatcher />
+					<AppToast />
+					<View style={styles.appBackground}>
 				<Stack
 					screenOptions={{
 						headerShown: false,
@@ -87,9 +91,10 @@ export default function RootLayout() {
 						}}
 					/>
 				</Stack>
-				</View>
-			</LocaleProvider>
-		</AuthProvider>
+					</View>
+				</LocaleProvider>
+			</AuthProvider>
+		</ToastProvider>
 	);
 }
 

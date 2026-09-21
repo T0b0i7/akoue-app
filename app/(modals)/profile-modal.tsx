@@ -5,6 +5,7 @@ import Typo from "@/components/typo"
 import { colors, radius, spacingX, spacingY } from "@/constants/theme"
 import { useAuth } from "@/context/auth-context"
 import { useLocale } from "@/context/locale-context"
+import { useToast } from "@/context/toast-context"
 import { getProfileImage } from "@/services/images-service"
 import { OptionType } from "@/types"
 import { verticalScale } from "@/utils/styling"
@@ -18,6 +19,7 @@ import Animated, { FadeInDown } from "react-native-reanimated"
 const ProfileModal = () => {
   const { user, logout } = useAuth()
   const { t } = useLocale()
+  const { showToast } = useToast()
   const router = useRouter()
 
   const accountOptions: OptionType[] = [
@@ -44,13 +46,14 @@ const ProfileModal = () => {
   const handleLogout = async () => {
     const res = await logout()
     if (res.success) {
+      showToast("success", "Déconnexion réussie", "À bientôt 👋")
       if (Platform.OS === "web") {
-        // Sur web Alert est limité + router modale peut bloquer — force le reload
-        window.location.href = "/welcome"
+        setTimeout(() => { window.location.href = "/welcome" }, 600)
         return
       }
-      setTimeout(() => router.replace("/(auth)/welcome" as any), 150)
+      setTimeout(() => router.replace("/(auth)/welcome" as any), 600)
     } else {
+      showToast("error", t("error"), res.msg || "Déconnexion échouée")
       Alert.alert(t("error"), res.msg || "Déconnexion échouée")
     }
   }

@@ -10,12 +10,14 @@ import Button from "@/components/button"
 import { useRouter } from "expo-router"
 import { useAuth } from "@/context/auth-context"
 import { useLocale } from "@/context/locale-context"
+import { useToast } from "@/context/toast-context"
 import { z, ZodError } from "zod"
 
 const SignUp = () => {
   const router = useRouter()
   const { signUp } = useAuth()
   const { t } = useLocale()
+  const { showToast } = useToast()
 
   const signUpSchema = z.object({
     name: z.string().min(2, { message: t("nameMin2") }),
@@ -40,14 +42,18 @@ const SignUp = () => {
       )
 
       if (!res.success) {
+        showToast("error", t("error"), res.msg || t("somethingWentWrong"))
         Alert.alert(t("error"), res.msg || t("somethingWentWrong"))
       } else {
-        router.replace("/(tabs)")
+        showToast("success", "Compte créé", "Bienvenue sur Akouè 👋")
+        router.replace("/(tabs)" as any)
       }
     } catch (err) {
       if (err instanceof ZodError) {
+        showToast("error", t("validationError"), err.issues[0].message)
         Alert.alert(t("validationError"), err.issues[0].message)
       } else {
+        showToast("error", t("error"), t("networkError"))
         Alert.alert(t("error"), t("networkError"))
       }
     } finally {
