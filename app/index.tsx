@@ -1,21 +1,31 @@
-import { StyleSheet, View, Image } from "react-native";
-import { colors } from "../constants/theme";
+import { colors } from "@/constants/theme";
+import { useAuth } from "@/context/auth-context";
+import { useRouter } from "expo-router";
+import { useEffect } from "react";
+import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
 
 const Index = () => {
-  // const router = useRouter();
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     router.push("/auth/welcome");
-  //   }, 2000);
-  // }, []);
+  const router = useRouter();
+  const { user, } = useAuth();
+  // On attend que Supabase restore la session — auth-context gère initializing en interne
+  // On ajoute un délai fixe pour voir le branding (un seul splash)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (user) router.replace("/(tabs)" as any);
+      else router.replace("/(auth)/welcome" as any);
+    }, 1800);
+    return () => clearTimeout(t);
+  }, [user]);
 
   return (
     <View style={styles.container}>
-      <Image
-        style={styles.logo}
-        source={require("../public/images/splash-icon.png")}
-        resizeMode="contain"
-      />
+      <View style={styles.logoWrap}>
+        <Image style={styles.logo} source={require("../public/images/splash-icon.png")} resizeMode="contain" />
+      </View>
+      <Text style={styles.title}>Akouè</Text>
+      <Text style={styles.subtitle}>Maîtrise ton argent</Text>
+      <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 32 }} />
+      <Text style={styles.loading}>Chargement...</Text>
     </View>
   );
 };
@@ -27,10 +37,24 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: colors.neutral900,
+    backgroundColor: "#171717",
+    paddingHorizontal: 24,
   },
-  logo: {
-    height: "20%",
-    aspectRatio: 1,
+  logoWrap: {
+    width: 140,
+    height: 140,
+    borderRadius: 32,
+    backgroundColor: "#7A4DFF",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#7A4DFF",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 12,
   },
+  logo: { width: 96, height: 96, borderRadius: 16 },
+  title: { marginTop: 24, fontSize: 32, fontWeight: "800", color: "#fff", letterSpacing: 1 },
+  subtitle: { marginTop: 6, fontSize: 13, color: "#a3a3a3", letterSpacing: 2, textTransform: "uppercase" },
+  loading: { marginTop: 12, fontSize: 13, color: "#737373" },
 });
