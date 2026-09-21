@@ -33,6 +33,7 @@ const EditProfileModal = () => {
     image: null,
   })
   const [loading, setLoading] = useState(false)
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null)
 
   useEffect(() => {
     setUserData({
@@ -55,20 +56,27 @@ const EditProfileModal = () => {
   }
 
   const handleSubmit = async () => {
-    let { name, image } = userData
+    let { name } = userData
     if (!name.trim()) {
-      Alert.alert(t("warning"), t("pleaseEnterName"))
+      const msg = t("pleaseEnterName")
+      setFeedback({ type: "error", msg })
+      Alert.alert(t("warning"), msg)
       return
     }
 
+    setFeedback(null)
     setLoading(true)
     const res = await updateUser(user?.uid as string, userData)
     setLoading(false)
     if (res.success) {
       await updateUserData(user?.uid as string)
-      Alert.alert(t("success"), "Profil mis à jour", [{ text: t("ok"), onPress: () => router.back() }])
+      setFeedback({ type: "success", msg: "Profil mis à jour ✓" })
+      Alert.alert(t("success"), "Profil mis à jour")
+      setTimeout(() => router.back(), 900)
     } else {
-      Alert.alert(t("error"), res.msg || t("updateFailed"))
+      const msg = res.msg || t("updateFailed")
+      setFeedback({ type: "error", msg })
+      Alert.alert(t("error"), msg)
     }
   }
 
@@ -109,6 +117,11 @@ const EditProfileModal = () => {
               }
             />
           </View>
+          {feedback && (
+            <View style={[styles.feedback, { backgroundColor: feedback.type === "success" ? "#16a34a20" : "#ef444420", borderColor: feedback.type === "success" ? "#16a34a" : "#ef4444" }]}>
+              <Typo size={14} color={feedback.type === "success" ? "#16a34a" : "#ef4444"} style={{ textAlign: "center" }}>{feedback.msg}</Typo>
+            </View>
+          )}
         </ScrollView>
       </View>
       <View style={styles.footer}>
@@ -173,5 +186,11 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     gap: spacingY._10,
+  },
+  feedback: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 8,
   },
 })
