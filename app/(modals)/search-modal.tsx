@@ -11,8 +11,7 @@ import { ScrollView, StyleSheet, View } from "react-native"
 import { TransactionList } from "@/components/transaction-list"
 import { useAuth } from "@/context/auth-context"
 import { useLocale } from "@/context/locale-context"
-import { useFirestoreData } from "@/hooks/use-firestore-data"
-import { orderBy, where } from "firebase/firestore"
+import { useSupabaseTransactions } from "@/hooks/use-supabase-data"
 
 const SearchModal = () => {
   const { user } = useAuth()
@@ -21,12 +20,11 @@ const SearchModal = () => {
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState("")
 
-  const constraints = [where("uid", "==", user?.uid), orderBy("date", "desc")]
   const {
     data: allTransactions,
     error,
     loading: recentTransactionsLoading,
-  } = useFirestoreData<TransactionType>("transactions", constraints)
+  } = useSupabaseTransactions(user?.uid, 100)
 
   // console.log("Total transactions: ", allTransactions.length);
 

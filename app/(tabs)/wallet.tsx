@@ -6,13 +6,11 @@ import { colors, radius, spacingX, spacingY } from "@/constants/theme";
 import { verticalScale } from "@/utils/styling";
 import * as Icons from "phosphor-react-native";
 import { useRouter } from "expo-router";
-import { useFirestoreData } from "@/hooks/use-firestore-data";
-import { WalletType } from "@/types";
-import { orderBy, where } from "firebase/firestore";
-import { useAuth } from "@/context/auth-context";
-import { useLocale } from "@/context/locale-context";
+import { useSupabaseWallets } from "@/hooks/use-supabase-data";
 import WalletListItem from "@/components/wallet-list-item";
 import Loading from "@/components/loading";
+import { useAuth } from "@/context/auth-context";
+import { useLocale } from "@/context/locale-context";
 
 export default function Wallet() {
   const router = useRouter();
@@ -23,10 +21,7 @@ export default function Wallet() {
     data: wallets,
     loading,
     error,
-  } = useFirestoreData<WalletType>("wallets", [
-    where("uid", "==", user?.uid),
-    orderBy("created", "desc"),
-  ]);
+  } = useSupabaseWallets(user?.uid);
 
   // console.log("wallets", wallets);
 

@@ -9,16 +9,15 @@ import { getExpenseCategories, getTransactionTypes } from "@/constants/data"
 import { colors, radius, spacingX, spacingY } from "@/constants/theme"
 import { useAuth } from "@/context/auth-context"
 import { useLocale } from "@/context/locale-context"
-import { useFirestoreData } from "@/hooks/use-firestore-data"
+import { useSupabaseWallets } from "@/hooks/use-supabase-data"
 import {
   createOrUpdateTransaction,
   deleteTransaction,
 } from "@/services/transaction-service"
-import { TransactionType, WalletType } from "@/types"
+import { TransactionType } from "@/types"
 import { scale, verticalScale } from "@/utils/styling"
 import DateTimePicker from "@react-native-community/datetimepicker"
 import { useLocalSearchParams, useRouter } from "expo-router"
-import { orderBy, where } from "firebase/firestore"
 import * as Icons from "phosphor-react-native"
 import React, { useEffect, useState } from "react"
 import {
@@ -53,10 +52,7 @@ const TransactionModal = () => {
     data: wallets,
     loading: walletLoading,
     error: walletError,
-  } = useFirestoreData<WalletType>("wallets", [
-    where("uid", "==", user?.uid),
-    orderBy("created", "desc"),
-  ])
+  } = useSupabaseWallets(user?.uid)
 
   //retrieve data from wallte to update
   const oldTransaction: any = useLocalSearchParams()
