@@ -11,9 +11,7 @@ import { verticalScale } from "@/utils/styling";
 import * as Icons from "phosphor-react-native";
 import HomeCard from "@/components/home-card";
 import { useRouter } from "expo-router";
-import { limit, orderBy, where } from "firebase/firestore";
-import { useFirestoreData } from "@/hooks/use-firestore-data";
-import { TransactionType } from "@/types";
+import { useSupabaseTransactions } from "@/hooks/use-supabase-data";
 import { TransactionList } from "@/components/transaction-list";
 
 const Home = () => {
@@ -21,20 +19,11 @@ const Home = () => {
   const { t } = useLocale();
   const router = useRouter();
 
-  // Fetch recent transactions data
-  const constraints = user?.uid
-    ? [where("uid", "==", user.uid), orderBy("date", "desc"), limit(30)]
-    : [];
-
   const {
     data: recentTransactions,
     error,
     loading: recentTransactionsLoading,
-  } = useFirestoreData<TransactionType>(
-    "transactions",
-    constraints,
-    !!user?.uid
-  );
+  } = useSupabaseTransactions(user?.uid, 30);
 
   return (
     <ScreenWrapper>

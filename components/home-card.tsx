@@ -1,11 +1,10 @@
 import { colors, spacingX, spacingY } from "@/constants/theme"
 import { useAuth } from "@/context/auth-context"
 import { useLocale } from "@/context/locale-context"
-import { useFirestoreData } from "@/hooks/use-firestore-data"
+import { useSupabaseWallets } from "@/hooks/use-supabase-data"
 import { WalletType } from "@/types"
 import { scale, verticalScale } from "@/utils/styling"
 import { router } from "expo-router"
-import { orderBy, where } from "firebase/firestore"
 import * as Icons from "phosphor-react-native"
 import React from "react"
 import {
@@ -20,16 +19,11 @@ const HomeCard = () => {
   const { user } = useAuth()
   const { t } = useLocale()
 
-  // Fetch wallet data
-  const walletConstraints = user?.uid
-    ? [where("uid", "==", user.uid), orderBy("created", "desc")]
-    : []
-
   const {
     data: wallets,
     error,
     loading: walletLoading,
-  } = useFirestoreData<WalletType>("wallets", walletConstraints, !!user?.uid)
+  } = useSupabaseWallets(user?.uid)
 
   // Calculate total balance
   const getTotalBalance = () => {
