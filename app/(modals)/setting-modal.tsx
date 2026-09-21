@@ -10,18 +10,19 @@ import React, { useState } from "react"
 import { StyleSheet, Switch, TouchableOpacity, View } from "react-native"
 import Animated, { FadeInDown } from "react-native-reanimated"
 import { useLocale } from "@/context/locale-context"
+import { useTheme } from "@/context/theme-context"
 
 const SettingsModal = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false)
   const { t, language, setLanguage } = useLocale()
+  const { isDark, toggleTheme } = useTheme()
   const isFR = language === "fr"
   const settings: OptionType[] = [
     {
       title: t("darkMode"),
       icon: <Icons.Moon size={26} color={colors.white} weight="fill" />,
       type: "switch",
-      value: isDarkMode,
-      onChange: (value: boolean) => setIsDarkMode(value),
+      value: isDark,
+      onChange: () => toggleTheme(),
       bgColor: "#6366f1",
     },
     {

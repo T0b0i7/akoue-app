@@ -6,6 +6,7 @@ import { colors } from "@/constants/theme";
 import { AuthProvider } from "@/context/auth-context";
 import { LocaleProvider } from "@/context/locale-context";
 import { ToastProvider } from "@/context/toast-context";
+import { ThemeProvider } from "@/context/theme-context";
 import { AppToast } from "@/components/app-toast";
 import { useOTAUpdate } from "@/hooks/use-ota-update";
 
@@ -26,11 +27,12 @@ export default function RootLayout() {
 
 	return (
 		<ToastProvider>
-			<AuthProvider>
-				<LocaleProvider>
-					<OTAWatcher />
-					<AppToast />
-					<View style={styles.appBackground}>
+			<ThemeProvider>
+				<AuthProvider>
+					<LocaleProvider>
+						<OTAWatcher />
+						<AppToast />
+						<View style={styles.appBackground}>
 				<Stack
 					screenOptions={{
 						headerShown: false,
@@ -91,9 +93,10 @@ export default function RootLayout() {
 						}}
 					/>
 				</Stack>
-					</View>
-				</LocaleProvider>
-			</AuthProvider>
+						</View>
+					</LocaleProvider>
+				</AuthProvider>
+			</ThemeProvider>
 		</ToastProvider>
 	);
 }
