@@ -14,6 +14,7 @@ import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity, View } from "re
 import Animated, { FadeInDown, FadeInRight } from "react-native-reanimated"
 import * as Updates from "expo-updates"
 import Constants from "expo-constants"
+import { useOTAUpdate } from "@/hooks/use-ota-update"
 
 const getFeatures = (t:any): OptionType[] => [
   {
@@ -88,7 +89,9 @@ const More = () => {
   const features = getFeatures(t)
   const utilities = getUtilities(t)
   const settings = getSettings(t)
+  const { checking: otaChecking, checkAndNotify } = useOTAUpdate()
   const [checking, setChecking] = React.useState(false)
+  const isChecking = checking || otaChecking
 
   const handlePress = (item: OptionType) => {
     if (!item.routeName) return
@@ -102,23 +105,19 @@ const More = () => {
   }
 
   const handleCheckUpdate = async () => {
-    if (checking) return
-    // Web / dev client sans OTA
+    if (isChecking) return
     if (!Updates.isEnabled) {
       Alert.alert(t("upToDateTitle"), "OTA désactivé en dev — fais un build preview/production pour tester.")
       return
     }
     try {
       setChecking(true)
-      const check = await Updates.checkForUpdateAsync()
-      if (check.isAvailable) {
-        await Updates.fetchUpdateAsync()
-        Alert.alert(t("updateAvailableTitle"), t("updateAvailableMsg"), [
-          { text: t("cancel"), style: "cancel" },
-          { text: t("restart"), onPress: async () => { await Updates.reloadAsync() } },
-        ])
-      } else {
-        Alert.alert(t("upToDateTitle"), t("upToDateMsg"))
+      const hasUpdate = await checkAndNotify(false)
+      if (!hasUpdate) {
+        // checkAndNotify a déjà alerté si update dispo, sinon on confirme "à jour"
+        // On revérifie silencieusement pour éviter double alerte
+        const check = await Updates.checkForUpdateAsync()
+        if (!check.isAvailable) Alert.alert(t("upToDateTitle"), t("upToDateMsg"))
       }
     } catch (e: any) {
       Alert.alert(t("updateFailedTitle"), e?.message ?? t("updateFailedMsg"))
@@ -282,7 +281,7 @@ const More = () => {
               </Animated.View>
             ))}
             <View style={styles.divider} />
-            <TouchableOpacity onPress={handleCheckUpdate} style={styles.flexRow} disabled={checking}>
+            <TouchableOpacity onPress={handleCheckUpdate} style={styles.flexRow} disabled={isChecking}>
               <View style={[styles.listIcon, { backgroundColor: "#f97316" }]}>
                 <Icons.ArrowsClockwise size={26} color={colors.white} weight="fill" />
               </View>
@@ -290,7 +289,7 @@ const More = () => {
                 <Typo size={16} fontWeight={"500"}>{t("checkUpdate")}</Typo>
                 <Typo size={12} color={colors.neutral400}>v{Constants.expoConfig?.version ?? "1.0.0"} • {Updates.isEnabled ? (Updates.channel ?? "preview") : "dev"}</Typo>
               </View>
-              {checking ? <ActivityIndicator color={colors.white} /> : <Icons.CaretRight size={verticalScale(20)} weight="bold" color={colors.white} />}
+              {isChecking ? <ActivityIndicator color={colors.white} /> : <Icons.CaretRight size={verticalScale(20)} weight="bold" color={colors.white} />}
             </TouchableOpacity>
           </View>
         </View>

@@ -3,13 +3,20 @@ import { StyleSheet, View } from "react-native";
 import { colors } from "@/constants/theme";
 import { AuthProvider } from "@/context/auth-context";
 import { LocaleProvider } from "@/context/locale-context";
+import { useOTAUpdate } from "@/hooks/use-ota-update";
 
 import "./global.css";
+
+function OTAWatcher() {
+  useOTAUpdate();
+  return null;
+}
 
 export default function RootLayout() {
 	return (
 		<AuthProvider>
 			<LocaleProvider>
+				<OTAWatcher />
 				<View style={styles.appBackground}>
 				<Stack
 					screenOptions={{
