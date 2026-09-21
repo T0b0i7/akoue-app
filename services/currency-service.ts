@@ -86,6 +86,18 @@ export const fetchCurrencies = async (
     return [];
   } catch (error) {
     console.error("Error fetching currencies:", error);
-    throw error;
+    // Fallback statique pour que le select ne soit jamais vide (même hors ligne)
+    const fallbackRates: Record<string, number> = {
+      EUR: 1, USD: 1.09, XOF: 655.96, XAF: 655.96, GBP: 0.85, JPY: 165, CNY: 7.85, CAD: 1.47, CHF: 0.95, MAD: 10.8, NGN: 1650, GHS: 16.5, VND: 27000, KRW: 1450, INR: 90,
+    };
+    const base = base_currency || "EUR";
+    const baseRate = fallbackRates[base] || 1;
+    return Object.entries(fallbackRates)
+      .filter(([code]) => code !== base)
+      .map(([code, rate]) => ({
+        code,
+        value: Number((rate / baseRate).toFixed(6)),
+        name: currencyMap[code] || code,
+      }));
   }
 };

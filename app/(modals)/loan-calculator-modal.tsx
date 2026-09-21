@@ -83,7 +83,11 @@ const LoanCalculatorModal = () => {
                 </View>
               </View>
               <View style={styles.formulaBox}>
-                <Typo size={12} color={colors.neutral400}>Formule: M = P·r·(1+r)^n / ((1+r)^n -1) • r=taux mensuel, n=mois</Typo>
+                <Typo size={13} fontWeight="600" color={colors.neutral200}>Comment c'est calculé ?</Typo>
+                <Typo size={12} color={colors.neutral400} style={{ marginTop: 6, lineHeight: 18 }}>
+                  On divise le taux annuel par 12 pour avoir le taux mensuel. Chaque mois tu payes une part du capital + les intérêts sur ce qu'il reste. Le total des mensualités donne le coût réel du prêt.
+                </Typo>
+                <Typo size={11} color={colors.neutral500} style={{ marginTop: 8 }}>Exemple : 1 000 000 XOF à 7% sur 12 mois → ~86 527 XOF/mois</Typo>
               </View>
             </View>
           ) : (
