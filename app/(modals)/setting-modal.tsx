@@ -10,26 +10,20 @@ import React, { useState } from "react"
 import { StyleSheet, Switch, TouchableOpacity, View } from "react-native"
 import Animated, { FadeInDown } from "react-native-reanimated"
 import { useLocale } from "@/context/locale-context"
-import { useTheme } from "@/context/theme-context"
-import { useToast } from "@/context/toast-context"
 
 const SettingsModal = () => {
   const { t, language, setLanguage } = useLocale()
-  const { isDark, toggleTheme } = useTheme()
-  const { showToast } = useToast()
   const isFR = language === "fr"
   const settings: OptionType[] = [
-    {
-      title: t("darkMode"),
-      icon: <Icons.Moon size={26} color={colors.white} weight="fill" />,
-      type: "switch",
-      value: isDark,
-      onChange: () => {
-        toggleTheme()
-        showToast("info", isDark ? "Mode clair activé" : "Mode sombre activé", isDark ? "☀️ Thème lumineux" : "🌙 Thème sombre")
-      },
-      bgColor: "#6366f1",
-    },
+    // Mode sombre uniquement — light supprimé temporairement
+    // {
+    //   title: t("darkMode"),
+    //   icon: <Icons.Moon size={26} color={colors.white} weight="fill" />,
+    //   type: "switch",
+    //   value: isDark,
+    //   onChange: () => {},
+    //   bgColor: "#6366f1",
+    // },
     {
       title: t("notification"),
       icon: <Icons.Bell size={26} color={colors.white} weight="fill" />,

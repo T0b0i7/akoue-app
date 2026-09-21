@@ -39,30 +39,22 @@ const ThemeContext = createContext<ThemeContextType | null>(null)
 const STORAGE_KEY = "app_theme"
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<ThemeType>("dark")
+  // Mode sombre uniquement pour l'instant — light désactivé sur demande
+  const theme: ThemeType = "dark"
+  const colorsTheme = darkColors
 
+  // Force le stockage en sombre et nettoie l'ancienne valeur light
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((v) => {
-      if (v === "light" || v === "dark") setThemeState(v)
-      else {
-        const sys = Appearance.getColorScheme()
-        if (sys === "light") setThemeState("light")
-      }
-    })
+    AsyncStorage.setItem(STORAGE_KEY, "dark")
+    Object.assign(colors, darkColors)
   }, [])
 
-  const setTheme = async (t: ThemeType) => {
-    setThemeState(t)
-    await AsyncStorage.setItem(STORAGE_KEY, t)
-  }
-  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark")
+  const setTheme = async () => {}
+  const toggleTheme = () => {}
 
-  const colorsTheme = theme === "dark" ? darkColors : (lightColors as typeof darkColors)
+  Object.assign(colors, darkColors)
 
-  // Mutate l'objet colors importé pour que les `import { colors }` existants reflètent le thème
-  Object.assign(colors, colorsTheme)
-
-  return <ThemeContext.Provider value={{ isDark: theme === "dark", theme, colors: colorsTheme, toggleTheme, setTheme }}>{children}</ThemeContext.Provider>
+  return <ThemeContext.Provider value={{ isDark: true, theme, colors: colorsTheme, toggleTheme, setTheme }}>{children}</ThemeContext.Provider>
 }
 
 export const useTheme = () => {
