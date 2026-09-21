@@ -89,8 +89,8 @@ const TransactionItem = ({
   let category =
     item?.type === "income"
       ? incomeCategory
-      : expenseCategories[item?.category!]
-  const IconComponent = category.icon
+      : (expenseCategories[item?.category as string] || expenseCategories.others)
+  const IconComponent = category?.icon || expenseCategories.others.icon
 
   //format transaction date
   const date = (() => {
