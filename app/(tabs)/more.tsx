@@ -55,8 +55,7 @@ const getUtilities = (t:any): OptionType[] => [
     title: t("loanCalculator"),
     icon: <Icons.Percent size={26} color={colors.white} weight="fill" />,
     bgColor: "#10b981",
-    // routeName: "/(modals)/loanCalculatorModal",
-    routeName: "commingsoon",
+    routeName: "/(modals)/loan-calculator-modal",
   },
   {
     title: t("splitBill"),
