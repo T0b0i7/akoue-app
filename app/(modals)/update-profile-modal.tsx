@@ -4,7 +4,7 @@ import Header from "@/components/header"
 import Input from "@/components/input"
 import ModalWrapper from "@/components/modal-wrapper"
 import Typo from "@/components/typo"
-import { colors, spacingX, spacingY } from "@/constants/theme"
+import { colors, radius, spacingX, spacingY } from "@/constants/theme"
 import { useAuth } from "@/context/auth-context"
 import { useLocale } from "@/context/locale-context"
 import { getProfileImage } from "@/services/images-service"
@@ -43,16 +43,7 @@ const EditProfileModal = () => {
   }, [user])
 
   const handleImagePicker = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      // allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.5,
-    })
-
-    if (!result.canceled) {
-      setUserData({ ...userData, image: result.assets[0] })
-    }
+    // Remplacé par sélection Homme/Femme — plus fiable que l'upload
   }
 
   const handleSubmit = async () => {
@@ -97,14 +88,21 @@ const EditProfileModal = () => {
               contentFit="cover"
               transition={100}
             />
+          </View>
+          <View style={styles.genderRow}>
             <TouchableOpacity
-              onPress={handleImagePicker}
-              style={styles.editIcon}
+              onPress={() => setUserData({ ...userData, image: "male" })}
+              style={[styles.genderBtn, userData.image === "male" && styles.genderBtnActiveMale]}
             >
-              <Icons.Pencil
-                size={verticalScale(20)}
-                color={colors.neutral800}
-              />
+              <Icons.GenderMale size={28} color={userData.image === "male" ? "#fff" : colors.neutral400} weight="fill" />
+              <Typo size={14} fontWeight="600" color={userData.image === "male" ? "#fff" : colors.neutral400}>Homme</Typo>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setUserData({ ...userData, image: "female" })}
+              style={[styles.genderBtn, userData.image === "female" && styles.genderBtnActiveFemale]}
+            >
+              <Icons.GenderFemale size={28} color={userData.image === "female" ? "#fff" : colors.neutral400} weight="fill" />
+              <Typo size={14} fontWeight="600" color={userData.image === "female" ? "#fff" : colors.neutral400}>Femme</Typo>
             </TouchableOpacity>
           </View>
           <View style={styles.inputContainer}>
@@ -171,6 +169,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.neutral500,
   },
+  genderRow: { flexDirection: "row", gap: spacingX._15, justifyContent: "center", marginTop: spacingY._10 },
+  genderBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: spacingY._12,
+    borderRadius: radius._15,
+    borderWidth: 1.5,
+    borderColor: colors.neutral700,
+    backgroundColor: colors.neutral800,
+  },
+  genderBtnActiveMale: { backgroundColor: "#0ea5e9", borderColor: "#0ea5e9" },
+  genderBtnActiveFemale: { backgroundColor: "#ec4899", borderColor: "#ec4899" },
   editIcon: {
     position: "absolute",
     bottom: spacingY._5,

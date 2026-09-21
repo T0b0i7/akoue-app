@@ -13,19 +13,15 @@ import { ScrollView, StyleSheet, View } from "react-native"
 const SplitBillModal = () => {
   const [total, setTotal] = useState("50000")
   const [people, setPeople] = useState("4")
-  const [tip, setTip] = useState("0")
 
   const totalNum = Number(total.replace(/\s/g, "")) || 0
   const peopleNum = Number(people) || 1
-  const tipNum = Number(tip.replace(",", ".")) || 0
 
   const result = useMemo(() => {
     if (!totalNum || !peopleNum) return null
-    const withTip = totalNum * (1 + tipNum / 100)
-    const perPerson = withTip / peopleNum
-    const tipAmount = withTip - totalNum
-    return { withTip, perPerson, tipAmount }
-  }, [totalNum, peopleNum, tipNum])
+    const perPerson = totalNum / peopleNum
+    return { perPerson }
+  }, [totalNum, peopleNum])
 
   return (
     <ModalWrapper>
@@ -40,11 +36,6 @@ const SplitBillModal = () => {
             <Typo size={15} fontWeight="600" color={colors.neutral200}>Nombre de personnes</Typo>
             <Input value={people} onChangeText={setPeople} keyboardType="numeric" placeholder="4" type="normal" />
           </View>
-          <View style={styles.inputContainer}>
-            <Typo size={15} fontWeight="600" color={colors.neutral200}>Pourboire (%) — optionnel</Typo>
-            <Input value={tip} onChangeText={setTip} keyboardType="numeric" placeholder="0" type="normal" />
-          </View>
-
           {result ? (
             <View style={styles.resultCard}>
               <View style={styles.resultRow}>
@@ -58,21 +49,15 @@ const SplitBillModal = () => {
               </View>
               <View style={styles.divider} />
               <View style={styles.row}>
-                <Typo size={14} color={colors.neutral400}>Total avec pourboire</Typo>
-                <Typo size={15} fontWeight="600">{formatCurrency(result.withTip, "fr-FR", "XOF", 0)}</Typo>
+                <Typo size={14} color={colors.neutral400}>Total</Typo>
+                <Typo size={15} fontWeight="600">{formatCurrency(totalNum, "fr-FR", "XOF", 0)}</Typo>
               </View>
-              {tipNum > 0 && (
-                <View style={styles.row}>
-                  <Typo size={14} color={colors.neutral400}>Dont pourboire</Typo>
-                  <Typo size={15} fontWeight="600" color={colors.green}>+{formatCurrency(result.tipAmount, "fr-FR", "XOF", 0)}</Typo>
-                </View>
-              )}
               <View style={styles.row}>
                 <Typo size={14} color={colors.neutral400}>Détail</Typo>
-                <Typo size={14} color={colors.neutral200}>{totalNum.toLocaleString("fr-FR")} ÷ {peopleNum} pers. {tipNum > 0 ? `+ ${tipNum}%` : ""}</Typo>
+                <Typo size={14} color={colors.neutral200}>{totalNum.toLocaleString("fr-FR")} ÷ {peopleNum} pers.</Typo>
               </View>
               <View style={styles.helpBox}>
-                <Typo size={12} color={colors.neutral400}>💡 Chacun paye le même montant. Ajoute le pourboire avant de diviser.</Typo>
+                <Typo size={12} color={colors.neutral400}>💡 Chacun paye le même montant.</Typo>
               </View>
             </View>
           ) : (
