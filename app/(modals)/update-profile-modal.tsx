@@ -14,6 +14,7 @@ import { scale, verticalScale } from "@/utils/styling"
 import { Image } from "expo-image"
 import * as ImagePicker from "expo-image-picker"
 import * as Icons from "phosphor-react-native"
+import { useRouter } from "expo-router"
 import React, { useEffect, useState } from "react"
 import {
   Alert,
@@ -26,7 +27,7 @@ import {
 const EditProfileModal = () => {
   const { user, updateUserData } = useAuth()
   const { t } = useLocale()
-  // const router = useRouter()
+  const router = useRouter()
   const [userData, setUserData] = useState<UserDataType>({
     name: "",
     image: null,
@@ -64,7 +65,8 @@ const EditProfileModal = () => {
     const res = await updateUser(user?.uid as string, userData)
     setLoading(false)
     if (res.success) {
-      updateUserData(user?.uid as string)
+      await updateUserData(user?.uid as string)
+      Alert.alert(t("success"), "Profil mis à jour", [{ text: t("ok"), onPress: () => router.back() }])
     } else {
       Alert.alert(t("error"), res.msg || t("updateFailed"))
     }

@@ -16,9 +16,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (initializing) return;
     const inAuth = pathname?.startsWith("/welcome") || pathname?.startsWith("/login") || pathname?.startsWith("/sign-up") || pathname?.startsWith("/forgot") || pathname?.startsWith("/(auth)");
-    const inTabs = pathname?.startsWith("/(tabs)") || pathname === "/" || pathname?.startsWith("/wallet") || pathname?.startsWith("/statistics") || pathname?.startsWith("/more");
-    if (user && inAuth) router.replace("/(tabs)");
-    else if (!user && inTabs) router.replace("/(auth)/welcome");
+    if (user && inAuth) router.replace("/(tabs)" as any);
+    else if (!user && !inAuth) router.replace("/(auth)/welcome" as any);
   }, [initializing, user, pathname]);
 
   useEffect(() => {

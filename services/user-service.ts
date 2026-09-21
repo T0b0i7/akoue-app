@@ -5,7 +5,7 @@ import { uploadFileToSupabase } from "./images-service";
 export const updateUser = async (uid: string, updatedData: UserDataType): Promise<ResponseType> => {
   try {
     if (updatedData.image && (updatedData as any)?.image?.uri) {
-      const res = await uploadFileToSupabase((updatedData as any).image, `profiles/${uid}`);
+      const res = await uploadFileToSupabase((updatedData as any).image, `${uid}`);
       if (!res.success) return { success: false, msg: res.msg || "Failed to upload image." };
       updatedData.image = res.data;
     }
