@@ -1,7 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import React, { createContext, useContext, useEffect, useState } from "react"
 import { Appearance } from "react-native"
-import { colors as darkColors, colors } from "@/constants/theme"
+import { colors } from "@/constants/theme"
+
+// Snapshot du thème sombre d'origine — ne mute jamais
+const darkColors = { ...colors } as typeof colors
 
 const lightColors = {
   ...darkColors,
