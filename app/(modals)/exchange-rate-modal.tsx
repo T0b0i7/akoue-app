@@ -23,7 +23,7 @@ import Animated, { FadeInDown } from "react-native-reanimated"
 const ExchangeRateModal = () => {
   const { t } = useLocale()
   const [currencies, setCurrencies] = useState<CurrencyType[]>([])
-  const [baseCurrency, setBaseCurrency] = useState<string>("VND")
+  const [baseCurrency, setBaseCurrency] = useState<string>("EUR")
   const [amount, setAmount] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(false)
   // const [error, setError] = useState<string | null>(null)

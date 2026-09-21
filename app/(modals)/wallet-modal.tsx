@@ -49,13 +49,11 @@ const WalletModal = () => {
       return
     }
     console.log("wallet", wallet)
-    if (!image) {
-      image = require("@/public/images/splash-icon.png")
-    }
-    console.log("images", image)
+    // Si pas d'image, on laisse null — Supabase stocke null, l'UI affiche l'avatar par défaut
+    const finalImage = typeof image === "string" ? image : (image as any)?.uri ?? null
     const data: WalletType = {
       name,
-      image,
+      image: finalImage,
       uid: user?.uid,
     }
 

@@ -12,16 +12,18 @@ export const createOrUpdateWallet = async (walletData: Partial<WalletType>): Pro
     }
 
     const { data: { user } } = await supabase.auth.getUser();
-    const uid = walletData.uid || user?.id;
-    if (!uid) return { success: false, msg: "User not authenticated" };
+    const uid = walletData.uid || (user as any)?.id || (walletData as any)?.uid;
+    // auth-context stocke uid, supabase renvoie id — on couvre les deux
+    const finalUid = uid || (await supabase.auth.getSession()).data.session?.user?.id;
+    if (!finalUid) return { success: false, msg: "User not authenticated" };
 
     if (!walletData.id) {
       const { data, error } = await supabase
         .from("wallets")
         .insert({
-          uid,
+          uid: finalUid,
           name: walletData.name,
-          image: imageUrl,
+          image: typeof imageUrl === "string" ? imageUrl : null,
           amount: 0,
           totalIncome: 0,
           totalExpenses: 0,
