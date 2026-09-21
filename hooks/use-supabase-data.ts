@@ -16,10 +16,19 @@ export function useSupabaseWallets(uid?: string | null) {
       return;
     }
     if (!silent) setLoading(true);
-    const { data: wallets, error } = await supabase.from("wallets").select("*").eq("uid", uid).order("created_at", { ascending: false });
-    if (error) setError(error.message);
-    else { setData(wallets as any); setError(null); }
-    setLoading(false);
+    try {
+      const { data: wallets, error } = await supabase.from("wallets").select("*").eq("uid", uid).order("created_at", { ascending: false });
+      if (error) throw error;
+      setData(wallets as any); setError(null);
+      // cache offline
+      await AsyncStorage.setItem(`wallets_${uid}`, JSON.stringify(wallets));
+      await AsyncStorage.setItem("mock_wallets", JSON.stringify(wallets));
+    } catch (e: any) {
+      // Hors ligne → fallback cache
+      const cached = await AsyncStorage.getItem(`wallets_${uid}`) || await AsyncStorage.getItem("mock_wallets");
+      if (cached) { setData(JSON.parse(cached)); setError(null); }
+      else setError(e.message || "Hors ligne");
+    } finally { setLoading(false); }
   }, [uid]);
 
   useEffect(() => {
@@ -48,11 +57,18 @@ export function useSupabaseTransactions(uid?: string | null, limit = 30) {
       return;
     }
     if (!silent) setLoading(true);
-    const { data: txs, error } = await supabase.from("transactions").select("*").eq("uid", uid).order("date", { ascending: false }).limit(limit);
-    if (error) setError(error.message);
-    else { 
+    try {
+      const { data: txs, error } = await supabase.from("transactions").select("*").eq("uid", uid).order("date", { ascending: false }).limit(limit);
+      if (error) throw error;
       const mapped = (txs as any[]).map(t => ({ ...t, date: t.date, created: t.created_at }));
-      setData(mapped); setError(null); 
+      setData(mapped); setError(null);
+      await AsyncStorage.setItem(`txs_${uid}`, JSON.stringify(mapped));
+      await AsyncStorage.setItem("mock_transactions", JSON.stringify(mapped));
+    } catch (e: any) {
+      const cached = await AsyncStorage.getItem(`txs_${uid}`) || await AsyncStorage.getItem("mock_transactions");
+      if (cached) { setData(JSON.parse(cached).slice(0, limit)); setError(null); }
+      else setError(e.message || "Hors ligne");
+      setLoading(false); return;
     }
     setLoading(false);
   }, [uid, limit]);
