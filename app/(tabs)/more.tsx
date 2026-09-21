@@ -33,8 +33,7 @@ const getFeatures = (t:any): OptionType[] => [
     title: t("exportData"),
     icon: <Icons.FileArrowUp size={26} color={colors.white} weight="fill" />,
     bgColor: "#0ea5e9",
-    // routeName: "/(modals)/exportDataModal",
-    routeName: "commingsoon",
+    routeName: "/(modals)/export-data-modal",
   },
 ]
 
