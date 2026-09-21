@@ -12,7 +12,7 @@ import { Image } from "expo-image"
 import { useRouter } from "expo-router"
 import * as Icons from "phosphor-react-native"
 import React from "react"
-import { Alert, StyleSheet, TouchableOpacity, View } from "react-native"
+import { Alert, Platform, StyleSheet, TouchableOpacity, View } from "react-native"
 import Animated, { FadeInDown } from "react-native-reanimated"
 
 const ProfileModal = () => {
@@ -44,8 +44,11 @@ const ProfileModal = () => {
   const handleLogout = async () => {
     const res = await logout()
     if (res.success) {
-      // Laisse auth-context rediriger via !user && !inAuth → welcome
-      // Pas de dismissAll sur web (cause removeChild crash)
+      if (Platform.OS === "web") {
+        // Sur web Alert est limité + router modale peut bloquer — force le reload
+        window.location.href = "/welcome"
+        return
+      }
       setTimeout(() => router.replace("/(auth)/welcome" as any), 150)
     } else {
       Alert.alert(t("error"), res.msg || "Déconnexion échouée")
@@ -53,19 +56,14 @@ const ProfileModal = () => {
   }
 
   const showLogoutAlert = () => {
+    if (Platform.OS === "web") {
+      // Alert.alert à 2 boutons ne marche pas bien sur web (window.alert) → use confirm
+      if (window.confirm(`${t("confirmLogoutTitle")}\n${t("confirmLogoutMsg")}`)) handleLogout()
+      return
+    }
     Alert.alert(t("confirmLogoutTitle"), t("confirmLogoutMsg"), [
-      {
-        text: t("cancel"),
-        style: "cancel",
-        onPress: () => {
-          // console.log("cancel logout")
-        },
-      },
-      {
-        text: t("logout"),
-        style: "destructive",
-        onPress: () => handleLogout(),
-      },
+      { text: t("cancel"), style: "cancel" },
+      { text: t("logout"), style: "destructive", onPress: () => handleLogout() },
     ])
   }
 
