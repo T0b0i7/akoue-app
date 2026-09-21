@@ -40,6 +40,13 @@
         }
       ]
     ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/79585acb-c04c-4b7b-96c4-96338df4ae8c",
+      "fallbackToCacheTimeout": 0
+    },
     "experiments": {
       "typedRoutes": true
     },

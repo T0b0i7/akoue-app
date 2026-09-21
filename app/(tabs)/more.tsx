@@ -10,8 +10,10 @@ import { Image } from "expo-image"
 import { useRouter } from "expo-router"
 import * as Icons from "phosphor-react-native"
 import React from "react"
-import { Alert, StyleSheet, TouchableOpacity, View } from "react-native"
+import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity, View } from "react-native"
 import Animated, { FadeInDown, FadeInRight } from "react-native-reanimated"
+import * as Updates from "expo-updates"
+import Constants from "expo-constants"
 
 const getFeatures = (t:any): OptionType[] => [
   {
@@ -86,6 +88,7 @@ const More = () => {
   const features = getFeatures(t)
   const utilities = getUtilities(t)
   const settings = getSettings(t)
+  const [checking, setChecking] = React.useState(false)
 
   const handlePress = (item: OptionType) => {
     if (!item.routeName) return
@@ -96,6 +99,32 @@ const More = () => {
           t("comingSoonMsg"),
         )
       : router.push(item?.routeName as any)
+  }
+
+  const handleCheckUpdate = async () => {
+    if (checking) return
+    // Web / dev client sans OTA
+    if (!Updates.isEnabled) {
+      Alert.alert(t("upToDateTitle"), "OTA désactivé en dev — fais un build preview/production pour tester.")
+      return
+    }
+    try {
+      setChecking(true)
+      const check = await Updates.checkForUpdateAsync()
+      if (check.isAvailable) {
+        await Updates.fetchUpdateAsync()
+        Alert.alert(t("updateAvailableTitle"), t("updateAvailableMsg"), [
+          { text: t("cancel"), style: "cancel" },
+          { text: t("restart"), onPress: async () => { await Updates.reloadAsync() } },
+        ])
+      } else {
+        Alert.alert(t("upToDateTitle"), t("upToDateMsg"))
+      }
+    } catch (e: any) {
+      Alert.alert(t("updateFailedTitle"), e?.message ?? t("updateFailedMsg"))
+    } finally {
+      setChecking(false)
+    }
   }
 
   return (
@@ -252,6 +281,17 @@ const More = () => {
                 </TouchableOpacity>
               </Animated.View>
             ))}
+            <View style={styles.divider} />
+            <TouchableOpacity onPress={handleCheckUpdate} style={styles.flexRow} disabled={checking}>
+              <View style={[styles.listIcon, { backgroundColor: "#f97316" }]}>
+                <Icons.ArrowsClockwise size={26} color={colors.white} weight="fill" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Typo size={16} fontWeight={"500"}>{t("checkUpdate")}</Typo>
+                <Typo size={12} color={colors.neutral400}>v{Constants.expoConfig?.version ?? "1.0.0"} • {Updates.isEnabled ? (Updates.channel ?? "preview") : "dev"}</Typo>
+              </View>
+              {checking ? <ActivityIndicator color={colors.white} /> : <Icons.CaretRight size={verticalScale(20)} weight="bold" color={colors.white} />}
+            </TouchableOpacity>
           </View>
         </View>
       </View>
