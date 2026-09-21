@@ -45,6 +45,7 @@ const TransactionModal = () => {
   })
 
   const [loading, setLoading] = useState(false)
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const router = useRouter()
 
@@ -88,7 +89,9 @@ const TransactionModal = () => {
       !date ||
       !walletId
     ) {
-      Alert.alert(t("transaction"), t("pleaseFillRequired"))
+      const msg = t("pleaseFillRequired")
+      setFeedback({ type: "error", msg })
+      Alert.alert(t("transaction"), msg)
       return
     }
     let transactionData: TransactionType = {
@@ -104,15 +107,18 @@ const TransactionModal = () => {
 
     // include transaction id
     if (oldTransaction?.id) transactionData.id = oldTransaction.id
+    setFeedback(null)
     setLoading(true)
     const result = await createOrUpdateTransaction(transactionData)
     setLoading(false)
     if (result.success) {
-      //update user
-      router.back()
+      setFeedback({ type: "success", msg: t("transactionAdded") })
       Alert.alert(t("transaction"), t("transactionAdded"))
+      setTimeout(() => router.back(), 800)
     } else {
-      Alert.alert(t("transaction"), result.msg)
+      const msg = result.msg || "Erreur"
+      setFeedback({ type: "error", msg })
+      Alert.alert(t("transaction"), msg)
     }
   }
 
@@ -125,11 +131,13 @@ const TransactionModal = () => {
     )
     setLoading(false)
     if (result!.success) {
-      //update user
-      router.back()
+      setFeedback({ type: "success", msg: t("walletDeleted") })
       Alert.alert(t("wallet"), t("walletDeleted"))
+      setTimeout(() => router.back(), 700)
     } else {
-      Alert.alert(t("wallet"), result!.msg)
+      const msg = result!.msg || "Erreur"
+      setFeedback({ type: "error", msg })
+      Alert.alert(t("wallet"), msg)
     }
   }
 
@@ -368,6 +376,11 @@ const TransactionModal = () => {
               placeholder={t("addImage")}
             />
           </View>
+          {feedback && (
+            <View style={[styles.feedback, { backgroundColor: feedback.type === "success" ? "#16a34a20" : "#ef444420", borderColor: feedback.type === "success" ? "#16a34a" : "#ef4444" }]}>
+              <Typo size={14} color={feedback.type === "success" ? "#16a34a" : "#ef4444"} style={{ textAlign: "center" }}>{feedback.msg}</Typo>
+            </View>
+          )}
         </ScrollView>
       </View>
       {/* footer area*/}
@@ -504,6 +517,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     paddingVertical: 15,
   },
+  feedback: { borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 4 },
 })
 
 export default TransactionModal

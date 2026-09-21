@@ -25,6 +25,7 @@ const WalletModal = () => {
   })
 
   const [loading, setLoading] = useState(false)
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null)
   const router = useRouter()
 
   //retrieve data from wallte to update
@@ -43,9 +44,10 @@ const WalletModal = () => {
   //onsublmit function
   const onSubmit = async () => {
     let { name, image } = wallet
-    // || !image
     if (!name.trim()) {
-      Alert.alert(t("wallet"), t("pleaseEnterWalletName"))
+      const msg = t("pleaseEnterWalletName")
+      setFeedback({ type: "error", msg })
+      Alert.alert(t("wallet"), msg)
       return
     }
     const finalImage = typeof image === "string" ? image : (image as any)?.uri ?? null
@@ -57,14 +59,18 @@ const WalletModal = () => {
 
     if (oldWallet?.id) data.id = oldWallet?.id
 
+    setFeedback(null)
     setLoading(true)
     const result = await createOrUpdateWallet(data)
     setLoading(false)
     if (result.success) {
-      //update user
-      router.back()
+      setFeedback({ type: "success", msg: oldWallet?.id ? "Portefeuille mis à jour ✓" : "Portefeuille créé ✓" })
+      Alert.alert(t("wallet"), oldWallet?.id ? "Portefeuille mis à jour" : "Portefeuille créé")
+      setTimeout(() => router.back(), 800)
     } else {
-      Alert.alert(t("wallet"), result.msg)
+      const msg = result.msg || "Erreur"
+      setFeedback({ type: "error", msg })
+      Alert.alert(t("wallet"), msg)
     }
   }
 
@@ -74,11 +80,13 @@ const WalletModal = () => {
     const result = await deleteWallet(oldWallet?.id)
     setLoading(false)
     if (result.success) {
-      //update user
-      router.back()
+      setFeedback({ type: "success", msg: t("walletDeleted") })
       Alert.alert(t("wallet"), t("walletDeleted"))
+      setTimeout(() => router.back(), 700)
     } else {
-      Alert.alert(t("wallet"), result.msg)
+      const msg = result.msg || "Erreur"
+      setFeedback({ type: "error", msg })
+      Alert.alert(t("wallet"), msg)
     }
   }
 
@@ -132,6 +140,11 @@ const WalletModal = () => {
               placeholder={t("addImage")}
             />
           </View>
+          {feedback && (
+            <View style={[styles.feedback, { backgroundColor: feedback.type === "success" ? "#16a34a20" : "#ef444420", borderColor: feedback.type === "success" ? "#16a34a" : "#ef4444" }]}>
+              <Typo size={14} color={feedback.type === "success" ? "#16a34a" : "#ef4444"} style={{ textAlign: "center" }}>{feedback.msg}</Typo>
+            </View>
+          )}
         </ScrollView>
       </View>
       {/* //footer area*/}
@@ -217,4 +230,5 @@ const styles = StyleSheet.create({
   inputContainer: {
     gap: spacingY._10,
   },
+  feedback: { borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 4 },
 })

@@ -23,40 +23,38 @@ const ChangePasswordModal = () => {
     confirmPassword: "",
   })
   const [loading, setLoading] = useState(false)
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null)
 
   const handleSubmit = async () => {
     const { oldPassword, newPassword, confirmPassword } = passwords
 
     if (!oldPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
-      Alert.alert(t("warning"), t("pleaseFillAllFields"))
-      return
+      const msg = t("pleaseFillAllFields")
+      setFeedback({ type: "error", msg }); Alert.alert(t("warning"), msg); return
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert(t("warning"), t("newPasswordNotMatch"))
-      return
+      const msg = t("newPasswordNotMatch")
+      setFeedback({ type: "error", msg }); Alert.alert(t("warning"), msg); return
     }
 
     if (newPassword.length < 6) {
-      Alert.alert(t("warning"), t("newPasswordMin6"))
-      return
+      const msg = t("newPasswordMin6")
+      setFeedback({ type: "error", msg }); Alert.alert(t("warning"), msg); return
     }
 
+    setFeedback(null)
     setLoading(true)
     const res = await updatePassword(oldPassword, newPassword)
     setLoading(false)
 
     if (res.success) {
-      Alert.alert(t("success"), t("passwordUpdated"), [
-        {
-          text: t("ok"),
-          onPress: () => {
-            router.back()
-          },
-        },
-      ])
+      setFeedback({ type: "success", msg: t("passwordUpdated") })
+      Alert.alert(t("success"), t("passwordUpdated"))
+      setTimeout(() => router.back(), 900)
     } else {
-      Alert.alert(t("error"), res.msg || t("failedUpdatePassword"))
+      const msg = res.msg || t("failedUpdatePassword")
+      setFeedback({ type: "error", msg }); Alert.alert(t("error"), msg)
     }
   }
 
@@ -123,6 +121,11 @@ const ChangePasswordModal = () => {
               }
             />
           </View>
+          {feedback && (
+            <View style={[styles.feedback, { backgroundColor: feedback.type === "success" ? "#16a34a20" : "#ef444420", borderColor: feedback.type === "success" ? "#16a34a" : "#ef4444" }]}>
+              <Typo size={14} color={feedback.type === "success" ? "#16a34a" : "#ef4444"} style={{ textAlign: "center" }}>{feedback.msg}</Typo>
+            </View>
+          )}
         </ScrollView>
       </View>
       <View style={styles.footer}>
@@ -162,4 +165,5 @@ const styles = StyleSheet.create({
   inputContainer: {
     gap: spacingY._10,
   },
+  feedback: { borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 4 },
 })
