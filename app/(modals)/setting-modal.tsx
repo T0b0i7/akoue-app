@@ -11,10 +11,12 @@ import { StyleSheet, Switch, TouchableOpacity, View } from "react-native"
 import Animated, { FadeInDown } from "react-native-reanimated"
 import { useLocale } from "@/context/locale-context"
 import { useTheme } from "@/context/theme-context"
+import { useToast } from "@/context/toast-context"
 
 const SettingsModal = () => {
   const { t, language, setLanguage } = useLocale()
   const { isDark, toggleTheme } = useTheme()
+  const { showToast } = useToast()
   const isFR = language === "fr"
   const settings: OptionType[] = [
     {
@@ -22,7 +24,10 @@ const SettingsModal = () => {
       icon: <Icons.Moon size={26} color={colors.white} weight="fill" />,
       type: "switch",
       value: isDark,
-      onChange: () => toggleTheme(),
+      onChange: () => {
+        toggleTheme()
+        showToast("info", isDark ? "Mode clair activé" : "Mode sombre activé", isDark ? "☀️ Thème lumineux" : "🌙 Thème sombre")
+      },
       bgColor: "#6366f1",
     },
     {
