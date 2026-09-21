@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 // Helper pour vider AsyncStorage mock avant chaque test
-async function clearStorage(page) {
+async function clearStorage(page: Page) {
   await page.evaluate(() => localStorage.clear());
   // AsyncStorage sur web utilise localStorage sous le capot
   await page.evaluate(() => {
@@ -15,25 +15,25 @@ async function clearStorage(page) {
 }
 
 test.describe('Finote - Auth flows (mock mode)', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }: { page: Page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
   });
 
-  test('welcome page affiche Get Started et Login', async ({ page }) => {
+  test('welcome page affiche Get Started et Login', async ({ page }: { page: Page }) => {
     await expect(page.getByText('Reprenez le contrôle')).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('Commencer')).toBeVisible();
     await expect(page.getByText('Connexion').first()).toBeVisible();
   });
 
-  test('navigation welcome -> sign-up', async ({ page }) => {
+  test('navigation welcome -> sign-up', async ({ page }: { page: Page }) => {
     await page.getByText('Commencer').click();
     await expect(page).toHaveURL(/sign-up/, { timeout: 10000 });
     await expect(page.getByPlaceholder('Entrez votre nom')).toBeVisible();
     await expect(page.getByPlaceholder('Entrez votre email')).toBeVisible();
   });
 
-  test('sign-up validation - champs vides', async ({ page }) => {
+  test('sign-up validation - champs vides', async ({ page }: { page: Page }) => {
     await page.goto('/sign-up');
     await page.waitForTimeout(2000);
     await page.getByText('Créer un compte').click();
@@ -41,7 +41,7 @@ test.describe('Finote - Auth flows (mock mode)', () => {
     await expect(page).toHaveURL(/sign-up/, { timeout: 5000 });
   });
 
-  test('sign-up validation - email invalide', async ({ page }) => {
+  test('sign-up validation - email invalide', async ({ page }: { page: Page }) => {
     await page.goto('/sign-up');
     await page.waitForTimeout(2000);
     await page.getByPlaceholder('Entrez votre nom').fill('Test');
@@ -52,7 +52,7 @@ test.describe('Finote - Auth flows (mock mode)', () => {
     await expect(page).toHaveURL(/sign-up/, { timeout: 5000 });
   });
 
-  test('sign-up validation - password trop court', async ({ page }) => {
+  test('sign-up validation - password trop court', async ({ page }: { page: Page }) => {
     await page.goto('/sign-up');
     await page.waitForTimeout(2000);
     await page.getByPlaceholder('Entrez votre nom').fill('Test');
@@ -63,7 +63,7 @@ test.describe('Finote - Auth flows (mock mode)', () => {
     await expect(page).toHaveURL(/sign-up/, { timeout: 5000 });
   });
 
-  test('sign-up succès -> redirection tabs', async ({ page }) => {
+  test('sign-up succès -> redirection tabs', async ({ page }: { page: Page }) => {
     await page.goto('/sign-up', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(3000);
     await clearStorage(page);
@@ -80,7 +80,7 @@ test.describe('Finote - Auth flows (mock mode)', () => {
     expect(hasSession).toBeTruthy();
   });
 
-  test('login validation - email invalide', async ({ page }) => {
+  test('login validation - email invalide', async ({ page }: { page: Page }) => {
     await page.goto('/login');
     await page.waitForTimeout(2000);
     await page.getByPlaceholder('Entrez votre email').fill('bad');
@@ -90,7 +90,7 @@ test.describe('Finote - Auth flows (mock mode)', () => {
     await expect(page).toHaveURL(/login/, { timeout: 5000 });
   });
 
-  test('login succès demo', async ({ page }) => {
+  test('login succès demo', async ({ page }: { page: Page }) => {
     await clearStorage(page);
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(3000);
@@ -102,7 +102,7 @@ test.describe('Finote - Auth flows (mock mode)', () => {
     expect(hasSession).toBeTruthy();
   });
 
-  test('login -> reload persiste session', async ({ page }) => {
+  test('login -> reload persiste session', async ({ page }: { page: Page }) => {
     await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(3000);
     await page.getByPlaceholder('Entrez votre email').fill('demo@akoue.app');
@@ -127,10 +127,11 @@ test.describe('Finote - Auth flows (mock mode)', () => {
     expect(after).toBeTruthy();
   });
 
-  test('forgot-password navigation', async ({ page }) => {
+  test('forgot-password navigation', async ({ page }: { page: Page }) => {
     await page.goto('/login');
     await page.waitForTimeout(2000);
     await page.getByText('Mot de passe oublié').click();
     await expect(page).toHaveURL(/forgot-password/, { timeout: 10000 });
   });
 });
+
