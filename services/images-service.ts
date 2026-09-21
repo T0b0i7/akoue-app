@@ -45,6 +45,9 @@ export const uploadFileToSupabase = async (
 export const uploadFileToCloudinary = uploadFileToSupabase;
 
 export const getProfileImage = (file: any) => {
+  if (file === "male") return require("../public/images/defaultAvatar.png");
+  if (file === "female") return require("../public/images/profile.png");
+  if (file && typeof file === "string" && file.startsWith("http")) return { uri: file };
   if (file && typeof file === "string") return file;
   if (file && typeof file === "object") return file.uri;
   return require("../public/images/defaultAvatar.png");

@@ -1,16 +1,20 @@
 import { colors } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect } from "react";
 import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
 
 const Index = () => {
   const router = useRouter();
   const { user, } = useAuth();
-  // On attend que Supabase restore la session — auth-context gère initializing en interne
-  // On ajoute un délai fixe pour voir le branding (un seul splash)
   useEffect(() => {
-    const t = setTimeout(() => {
+    const t = setTimeout(async () => {
+      const lang = await AsyncStorage.getItem("app_locale");
+      if (!lang) {
+        router.replace("/language" as any);
+        return;
+      }
       if (user) router.replace("/(tabs)" as any);
       else router.replace("/(auth)/welcome" as any);
     }, 1800);
