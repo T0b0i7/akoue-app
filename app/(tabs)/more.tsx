@@ -80,7 +80,7 @@ const getSettings = (t:any): OptionType[] => [
 ]
 
 const More = () => {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const { t } = useLocale()
   const router = useRouter()
   const features = getFeatures(t)
@@ -89,6 +89,13 @@ const More = () => {
   const { checking: otaChecking, checkAndNotify } = useOTAUpdate()
   const [checking, setChecking] = React.useState(false)
   const isChecking = checking || otaChecking
+
+  const handleLogout = () => {
+    Alert.alert(t("confirmLogoutTitle"), t("confirmLogoutMsg"), [
+      { text: t("cancel"), style: "cancel" },
+      { text: t("logout"), style: "destructive", onPress: async () => { await logout() } },
+    ])
+  }
 
   const handlePress = (item: OptionType) => {
     if (!item.routeName) return
@@ -290,6 +297,12 @@ const More = () => {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Déconnexion */}
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+          <Icons.SignOut size={22} color={colors.white} weight="bold" />
+          <Typo size={16} color={colors.white} fontWeight="600">{t("logout")}</Typo>
+        </TouchableOpacity>
       </View>
     </ScreenWrapper>
   )
@@ -361,5 +374,15 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.neutral700,
     marginVertical: verticalScale(9),
+  },
+  logoutBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacingX._10,
+    backgroundColor: "#e11d48",
+    borderRadius: radius._15,
+    paddingVertical: verticalScale(14),
+    marginTop: verticalScale(6),
   },
 })
