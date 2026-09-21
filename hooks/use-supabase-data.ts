@@ -25,12 +25,9 @@ export function useSupabaseWallets(uid?: string | null) {
   useEffect(() => {
     fetch(false);
     if (!uid || !isSupabaseConfigured) return;
-    const channel = supabase.channel(`wallets-${uid}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "wallets", filter: `uid=eq.${uid}` }, () => fetch(true))
-      .subscribe();
-    // Poll silencieux toutes les 30s en fallback realtime (ne déclenche pas de spinner)
-    const id = setInterval(() => fetch(true), 30000);
-    return () => { supabase.removeChannel(channel); clearInterval(id); };
+    // Poll silencieux toutes les 15s (realtime désactivé pour éviter crash web StrictMode)
+    const id = setInterval(() => fetch(true), 15000);
+    return () => clearInterval(id);
   }, [fetch, uid]);
 
   return { data, loading, error, refetch: fetch };
@@ -63,11 +60,8 @@ export function useSupabaseTransactions(uid?: string | null, limit = 30) {
   useEffect(() => {
     fetch(false);
     if (!uid || !isSupabaseConfigured) return;
-    const channel = supabase.channel(`txs-${uid}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "transactions", filter: `uid=eq.${uid}` }, () => fetch(true))
-      .subscribe();
-    const id = setInterval(() => fetch(true), 30000);
-    return () => { supabase.removeChannel(channel); clearInterval(id); };
+    const id = setInterval(() => fetch(true), 15000);
+    return () => clearInterval(id);
   }, [fetch, uid]);
 
   return { data, loading, error, refetch: fetch };
