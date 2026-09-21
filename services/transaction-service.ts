@@ -5,6 +5,39 @@ import { createOrUpdateWallet } from "./wallet-service";
 import { getLast12Months, getLast7Days, getYearsRange } from "@/utils/common";
 import { scale } from "@/utils/styling";
 import { colors } from "@/constants/theme";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const isNetErr = (m: string) => /fetch|network|offline|Failed to fetch/i.test(m || "");
+async function cacheTxLocal(tx: any, uid: string) {
+  try {
+    const key = `txs_${uid}`;
+    const raw = await AsyncStorage.getItem(key);
+    const list = raw ? JSON.parse(raw) : [];
+    list.unshift(tx);
+    await AsyncStorage.setItem(key, JSON.stringify(list));
+    await AsyncStorage.setItem("mock_transactions", JSON.stringify(list));
+    const qRaw = await AsyncStorage.getItem("pending_txs");
+    const q = qRaw ? JSON.parse(qRaw) : [];
+    q.push(tx);
+    await AsyncStorage.setItem("pending_txs", JSON.stringify(q));
+    // update wallet cache
+    const wKey = `wallets_${uid}`;
+    const wRaw = await AsyncStorage.getItem(wKey);
+    if (wRaw) {
+      const wallets = JSON.parse(wRaw);
+      const idx = wallets.findIndex((w: any) => w.id === tx.walletId);
+      if (idx >= 0) {
+        const w = wallets[idx];
+        const delta = tx.type === "income" ? tx.amount : -tx.amount;
+        w.amount = Number(w.amount) + delta;
+        if (tx.type === "income") w.totalIncome = Number(w.totalIncome) + tx.amount;
+        else w.totalExpenses = Number(w.totalExpenses) + tx.amount;
+        await AsyncStorage.setItem(wKey, JSON.stringify(wallets));
+        await AsyncStorage.setItem("mock_wallets", JSON.stringify(wallets));
+      }
+    }
+  } catch {}
+}
 
 export const createOrUpdateTransaction = async (
   transactionData: Partial<TransactionType>
@@ -65,6 +98,24 @@ export const createOrUpdateTransaction = async (
       return { success: true, data: { ...data, id: data.id } };
     }
   } catch (error: any) {
+    if (isNetErr(error.message)) {
+      const uid2 = (transactionData as any).uid || "offline";
+      const localTx = {
+        id: `local-${Date.now()}`,
+        uid: uid2,
+        walletId: transactionData.walletId,
+        type: transactionData.type,
+        amount: Number(transactionData.amount),
+        category: (transactionData as any).category,
+        description: (transactionData as any).description,
+        image: null,
+        date: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        _offline: true,
+      };
+      await cacheTxLocal(localTx, uid2);
+      return { success: true, data: localTx };
+    }
     return { success: false, msg: error.message };
   }
 };
@@ -173,7 +224,21 @@ export const fetchWeeklyStats = async (uid: string): Promise<ResponseType> => {
       .gte("date", sevenDaysAgo.toISOString())
       .lte("date", today.toISOString())
       .order("date", { ascending: true });
-    if (error) return { success: false, msg: error.message };
+    if (error) {
+      if (isNetErr(error.message)) {
+        const raw = await AsyncStorage.getItem(`txs_${uid}`);
+        const cached = raw ? JSON.parse(raw) : [];
+        const filtered = cached.filter((t: any) => new Date(t.date) >= sevenDaysAgo && new Date(t.date) <= today);
+        const weeklyData = getLast7Days();
+        filtered.forEach((t: any) => {
+          const d = new Date(t.date).toISOString().split("T")[0];
+          const day = weeklyData.find((x) => x.date === d);
+          if (day) { if (t.type === "income") day.income! += Number(t.amount); else day.expense! += Number(t.amount); }
+        });
+        return { success: true, data: { stats: formatStats(weeklyData, "day"), transactions: filtered } };
+      }
+      return { success: false, msg: error.message };
+    }
     const weeklyData = getLast7Days();
     data?.forEach((t: any) => {
       const d = new Date(t.date).toISOString().split("T")[0];
@@ -185,6 +250,11 @@ export const fetchWeeklyStats = async (uid: string): Promise<ResponseType> => {
     });
     return { success: true, data: { stats: formatStats(weeklyData, "day"), transactions: data } };
   } catch (error: any) {
+    if (isNetErr(error.message)) {
+      const raw = await AsyncStorage.getItem(`txs_${uid}`);
+      const cached = raw ? JSON.parse(raw) : [];
+      return { success: true, data: { stats: [], transactions: cached } };
+    }
     return { success: false, msg: error.message };
   }
 };
@@ -201,7 +271,14 @@ export const fetchMonthlyStats = async (uid: string): Promise<ResponseType> => {
       .gte("date", twelveAgo.toISOString())
       .lte("date", today.toISOString())
       .order("date", { ascending: true });
-    if (error) return { success: false, msg: error.message };
+    if (error) {
+      if (isNetErr(error.message)) {
+        const raw = await AsyncStorage.getItem(`txs_${uid}`);
+        const cached = raw ? JSON.parse(raw) : [];
+        return { success: true, data: { stats: [], transactions: cached } };
+      }
+      return { success: false, msg: error.message };
+    }
     const monthlyData = getLast12Months();
     data?.forEach((t: any) => {
       const d = new Date(t.date);
@@ -226,7 +303,14 @@ export const fetchMonthlyStats = async (uid: string): Promise<ResponseType> => {
 export const fetchYearlyStats = async (uid: string): Promise<ResponseType> => {
   try {
     const { data, error } = await supabase.from("transactions").select("*").eq("uid", uid).order("date", { ascending: true });
-    if (error) return { success: false, msg: error.message };
+    if (error) {
+      if (isNetErr(error.message)) {
+        const raw = await AsyncStorage.getItem(`txs_${uid}`);
+        const cached = raw ? JSON.parse(raw) : [];
+        return { success: true, data: { stats: [], transactions: cached } };
+      }
+      return { success: false, msg: error.message };
+    }
     if (!data?.length) return { success: true, data: { stats: [], transactions: [] } };
     const firstYear = new Date(data[0].date).getFullYear();
     const yearlyData = getYearsRange(firstYear, new Date().getFullYear());
