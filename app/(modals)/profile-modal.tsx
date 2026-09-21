@@ -42,8 +42,13 @@ const ProfileModal = () => {
   ]
 
   const handleLogout = async () => {
-    // router.navigate("/(auth)/sign-up")
-    await logout()
+    const res = await logout()
+    if (res.success) {
+      router.dismissAll()
+      router.replace("/(auth)/welcome" as any)
+    } else {
+      Alert.alert(t("error"), res.msg || "Déconnexion échouée")
+    }
   }
 
   const showLogoutAlert = () => {
