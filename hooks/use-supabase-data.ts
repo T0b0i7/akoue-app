@@ -7,7 +7,7 @@ export function useSupabaseWallets(uid?: string | null) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetch = useCallback(async () => {
+  const fetch = useCallback(async (silent = false) => {
     if (!uid) { setData([]); setLoading(false); return; }
     if (!isSupabaseConfigured) {
       const raw = await AsyncStorage.getItem("mock_wallets");
@@ -15,7 +15,7 @@ export function useSupabaseWallets(uid?: string | null) {
       setLoading(false);
       return;
     }
-    setLoading(true);
+    if (!silent) setLoading(true);
     const { data: wallets, error } = await supabase.from("wallets").select("*").eq("uid", uid).order("created_at", { ascending: false });
     if (error) setError(error.message);
     else { setData(wallets as any); setError(null); }
@@ -23,12 +23,13 @@ export function useSupabaseWallets(uid?: string | null) {
   }, [uid]);
 
   useEffect(() => {
-    fetch();
+    fetch(false);
     if (!uid || !isSupabaseConfigured) return;
     const channel = supabase.channel(`wallets-${uid}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "wallets", filter: `uid=eq.${uid}` }, () => fetch())
+      .on("postgres_changes", { event: "*", schema: "public", table: "wallets", filter: `uid=eq.${uid}` }, () => fetch(true))
       .subscribe();
-    const id = setInterval(fetch, 3000);
+    // Poll silencieux toutes les 30s en fallback realtime (ne déclenche pas de spinner)
+    const id = setInterval(() => fetch(true), 30000);
     return () => { supabase.removeChannel(channel); clearInterval(id); };
   }, [fetch, uid]);
 
@@ -40,7 +41,7 @@ export function useSupabaseTransactions(uid?: string | null, limit = 30) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetch = useCallback(async () => {
+  const fetch = useCallback(async (silent = false) => {
     if (!uid) { setData([]); setLoading(false); return; }
     if (!isSupabaseConfigured) {
       const raw = await AsyncStorage.getItem("mock_transactions");
@@ -49,7 +50,7 @@ export function useSupabaseTransactions(uid?: string | null, limit = 30) {
       setLoading(false);
       return;
     }
-    setLoading(true);
+    if (!silent) setLoading(true);
     const { data: txs, error } = await supabase.from("transactions").select("*").eq("uid", uid).order("date", { ascending: false }).limit(limit);
     if (error) setError(error.message);
     else { 
@@ -60,12 +61,12 @@ export function useSupabaseTransactions(uid?: string | null, limit = 30) {
   }, [uid, limit]);
 
   useEffect(() => {
-    fetch();
+    fetch(false);
     if (!uid || !isSupabaseConfigured) return;
     const channel = supabase.channel(`txs-${uid}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "transactions", filter: `uid=eq.${uid}` }, () => fetch())
+      .on("postgres_changes", { event: "*", schema: "public", table: "transactions", filter: `uid=eq.${uid}` }, () => fetch(true))
       .subscribe();
-    const id = setInterval(fetch, 3000);
+    const id = setInterval(() => fetch(true), 30000);
     return () => { supabase.removeChannel(channel); clearInterval(id); };
   }, [fetch, uid]);
 
