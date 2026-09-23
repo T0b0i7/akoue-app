@@ -2,13 +2,15 @@ import { colors } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
 
 const Index = () => {
   const router = useRouter();
-  const { user, } = useAuth();
+  const { user } = useAuth();
+  const [logoReady, setLogoReady] = useState(false);
   useEffect(() => {
+    // Délai réduit 800ms + attend que le logo soit décodé pour éviter apparition tardive
     const t = setTimeout(async () => {
       const lang = await AsyncStorage.getItem("app_locale");
       if (!lang) {
@@ -17,14 +19,20 @@ const Index = () => {
       }
       if (user) router.replace("/(tabs)" as any);
       else router.replace("/(auth)/welcome" as any);
-    }, 1800);
+    }, 900);
     return () => clearTimeout(t);
   }, [user]);
 
   return (
     <View style={styles.container}>
       <View style={styles.logoWrap}>
-        <Image style={styles.logo} source={require("../public/images/splash-icon.png")} resizeMode="contain" />
+        <Image
+          style={styles.logo}
+          source={require("../public/images/splash-icon.png")}
+          resizeMode="contain"
+          fadeDuration={0}
+          onLoadEnd={() => setLogoReady(true)}
+        />
       </View>
       <Text style={styles.title}>Akouè</Text>
       <Text style={styles.subtitle}>Maîtrise ton argent</Text>

@@ -1,7 +1,9 @@
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
+// @ts-ignore expo-asset déjà présent via expo mais types pnpm non résolus
+import { Asset } from "expo-asset";
 import { colors } from "@/constants/theme";
 import { AuthProvider } from "@/context/auth-context";
 import { LocaleProvider } from "@/context/locale-context";
@@ -20,9 +22,19 @@ function OTAWatcher() {
 }
 
 export default function RootLayout() {
+  const [ready, setReady] = useState(false);
   useEffect(() => {
-    // Cache le splash natif immédiatement — on utilise un seul splash custom dans app/index.tsx
-    SplashScreen.hideAsync().catch(() => {});
+    let cancelled = false;
+    (async () => {
+      try {
+        // Précharge l'icône splash pour qu'elle apparaisse instantanément dans app/index.tsx
+        await Asset.fromModule(require("../public/images/splash-icon.png")).downloadAsync();
+      } catch {}
+      if (!cancelled) setReady(true);
+      // Cache le splash natif seulement quand l'asset est prêt — évite flash/flicker
+      SplashScreen.hideAsync().catch(() => {});
+    })();
+    return () => { cancelled = true; };
   }, []);
 
 	return (

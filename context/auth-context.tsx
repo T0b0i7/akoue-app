@@ -2,6 +2,36 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { AuthContextType, UserType } from "@/types";
 import { supabase, isSupabaseConfigured } from "@/config/supabase";
 import { useRouter, usePathname } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const OFFLINE_USER_KEY = "offline_user";
+const OFFLINE_USERS_KEY = "offline_users"; // [{email,password,uid,name}]
+const isOfflineError = (msg: string) => /fetch|network|offline|Failed to fetch|Network request failed/i.test(msg || "");
+
+async function getOfflineUsers(): Promise<any[]> {
+  try {
+    const raw = await AsyncStorage.getItem(OFFLINE_USERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+async function saveOfflineUser(user: NonNullable<UserType>, password: string) {
+  try {
+    const users = await getOfflineUsers();
+    const idx = users.findIndex((u: any) => u.email.toLowerCase() === user.email?.toLowerCase());
+    const entry = { email: user.email, password, uid: user.uid, name: user.name };
+    if (idx >= 0) users[idx] = entry; else users.push(entry);
+    await AsyncStorage.setItem(OFFLINE_USERS_KEY, JSON.stringify(users));
+    await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(user));
+    // aussi pour compat hooks
+    await AsyncStorage.setItem("mock_user", JSON.stringify(user));
+  } catch {}
+}
+async function getOfflineSession(): Promise<UserType | null> {
+  try {
+    const raw = await AsyncStorage.getItem(OFFLINE_USER_KEY) || await AsyncStorage.getItem("mock_user");
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -21,36 +51,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [initializing, user, pathname]);
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
-      setInitializing(false);
-      return () => {};
-    }
-
-    // Restore session
-    supabase.auth.getSession().then(({ data: { session } }: any) => {
-      if (session?.user) {
-        setUser({
-          uid: session.user.id,
-          email: session.user.email ?? null,
-          name: (session.user.user_metadata?.name as string) ?? session.user.email?.split("@")[0] ?? null,
-          image: (session.user.user_metadata?.avatar_url as string) ?? null,
-        });
-        updateUserData(session.user.id);
+    let cancelled = false;
+    (async () => {
+      // 1) Toujours essayer de restaurer une session offline d'abord (mode avion)
+      const offline = await getOfflineSession();
+      if (offline && !cancelled) {
+        setUser(offline);
       }
-      setInitializing(false);
-    });
+
+      if (!isSupabaseConfigured) {
+        if (!cancelled) setInitializing(false);
+        return;
+      }
+
+      // 2) Puis essayer Supabase — si offline, on garde la session offline
+      try {
+        const { data: { session } }: any = await supabase.auth.getSession();
+        if (!cancelled && session?.user) {
+          const u: UserType = {
+            uid: session.user.id,
+            email: session.user.email ?? null,
+            name: (session.user.user_metadata?.name as string) ?? session.user.email?.split("@")[0] ?? null,
+            image: (session.user.user_metadata?.avatar_url as string) ?? null,
+          };
+          setUser(u);
+          await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u));
+          updateUserData(session.user.id);
+        }
+      } catch {}
+      if (!cancelled) setInitializing(false);
+    })();
+
+    if (!isSupabaseConfigured) return () => {};
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: any, session: any) => {
       if (session?.user) {
-        setUser({
+        const u: UserType = {
           uid: session.user.id,
           email: session.user.email ?? null,
           name: (session.user.user_metadata?.name as string) ?? session.user.email?.split("@")[0] ?? null,
           image: (session.user.user_metadata?.avatar_url as string) ?? null,
-        });
+        };
+        setUser(u);
+        try { await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u)); } catch {}
         updateUserData(session.user.id);
       } else {
-        setUser(null);
+        // Ne pas écraser la session offline si on est en mode avion (pas de session mais offline_user existe)
+        const off = await getOfflineSession();
+        if (!off) setUser(null);
       }
       setInitializing(false);
     });
@@ -59,39 +107,94 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const login = async (email: string, password: string) => {
-    if (!isSupabaseConfigured) return { success: false, msg: "Supabase non configuré — vérifie .env" };
+    // Toujours permettre le login offline (test app / mode avion)
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        let msg = error.message;
-        if (msg.includes("Invalid login credentials")) msg = "Email ou mot de passe incorrect";
-        return { success: false, msg };
+      if (isSupabaseConfigured) {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (!error) return { success: true };
+        if (!isOfflineError(error.message)) {
+          let msg = error.message;
+          if (msg.includes("Invalid login credentials")) msg = "Email ou mot de passe incorrect";
+          return { success: false, msg };
+        }
+        // offline → fallback ci-dessous
       }
-      return { success: true };
+      // Fallback offline : cherche dans les comptes créés localement
+      const users = await getOfflineUsers();
+      const found = users.find((u: any) => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+      if (found) {
+        const u: UserType = { uid: found.uid, email: found.email, name: found.name, image: null };
+        setUser(u);
+        await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u));
+        return { success: true };
+      }
+      // Mode démo offline : si aucun compte, on crée une session à la volée (test app)
+      // On accepte tout email valide + password >=6 comme compte offline auto-créé
+      if (email.includes("@") && password.length >= 6) {
+        const uid = `offline-${email.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
+        const u: UserType = { uid, email, name: email.split("@")[0], image: null };
+        setUser(u);
+        await saveOfflineUser(u, password);
+        return { success: true };
+      }
+      return { success: false, msg: "Email ou mot de passe incorrect (hors ligne)" };
     } catch (error: any) {
+      if (isOfflineError(error.message)) {
+        const users = await getOfflineUsers();
+        const found = users.find((u: any) => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+        if (found) {
+          const u: UserType = { uid: found.uid, email: found.email, name: found.name, image: null };
+          setUser(u);
+          await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u));
+          return { success: true };
+        }
+      }
       return { success: false, msg: error.message };
     }
   };
 
   const signUp = async (email: string, password: string, name: string) => {
-    if (!isSupabaseConfigured) return { success: false, msg: "Supabase non configuré" };
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { name } },
-      });
-      if (error) {
-        let msg = error.message;
-        if (msg.includes("already registered")) msg = "Email déjà utilisé";
-        return { success: false, msg };
+      if (isSupabaseConfigured) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { name } },
+        });
+        if (!error) {
+          if (data.user) {
+            try { await supabase.from("profiles").insert({ id: data.user.id, name, image: null }); } catch {}
+            const u: UserType = { uid: data.user.id, email: data.user.email ?? email, name, image: null };
+            await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u));
+            await saveOfflineUser(u, password);
+          }
+          return { success: true };
+        }
+        if (!isOfflineError(error.message)) {
+          let msg = error.message;
+          if (msg.includes("already registered")) msg = "Email déjà utilisé";
+          return { success: false, msg };
+        }
+        // offline → fallback local
       }
-      // Create profile row
-      if (data.user) {
-        await supabase.from("profiles").insert({ id: data.user.id, name, image: null });
+      // Fallback offline : création locale
+      const users = await getOfflineUsers();
+      if (users.some((u: any) => u.email.toLowerCase() === email.toLowerCase())) {
+        return { success: false, msg: "Email déjà utilisé (hors ligne)" };
       }
+      const uid = `offline-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+      const u: UserType = { uid, email, name, image: null };
+      setUser(u);
+      await saveOfflineUser(u, password);
       return { success: true };
     } catch (error: any) {
+      if (isOfflineError(error.message)) {
+        const uid = `offline-${Date.now().toString(36)}`;
+        const u: UserType = { uid, email, name, image: null };
+        setUser(u);
+        await saveOfflineUser(u, password);
+        return { success: true };
+      }
       return { success: false, msg: error.message };
     }
   };
@@ -138,8 +241,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = async () => {
     try {
-      if (isSupabaseConfigured) await supabase.auth.signOut();
+      if (isSupabaseConfigured) await supabase.auth.signOut().catch(() => {});
       setUser(null);
+      try {
+        await AsyncStorage.removeItem(OFFLINE_USER_KEY);
+        await AsyncStorage.removeItem("mock_user");
+      } catch {}
       return { success: true };
     } catch (error: any) {
       return { success: false, msg: error.message };
