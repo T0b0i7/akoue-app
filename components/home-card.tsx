@@ -14,6 +14,8 @@ import {
   View,
 } from "react-native"
 import Typo from "./typo"
+import { getCurrencyInfo } from "@/constants/currencies"
+import { formatCurrency } from "@/utils/common"
 
 const HomeCard = () => {
   const { user } = useAuth()
@@ -25,7 +27,7 @@ const HomeCard = () => {
     loading: walletLoading,
   } = useSupabaseWallets(user?.uid)
 
-  // Calculate total balance
+  // Calculate total balance + devise dominante
   const getTotalBalance = () => {
     return wallets.reduce(
       (totals: any, item: WalletType) => {
@@ -37,6 +39,12 @@ const HomeCard = () => {
       { balance: 0, income: 0, expenses: 0 },
     )
   }
+  const dominantCurrency = (() => {
+    if (!wallets.length) return "XOF";
+    const counts: Record<string, number> = {};
+    wallets.forEach((w: any) => { const c = w.currency || "XOF"; counts[c] = (counts[c] || 0) + 1; });
+    return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+  })();
   return (
     <ImageBackground
       source={require("@/public/images/card.png")}
@@ -58,9 +66,12 @@ const HomeCard = () => {
               />
             </TouchableOpacity>
           </View>
-          <Typo size={30} color={colors.black} fontWeight={"bold"}>
-            $ {walletLoading ? "----" : getTotalBalance()?.balance?.toFixed(2)}
+          <Typo size={26} color={colors.black} fontWeight={"bold"} textProps={{ numberOfLines: 1, adjustsFontSizeToFit: true } as any}>
+            {walletLoading ? "----" : (() => { try { return formatCurrency(getTotalBalance()?.balance || 0, "fr-FR", dominantCurrency, 0); } catch { return `${getCurrencyInfo(dominantCurrency)?.symbol || dominantCurrency} ${Number(getTotalBalance()?.balance || 0).toLocaleString("fr-FR")}`; } })()}
           </Typo>
+          {wallets.length > 1 && new Set(wallets.map((w:any)=>w.currency||"XOF")).size > 1 && (
+            <Typo size={11} color={colors.neutral600}>Devises mixtes • affiché en {dominantCurrency}</Typo>
+          )}
         </View>
         {/* //total income expense */}
         <View style={styles.stats}>
@@ -79,9 +90,8 @@ const HomeCard = () => {
               </Typo>
             </View>
             <View style={{ alignSelf: "center" }}>
-              <Typo size={15} color={colors.green} fontWeight={"600"}>
-                ${" "}
-                {walletLoading ? "----" : getTotalBalance()?.income?.toFixed(2)}
+              <Typo size={14} color={colors.green} fontWeight={"600"} textProps={{ numberOfLines: 1 } as any}>
+                {walletLoading ? "----" : (() => { try { return formatCurrency(getTotalBalance()?.income || 0, "fr-FR", dominantCurrency, 0); } catch { return `${getCurrencyInfo(dominantCurrency)?.symbol || ""} ${Number(getTotalBalance()?.income||0).toLocaleString("fr-FR")}`; } })()}
               </Typo>
             </View>
           </View>
@@ -100,11 +110,8 @@ const HomeCard = () => {
               </Typo>
             </View>
             <View style={{ alignSelf: "center" }}>
-              <Typo size={15} color={colors.rose} fontWeight={"600"}>
-                ${" "}
-                {walletLoading
-                  ? "----"
-                  : getTotalBalance()?.expenses?.toFixed(2)}
+              <Typo size={14} color={colors.rose} fontWeight={"600"} textProps={{ numberOfLines: 1 } as any}>
+                {walletLoading ? "----" : (() => { try { return formatCurrency(getTotalBalance()?.expenses || 0, "fr-FR", dominantCurrency, 0); } catch { return `${getCurrencyInfo(dominantCurrency)?.symbol || ""} ${Number(getTotalBalance()?.expenses||0).toLocaleString("fr-FR")}`; } })()}
               </Typo>
             </View>
           </View>

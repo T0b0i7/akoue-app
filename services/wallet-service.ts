@@ -37,22 +37,42 @@ export const createOrUpdateWallet = async (walletData: Partial<WalletType>): Pro
     const finalUid = uid || (await supabase.auth.getSession()).data.session?.user?.id;
     if (!finalUid) return { success: false, msg: "User not authenticated" };
 
+    const initialAmount = Number(walletData.amount || 0);
+    const currency = (walletData as any).currency || "XOF";
     if (!walletData.id) {
+      const payload: any = {
+        uid: finalUid,
+        name: walletData.name,
+        image: typeof imageUrl === "string" ? imageUrl : null,
+        amount: initialAmount,
+        totalIncome: initialAmount > 0 ? initialAmount : 0,
+        totalExpenses: 0,
+        currency,
+      };
       const { data, error } = await supabase
         .from("wallets")
-        .insert({
-          uid: finalUid,
-          name: walletData.name,
-          image: typeof imageUrl === "string" ? imageUrl : null,
-          amount: 0,
-          totalIncome: 0,
-          totalExpenses: 0,
-        })
+        .insert(payload)
         .select()
         .single();
       if (error) {
+        // si colonne currency n'existe pas encore, retry sans elle
+        if (error.message?.includes("currency")) {
+          delete payload.currency;
+          const retry = await supabase.from("wallets").insert(payload).select().single();
+          if (!retry.error) {
+            try {
+              const raw = await AsyncStorage.getItem(cacheKey(finalUid));
+              const list = raw ? JSON.parse(raw) : [];
+              const toCache = { ...retry.data, currency };
+              list.unshift(toCache);
+              await AsyncStorage.setItem(cacheKey(finalUid), JSON.stringify(list));
+              await AsyncStorage.setItem("mock_wallets", JSON.stringify(list));
+            } catch {}
+            return { success: true, data: { ...retry.data, currency, id: retry.data.id } };
+          }
+        }
         if (isNetworkError(error.message)) {
-          const local = { id: `local-${Date.now()}`, uid: finalUid, name: walletData.name, image: typeof imageUrl === "string" ? imageUrl : null, amount: 0, totalIncome: 0, totalExpenses: 0, created_at: new Date().toISOString(), _offline: true };
+          const local = { id: `local-${Date.now()}`, uid: finalUid, name: walletData.name, image: typeof imageUrl === "string" ? imageUrl : null, amount: initialAmount, totalIncome: initialAmount > 0 ? initialAmount : 0, totalExpenses: 0, currency, created_at: new Date().toISOString(), _offline: true };
           await cacheWalletLocal(local, finalUid);
           return { success: true, data: local };
         }
@@ -68,15 +88,22 @@ export const createOrUpdateWallet = async (walletData: Partial<WalletType>): Pro
       } catch {}
       return { success: true, data: { ...data, id: data.id } };
     } else {
+      const upd: any = { name: walletData.name, image: imageUrl, amount: walletData.amount, totalIncome: walletData.totalIncome, totalExpenses: walletData.totalExpenses };
+      if ((walletData as any).currency) upd.currency = (walletData as any).currency;
       const { data, error } = await supabase
         .from("wallets")
-        .update({ name: walletData.name, image: imageUrl, amount: walletData.amount, totalIncome: walletData.totalIncome, totalExpenses: walletData.totalExpenses })
+        .update(upd)
         .eq("id", walletData.id)
         .select()
         .single();
       if (error) {
+        if (error.message?.includes("currency")) {
+          delete upd.currency;
+          const retry = await supabase.from("wallets").update(upd).eq("id", walletData.id).select().single();
+          if (!retry.error) return { success: true, data: { ...retry.data, currency: (walletData as any).currency, id: retry.data.id } };
+        }
         if (isNetworkError(error.message)) {
-          const local = { id: walletData.id, uid: finalUid, name: walletData.name, image: typeof imageUrl === "string" ? imageUrl : null, amount: walletData.amount, totalIncome: walletData.totalIncome, totalExpenses: walletData.totalExpenses, created_at: new Date().toISOString(), _offline: true };
+          const local = { id: walletData.id, uid: finalUid, name: walletData.name, image: typeof imageUrl === "string" ? imageUrl : null, amount: walletData.amount, totalIncome: walletData.totalIncome, totalExpenses: walletData.totalExpenses, currency: (walletData as any).currency, created_at: new Date().toISOString(), _offline: true };
           await cacheWalletLocal(local, finalUid);
           return { success: true, data: local };
         }
@@ -87,7 +114,7 @@ export const createOrUpdateWallet = async (walletData: Partial<WalletType>): Pro
   } catch (error: any) {
     if (isNetworkError(error.message)) {
       const uid2 = (walletData as any).uid || "offline";
-      const local = { id: walletData.id || `local-${Date.now()}`, uid: uid2, name: walletData.name, image: typeof (walletData as any).image === "string" ? (walletData as any).image : null, amount: 0, totalIncome: 0, totalExpenses: 0, created_at: new Date().toISOString(), _offline: true };
+      const local = { id: walletData.id || `local-${Date.now()}`, uid: uid2, name: walletData.name, image: typeof (walletData as any).image === "string" ? (walletData as any).image : null, amount: Number(walletData.amount || 0), totalIncome: Number(walletData.amount || 0) > 0 ? Number(walletData.amount) : 0, totalExpenses: 0, currency: (walletData as any).currency || "XOF", created_at: new Date().toISOString(), _offline: true };
       try { await cacheWalletLocal(local, uid2); } catch {}
       return { success: true, data: local };
     }
