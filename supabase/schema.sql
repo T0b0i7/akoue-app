@@ -60,13 +60,15 @@ create policy "wallets_own" on public.wallets for all using (auth.uid() = uid) w
 drop policy if exists "transactions_own" on public.transactions;
 create policy "transactions_own" on public.transactions for all using (auth.uid() = uid) with check (auth.uid() = uid);
 
--- Storage bucket pour reçus
-insert into storage.buckets (id, name, public) values ('receipts','receipts', true)
-on conflict (id) do nothing;
+-- Storage bucket pour reçus — PRIVÉ (pas public)
+insert into storage.buckets (id, name, public) values ('receipts','receipts', false)
+on conflict (id) do update set public = false;
 
 drop policy if exists "receipts_own" on storage.objects;
 create policy "receipts_own" on storage.objects for all using (bucket_id = 'receipts' and auth.uid()::text = (storage.foldername(name))[1])
 with check (bucket_id = 'receipts' and auth.uid()::text = (storage.foldername(name))[1]);
+-- s'assurer que anon ne peut pas lire public
+update storage.buckets set public = false where id = 'receipts';
 
 -- 4. Broadcasts (messages admin -> tous les users, offline via cache)
 create table if not exists public.broadcasts (
@@ -78,7 +80,7 @@ create table if not exists public.broadcasts (
 );
 alter table public.broadcasts enable row level security;
 drop policy if exists "broadcasts_read" on public.broadcasts;
-create policy "broadcasts_read" on public.broadcasts for select using (active = true);
+create policy "broadcasts_read" on public.broadcasts for select using (active = true and auth.role() = 'authenticated');
 -- seul service_role peut insert/update/delete (pas de policy insert pour anon/auth)
 
 create index if not exists idx_broadcasts_active_created on public.broadcasts(active, created_at desc);

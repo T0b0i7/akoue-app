@@ -28,6 +28,7 @@ const ChangePasswordModal = () => {
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null)
 
   const handleSubmit = async () => {
+    if (loading) return;
     const { oldPassword, newPassword, confirmPassword } = passwords
 
     if (!oldPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
@@ -53,7 +54,16 @@ const ChangePasswordModal = () => {
     if (res.success) {
       setFeedback({ type: "success", msg: t("passwordUpdated") })
       showToast("success", "Mot de passe mis à jour", "Sécurité renforcée 🔒")
-      setTimeout(() => { try { (router as any).dismiss?.(); } catch {}; setTimeout(() => { try { router.replace("/(tabs)/more" as any); } catch { router.back(); } }, 100); }, 800)
+      setTimeout(() => {
+        try { (router as any).dismiss?.(); } catch {}
+        setTimeout(() => {
+          try {
+            const stillModal = typeof window !== "undefined" && window.location.pathname.endsWith("change-password-modal");
+            if (!stillModal) return;
+            if (router.canGoBack()) router.back(); else router.replace("/(tabs)/more" as any);
+          } catch {}
+        }, 250)
+      }, 800)
     } else {
       const msg = res.msg || t("failedUpdatePassword")
       setFeedback({ type: "error", msg }); showToast("error", "Erreur", msg); Alert.alert(t("error"), msg)

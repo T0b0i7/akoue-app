@@ -15,8 +15,8 @@ import {
 import { verticalScale } from "@/utils/styling"
 import * as Icons from "phosphor-react-native"
 import { useLocale } from "@/context/locale-context"
-import React, { useEffect, useMemo, useState } from "react"
-import { ScrollView, StyleSheet, View } from "react-native"
+import React, { useCallback, useEffect, useMemo, useState } from "react"
+import { AppState, Platform, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native"
 import { Dropdown } from "react-native-element-dropdown"
 import Animated, { FadeInDown } from "react-native-reanimated"
 
@@ -26,23 +26,47 @@ const ExchangeRateModal = () => {
   const [baseCurrency, setBaseCurrency] = useState<string>("EUR")
   const [amount, setAmount] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(false)
-  // const [error, setError] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
+  const [live, setLive] = useState(false)
   const [searchQuery, setSearchQuery] = useState<string>("")
+  const [selected, setSelected] = useState<CurrencyType | null>(null)
+
+  const fetchData = useCallback(async (showLoader = true) => {
+    try {
+      if (showLoader) setLoading(true)
+      const response = await fetchCurrencies(baseCurrency)
+      setCurrencies(response)
+      setLastUpdate(new Date())
+      setLive(true)
+    } catch (error) {
+      setLive(false)
+    } finally {
+      if (showLoader) setLoading(false)
+      setRefreshing(false)
+    }
+  }, [baseCurrency])
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        const response = await fetchCurrencies(baseCurrency)
-        setCurrencies(response)
-      } catch (error) {
-        // setError(error as string)
-      } finally {
-        setLoading(false)
-      }
+    fetchData(true)
+  }, [fetchData])
+
+  // temps réel : polling 60s + au retour AppState active
+  useEffect(() => {
+    const id = setInterval(() => fetchData(false), 60000)
+    const sub = AppState.addEventListener("change", (s) => {
+      if (s === "active") fetchData(false)
+    })
+    return () => {
+      clearInterval(id)
+      sub.remove()
     }
-    fetchData()
-  }, [baseCurrency])
+  }, [fetchData])
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true)
+    fetchData(false)
+  }, [fetchData])
 
   const filteredCurrencies = useMemo(() => {
     return currencies.filter(
@@ -71,6 +95,7 @@ const ExchangeRateModal = () => {
         <ScrollView
           contentContainerStyle={styles.scrollViewStyle}
           showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         >
           {/* Currency Selection */}
           <View style={styles.inputContainer}>
@@ -128,19 +153,41 @@ const ExchangeRateModal = () => {
           {/* Conversion List */}
           <View style={styles.inputContainer}>
             <View style={styles.listHeader}>
-              <Typo size={16} fontWeight="600" color={colors.neutral200}>
-                {t("conversionResult")}
-              </Typo>
+              <View style={{ gap: 2 }}>
+                <Typo size={16} fontWeight="600" color={colors.neutral200}>
+                  {t("conversionResult")}
+                </Typo>
+                {lastUpdate && (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    <View style={[styles.liveDot, { backgroundColor: live ? colors.green : colors.neutral500 }]} />
+                    <Typo size={11} color={colors.neutral500}>
+                      {live ? "Temps réel" : "Hors ligne"} • {lastUpdate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                    </Typo>
+                  </View>
+                )}
+              </View>
+              <TouchableOpacity onPress={() => fetchData(false)} style={styles.refreshBtn} activeOpacity={0.7}>
+                <Icons.ArrowsClockwise size={16} color={colors.white} weight="bold" />
+                <Typo size={12} fontWeight="600" color={colors.white}>
+                  Actualiser
+                </Typo>
+              </TouchableOpacity>
             </View>
             <View style={styles.listContainer}>
-              {filteredCurrencies.map((currency, index) => (
+              {filteredCurrencies.map((currency, index) => {
+                const isSelected = selected?.code === currency.code;
+                return (
                 <Animated.View
                   key={currency.code}
                   entering={FadeInDown.delay(index * 50)
                     .springify()
                     .damping(50)}
                 >
-                  <View style={styles.currencyItem}>
+                  <TouchableOpacity
+                    onPress={() => setSelected(isSelected ? null : currency)}
+                    activeOpacity={0.7}
+                    style={[styles.currencyItem, isSelected && { backgroundColor: colors.neutral700 }]}
+                  >
                     <View style={styles.currencyInfo}>
                       <Typo size={17} fontWeight="500">
                         {currency.code}
@@ -149,20 +196,39 @@ const ExchangeRateModal = () => {
                         {currency.name}
                       </Typo>
                     </View>
-                    <Typo size={17} fontWeight="500" color={colors.green}>
-                      {formatCurrency(
-                        Number(amount) * currency.value,
-                        "vi-VN",
-                        currency.code,
-                        6,
-                      )}
-                    </Typo>
-                  </View>
+                    <View style={{ alignItems: "flex-end", gap: 2 }}>
+                      <Typo size={17} fontWeight="500" color={colors.green}>
+                        {formatCurrency(
+                          Number(amount) * currency.value,
+                          "vi-VN",
+                          currency.code,
+                          6,
+                        )}
+                      </Typo>
+                      <Typo size={11} color={colors.neutral500}>
+                        1 {baseCurrency} = {currency.value.toFixed(4)} {currency.code}
+                      </Typo>
+                    </View>
+                  </TouchableOpacity>
+                  {isSelected && (
+                    <View style={styles.detailBox}>
+                      <View style={styles.detailRow}>
+                        <Typo size={12} color={colors.neutral400}>1 {currency.code} =</Typo>
+                        <Typo size={13} fontWeight="600" color={colors.white}>{(1 / currency.value).toFixed(6)} {baseCurrency}</Typo>
+                      </View>
+                      <View style={styles.detailRow}>
+                        <Typo size={12} color={colors.neutral400}>Valeur unitaire</Typo>
+                        <Typo size={13} fontWeight="600" color={colors.primary}>{currency.value.toFixed(6)} {currency.code}</Typo>
+                      </View>
+                      <Typo size={11} color={colors.neutral500} style={{ marginTop: 6, textAlign: "center" }}>Tape pour fermer • Montant x taux temps réel</Typo>
+                    </View>
+                  )}
                   {index < filteredCurrencies.length - 1 && (
                     <View style={styles.divider} />
                   )}
                 </Animated.View>
-              ))}
+                );
+              })}
 
               {loading ? (
                 <Loading />
@@ -246,6 +312,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: spacingY._10,
   },
+  liveDot: { width: 6, height: 6, borderRadius: 3 },
+  refreshBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: colors.neutral700,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
   listContainer: {
     backgroundColor: colors.neutral800,
     borderRadius: radius._15,
@@ -267,4 +343,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.neutral700,
     marginHorizontal: spacingX._15,
   },
+  detailBox: {
+    backgroundColor: colors.neutral900,
+    marginHorizontal: spacingX._15,
+    marginVertical: spacingY._10,
+    borderRadius: radius._12,
+    padding: spacingX._12,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+  detailRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
 })

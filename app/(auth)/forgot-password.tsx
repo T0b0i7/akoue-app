@@ -30,7 +30,7 @@ const ForgotPassword = () => {
 
     if (res.success) {
       Alert.alert(t("success"), t("resetLinkSent"));
-      router.back();
+      if (router.canGoBack()) router.back(); else router.replace("/(auth)/login" as any);
     }
     if (!res.success) {
       Alert.alert(t("error"), res.msg);
@@ -41,7 +41,7 @@ const ForgotPassword = () => {
   return (
     <ScreenWrapper>
       <View style={styles.container}>
-        <BackButton iconSize={28} />
+        <BackButton size={28} />
 
         <View style={styles.headerContainer}>
           <Typo size={24} fontWeight={"800"}>

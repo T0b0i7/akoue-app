@@ -49,6 +49,7 @@ const EditProfileModal = () => {
   }
 
   const handleSubmit = async () => {
+    if (loading) return;
     let { name } = userData
     if (!name.trim()) {
       const msg = t("pleaseEnterName")
@@ -65,7 +66,16 @@ const EditProfileModal = () => {
       await updateUserData(user?.uid as string)
       setFeedback({ type: "success", msg: "Profil mis à jour ✓" })
       showToast("success", "Profil mis à jour", `Bien joué ${userData.name} ✨`)
-      setTimeout(() => { try { (router as any).dismiss?.(); } catch {}; setTimeout(() => { try { router.replace("/(tabs)/more" as any); } catch { router.back(); } }, 100); }, 800)
+      setTimeout(() => {
+        try { (router as any).dismiss?.(); } catch {}
+        setTimeout(() => {
+          try {
+            const stillModal = typeof window !== "undefined" && window.location.pathname.endsWith("update-profile-modal");
+            if (!stillModal) return;
+            if (router.canGoBack()) router.back(); else router.replace("/(tabs)/more" as any);
+          } catch {}
+        }, 250)
+      }, 800)
     } else {
       const msg = res.msg || t("updateFailed")
       setFeedback({ type: "error", msg })

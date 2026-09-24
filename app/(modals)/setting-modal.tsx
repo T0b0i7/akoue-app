@@ -7,28 +7,78 @@ import { OptionType } from "@/types"
 import { verticalScale } from "@/utils/styling"
 import * as Icons from "phosphor-react-native"
 import React, { useState } from "react"
-import { StyleSheet, Switch, TouchableOpacity, View } from "react-native"
+import { Alert, StyleSheet, Switch, TouchableOpacity, View } from "react-native"
+import { useRouter } from "expo-router"
 import Animated, { FadeInDown } from "react-native-reanimated"
 import { useLocale } from "@/context/locale-context"
+import { useAuth } from "@/context/auth-context"
+import { supabase } from "@/config/supabase"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import ConfirmDialog from "@/components/confirm-dialog"
+import { useToast } from "@/context/toast-context"
 
 const SettingsModal = () => {
   const { t, language, setLanguage } = useLocale()
+  const router = useRouter()
+  const { user, logout } = useAuth()
+  const { showToast } = useToast()
   const isFR = language === "fr"
+  const [confirm, setConfirm] = useState<"data" | "account" | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const handleNotificationPress = () => {
+    router.push("/(modals)/notifications-modal" as any);
+  };
+
+  const handleClearData = async () => {
+    setLoading(true)
+    try {
+      const uid = user?.uid
+      if (uid) {
+        // supprime côté Supabase
+        try { await supabase.from("transactions").delete().eq("uid", uid) } catch {}
+        try { await supabase.from("wallets").delete().eq("uid", uid) } catch {}
+      }
+      // purge cache local sauf compte
+      const keys = await AsyncStorage.getAllKeys()
+      const toRemove = keys.filter(k => k.startsWith("wallets_") || k.startsWith("txs_") || k.startsWith("mock_") || k.startsWith("pending_") || k.startsWith("cached_") || k.startsWith("seen_"))
+      if (toRemove.length) await AsyncStorage.multiRemove(toRemove)
+      showToast("success", "Données effacées", "Portefeuilles et transactions supprimés ✓")
+      setConfirm(null)
+    } catch (e: any) {
+      Alert.alert("Erreur", e.message)
+    } finally { setLoading(false) }
+  }
+
+  const handleDeleteAccount = async () => {
+    setLoading(true)
+    try {
+      const uid = user?.uid
+      if (uid) {
+        try { await supabase.from("transactions").delete().eq("uid", uid) } catch {}
+        try { await supabase.from("wallets").delete().eq("uid", uid) } catch {}
+        try { await supabase.from("profiles").delete().eq("id", uid) } catch {}
+      }
+      // purge tout y compris compte offline
+      const keys = await AsyncStorage.getAllKeys()
+      const toRemove = keys.filter(k => k !== "app_locale" && k !== "app_theme")
+      if (toRemove.length) await AsyncStorage.multiRemove(toRemove)
+      await logout()
+      showToast("success", "Compte supprimé", "Toutes les données et le compte ont été supprimés")
+      setConfirm(null)
+      setTimeout(() => router.replace("/(auth)/welcome" as any), 600)
+    } catch (e: any) {
+      Alert.alert("Erreur", e.message)
+    } finally { setLoading(false) }
+  }
+
   const settings: OptionType[] = [
-    // Mode sombre uniquement — light supprimé temporairement
-    // {
-    //   title: t("darkMode"),
-    //   icon: <Icons.Moon size={26} color={colors.white} weight="fill" />,
-    //   type: "switch",
-    //   value: isDark,
-    //   onChange: () => {},
-    //   bgColor: "#6366f1",
-    // },
     {
       title: t("notification"),
       icon: <Icons.Bell size={26} color={colors.white} weight="fill" />,
       type: "arrow",
       bgColor: "#8b5cf6",
+      onPress: handleNotificationPress,
     },
     {
       title: "Français",
@@ -123,7 +173,59 @@ const SettingsModal = () => {
             ))}
           </View>
         </View>
+
+        {/* Zone danger */}
+        <View style={[styles.cardContainer, { marginTop: 16, borderWidth: 1, borderColor: "rgba(239,68,68,0.25)" }]}>
+          <View style={{ padding: 12, gap: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Icons.Warning size={16} color={colors.rose} weight="fill" />
+              <Typo size={13} fontWeight="700" color={colors.rose}>Zone dangereuse</Typo>
+            </View>
+            <TouchableOpacity onPress={() => setConfirm("data")} style={styles.dangerRow} activeOpacity={0.7}>
+              <View style={[styles.listIcon, { backgroundColor: "#f97316", width: 36, height: 36 }]}>
+                <Icons.Broom size={18} color="#fff" weight="fill" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Typo size={14} fontWeight="600" color={colors.white}>Effacer toutes mes données</Typo>
+                <Typo size={11} color={colors.neutral400}>Garde le compte, supprime wallets & transactions</Typo>
+              </View>
+              <Icons.CaretRight size={16} color={colors.neutral500} weight="bold" />
+            </TouchableOpacity>
+            <View style={styles.divider} />
+            <TouchableOpacity onPress={() => setConfirm("account")} style={styles.dangerRow} activeOpacity={0.7}>
+              <View style={[styles.listIcon, { backgroundColor: colors.rose, width: 36, height: 36 }]}>
+                <Icons.Trash size={18} color="#fff" weight="fill" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Typo size={14} fontWeight="600" color={colors.white}>Supprimer le compte</Typo>
+                <Typo size={11} color={colors.neutral400}>Efface tout + déconnecte définitivement</Typo>
+              </View>
+              <Icons.CaretRight size={16} color={colors.neutral500} weight="bold" />
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
+
+      <ConfirmDialog
+        visible={confirm === "data"}
+        title="Effacer les données ?"
+        message="Tous les portefeuilles et transactions seront supprimés. Ton compte sera conservé."
+        confirmLabel="Effacer"
+        cancelLabel="Annuler"
+        destructive
+        onCancel={() => setConfirm(null)}
+        onConfirm={handleClearData}
+      />
+      <ConfirmDialog
+        visible={confirm === "account"}
+        title="Supprimer le compte ?"
+        message="Toutes les données et ton compte seront supprimés. Cette action est irréversible."
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        destructive
+        onCancel={() => setConfirm(null)}
+        onConfirm={handleDeleteAccount}
+      />
     </ModalWrapper>
   )
 }
@@ -147,6 +249,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacingX._10,
     paddingVertical: spacingY._12,
+  },
+  dangerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacingX._10,
+    paddingVertical: spacingY._8,
   },
   listIcon: {
     height: verticalScale(44),

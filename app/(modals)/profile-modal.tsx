@@ -15,6 +15,7 @@ import * as Icons from "phosphor-react-native"
 import React from "react"
 import { Alert, Platform, StyleSheet, TouchableOpacity, View } from "react-native"
 import Animated, { FadeInDown } from "react-native-reanimated"
+import ConfirmDialog from "@/components/confirm-dialog"
 
 const ProfileModal = () => {
   const { user, logout } = useAuth()
@@ -48,34 +49,31 @@ const ProfileModal = () => {
     const res = await logout()
     if (res.success) {
       showToast("success", "Déconnexion réussie", name ? `À bientôt ${name} 👋` : "À bientôt 👋")
+      // laisse auth-context rediriger (évite double replace) — fallback web seulement si besoin
       if (Platform.OS === "web") {
-        setTimeout(() => { window.location.href = "/welcome" }, 600)
+        setTimeout(() => {
+          if (window.location.pathname !== "/welcome" && !window.location.pathname.includes("welcome")) {
+            window.location.href = "/welcome";
+          }
+        }, 700)
         return
       }
-      setTimeout(() => router.replace("/(auth)/welcome" as any), 600)
     } else {
       showToast("error", t("error"), res.msg || "Déconnexion échouée")
       Alert.alert(t("error"), res.msg || "Déconnexion échouée")
     }
   }
 
+  const [confirmLogoutVisible, setConfirmLogoutVisible] = React.useState(false);
   const showLogoutAlert = () => {
-    if (Platform.OS === "web") {
-      // Alert.alert à 2 boutons ne marche pas bien sur web (window.alert) → use confirm
-      if (window.confirm(`${t("confirmLogoutTitle")}\n${t("confirmLogoutMsg")}`)) handleLogout()
-      return
-    }
-    Alert.alert(t("confirmLogoutTitle"), t("confirmLogoutMsg"), [
-      { text: t("cancel"), style: "cancel" },
-      { text: t("logout"), style: "destructive", onPress: () => handleLogout() },
-    ])
+    setConfirmLogoutVisible(true);
   }
 
   const handlePress = (item: OptionType) => {
     if (item.title === t("logout")) {
       showLogoutAlert()
+      return
     }
-
     if (item.routeName) router.push(item?.routeName as any)
   }
 
@@ -153,6 +151,19 @@ const ProfileModal = () => {
             })}
         </View>
       </View>
+      <ConfirmDialog
+        visible={confirmLogoutVisible}
+        title={t("confirmLogoutTitle")}
+        message={t("confirmLogoutMsg")}
+        confirmLabel={t("logout")}
+        cancelLabel={t("cancel")}
+        destructive
+        onCancel={() => setConfirmLogoutVisible(false)}
+        onConfirm={() => {
+          setConfirmLogoutVisible(false);
+          handleLogout();
+        }}
+      />
     </ModalWrapper>
   )
 }

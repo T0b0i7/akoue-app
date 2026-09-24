@@ -24,19 +24,26 @@ const ExportDataModal = () => {
     return { wallets: wallets || [], txs: txs || [] }
   }
 
+  const sanitizeCsvField = (v: string) => {
+    const s = String(v || "");
+    // neutralise l'injection de formule Excel (=, +, -, @, |, %)
+    if (/^[=+\-@|\t\r%]/ .test(s)) return `'${s}`;
+    return s;
+  };
+  const csvEscape = (v: string) => `"${sanitizeCsvField(v).replace(/"/g, '""')}"`;
   const toCSV = (wallets: any[], txs: any[]) => {
     const walletMap = new Map(wallets.map((w: any) => [w.id, w.name]))
     const lines = ["id,type,amount,category,description,date,wallet,walletId"]
     for (const t of txs) {
       const row = [
         t.id,
-        t.type,
-        t.amount,
-        `"${(t.category || "").replace(/"/g, '""')}"`,
-        `"${(t.description || "").replace(/"/g, '""')}"`,
+        String(t.type).replace(/[^a-z]/g, ""),
+        String(Number(t.amount) || 0),
+        csvEscape(t.category || ""),
+        csvEscape(t.description || ""),
         new Date(t.date).toISOString().slice(0, 10),
-        `"${(walletMap.get(t.walletId) || "").replace(/"/g, '""')}"`,
-        t.walletId,
+        csvEscape(walletMap.get(t.walletId) || ""),
+        String(t.walletId || "").replace(/[^a-z0-9\-]/gi, ""),
       ].join(",")
       lines.push(row)
     }
@@ -44,7 +51,7 @@ const ExportDataModal = () => {
     lines.push("WALLETS")
     lines.push("id,name,amount,totalIncome,totalExpenses,created_at")
     for (const w of wallets) {
-      lines.push([w.id, `"${w.name.replace(/"/g, '""')}"`, w.amount, w.totalIncome, w.totalExpenses, w.created_at].join(","))
+      lines.push([String(w.id).replace(/[^a-z0-9\-]/gi, ""), csvEscape(w.name), String(Number(w.amount) || 0), String(Number(w.totalIncome) || 0), String(Number(w.totalExpenses) || 0), String(w.created_at || "")].join(","))
     }
     return lines.join("\n")
   }

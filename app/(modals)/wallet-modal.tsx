@@ -21,6 +21,7 @@ import React, { useEffect, useState } from "react"
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native"
 import { Dropdown } from "react-native-element-dropdown"
 import { getNumberInput, formatNumberInput } from "@/utils/common"
+import ConfirmDialog from "@/components/confirm-dialog"
 
 const WalletModal = () => {
   const { user } = useAuth()
@@ -38,6 +39,7 @@ const WalletModal = () => {
 
   const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null)
+  const [confirmVisible, setConfirmVisible] = useState(false)
   const router = useRouter()
 
   //retrieve data from wallte to update
@@ -120,14 +122,19 @@ const WalletModal = () => {
   }
 
   function closeModal() {
-    try { (router as any).dismiss?.(); } catch {}
-    // revient toujours vers la liste des portefeuilles
+    // dismiss suffit — il revient déjà à l'écran précédent
+    try {
+      (router as any).dismiss?.();
+    } catch {}
+    // fallback uniquement si dismiss n'a pas navigué (web direct URL)
     setTimeout(() => {
-      try { router.replace("/(tabs)/wallet" as any); } catch {
-        try { router.back(); } catch {}
-      }
-    }, 100);
-    setTimeout(() => { try { if (router.canGoBack()) router.back(); } catch {} }, 500);
+      try {
+        const stillModal = typeof window !== "undefined" && window.location.pathname.includes("wallet-modal");
+        if (!stillModal) return;
+        if (router.canGoBack()) router.back();
+        else router.replace("/(tabs)/wallet" as any);
+      } catch {}
+    }, 250);
   }
 
   const OnDelete = async () => {
@@ -149,18 +156,7 @@ const WalletModal = () => {
 
   //Function show delete alert for deleting wallet
   const showDeleteAlert = () => {
-    Alert.alert(
-      t("confirmDeleteWallet"),
-      t("deleteWalletMsg"),
-      [
-        { text: t("cancel"), onPress: () => {}, style: "cancel" },
-        {
-          text: t("delete"),
-          onPress: () => OnDelete(),
-          style: "destructive",
-        },
-      ],
-    )
+    setConfirmVisible(true);
   }
 
   return (
@@ -279,6 +275,19 @@ const WalletModal = () => {
           </Typo>
         </ButtonComponent>
       </View>
+      <ConfirmDialog
+        visible={confirmVisible}
+        title={t("confirmDeleteWallet")}
+        message={t("deleteWalletMsg")}
+        confirmLabel={t("delete")}
+        cancelLabel={t("cancel")}
+        destructive
+        onCancel={() => setConfirmVisible(false)}
+        onConfirm={() => {
+          setConfirmVisible(false);
+          OnDelete();
+        }}
+      />
     </ModalWrapper>
   )
 }

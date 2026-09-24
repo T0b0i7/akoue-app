@@ -10,7 +10,7 @@ import { Image } from "expo-image"
 import { useRouter } from "expo-router"
 import * as Icons from "phosphor-react-native"
 import React from "react"
-import { ActivityIndicator, Alert, StyleSheet, TouchableOpacity, View } from "react-native"
+import { ActivityIndicator, Alert, Platform, StyleSheet, TouchableOpacity, View } from "react-native"
 import Animated, { FadeInDown, FadeInRight } from "react-native-reanimated"
 import * as Updates from "expo-updates"
 import Constants from "expo-constants"
@@ -277,17 +277,21 @@ const More = () => {
                 </TouchableOpacity>
               </Animated.View>
             ))}
-            <View style={styles.divider} />
-            <TouchableOpacity onPress={handleCheckUpdate} style={styles.flexRow} disabled={isChecking}>
-              <View style={[styles.listIcon, { backgroundColor: "#f97316" }]}>
-                <Icons.ArrowsClockwise size={26} color={colors.white} weight="fill" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Typo size={16} fontWeight={"500"}>{t("checkUpdate")}</Typo>
-                <Typo size={12} color={colors.neutral400}>v{Constants.expoConfig?.version ?? "1.0.0"} • {Updates.isEnabled ? (Updates.channel ?? "preview") : "dev"}</Typo>
-              </View>
-              {isChecking ? <ActivityIndicator color={colors.white} /> : <Icons.CaretRight size={verticalScale(20)} weight="bold" color={colors.white} />}
-            </TouchableOpacity>
+            {Platform.OS !== "web" && (
+              <>
+                <View style={styles.divider} />
+                <TouchableOpacity onPress={handleCheckUpdate} style={styles.flexRow} disabled={isChecking}>
+                  <View style={[styles.listIcon, { backgroundColor: "#f97316" }]}>
+                    <Icons.ArrowsClockwise size={26} color={colors.white} weight="fill" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Typo size={16} fontWeight={"500"}>{t("checkUpdate")}</Typo>
+                    <Typo size={12} color={colors.neutral400}>v{Constants.expoConfig?.version ?? "1.0.0"} • {Updates.isEnabled ? (Updates.channel ?? "preview") : "dev"}</Typo>
+                  </View>
+                  {isChecking ? <ActivityIndicator color={colors.white} /> : <Icons.CaretRight size={verticalScale(20)} weight="bold" color={colors.white} />}
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
       </View>

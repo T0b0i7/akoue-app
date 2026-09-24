@@ -3,10 +3,45 @@ import { AuthContextType, UserType } from "@/types";
 import { supabase, isSupabaseConfigured } from "@/config/supabase";
 import { useRouter, usePathname } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as bcrypt from "bcryptjs";
 
 const OFFLINE_USER_KEY = "offline_user";
-const OFFLINE_USERS_KEY = "offline_users"; // [{email,password,uid,name}]
+const OFFLINE_USERS_KEY = "offline_users"; // [{email,passwordHash,uid,name}]
 const isOfflineError = (msg: string) => /fetch|network|offline|Failed to fetch|Network request failed/i.test(msg || "");
+
+// rate limiting login
+const RATE_KEY = "login_rate";
+async function checkRateLimit(): Promise<string | null> {
+  try {
+    const raw = await AsyncStorage.getItem(RATE_KEY);
+    const data = raw ? JSON.parse(raw) : { count: 0, first: Date.now() };
+    const now = Date.now();
+    // reset après 15min
+    if (now - data.first > 15 * 60 * 1000) {
+      await AsyncStorage.setItem(RATE_KEY, JSON.stringify({ count: 0, first: now }));
+      return null;
+    }
+    if (data.count >= 5) {
+      const wait = Math.ceil((15 * 60 * 1000 - (now - data.first)) / 60000);
+      return `Trop de tentatives. Réessayez dans ${wait} min.`;
+    }
+    return null;
+  } catch { return null; }
+}
+async function incRateLimit() {
+  try {
+    const raw = await AsyncStorage.getItem(RATE_KEY);
+    const data = raw ? JSON.parse(raw) : { count: 0, first: Date.now() };
+    if (Date.now() - data.first > 15 * 60 * 1000) {
+      await AsyncStorage.setItem(RATE_KEY, JSON.stringify({ count: 1, first: Date.now() }));
+    } else {
+      await AsyncStorage.setItem(RATE_KEY, JSON.stringify({ count: data.count + 1, first: data.first }));
+    }
+  } catch {}
+}
+async function resetRateLimit() {
+  try { await AsyncStorage.removeItem(RATE_KEY); } catch {}
+}
 
 async function getOfflineUsers(): Promise<any[]> {
   try {
@@ -14,15 +49,26 @@ async function getOfflineUsers(): Promise<any[]> {
     return raw ? JSON.parse(raw) : [];
   } catch { return []; }
 }
+async function hashPassword(p: string): Promise<string> {
+  try { return await bcrypt.hash(p, 10); } catch { return p; }
+}
+async function verifyPassword(p: string, hash: string): Promise<boolean> {
+  try {
+    // support migration: ancien stockage en clair
+    if (hash && !hash.startsWith("$2")) return p === hash;
+    return await bcrypt.compare(p, hash);
+  } catch { return p === hash; }
+}
 async function saveOfflineUser(user: NonNullable<UserType>, password: string) {
   try {
     const users = await getOfflineUsers();
     const idx = users.findIndex((u: any) => u.email.toLowerCase() === user.email?.toLowerCase());
-    const entry = { email: user.email, password, uid: user.uid, name: user.name };
+    const passwordHash = await hashPassword(password);
+    const entry = { email: user.email, passwordHash, uid: user.uid, name: user.name };
+    // ne jamais stocker le mot de passe en clair
     if (idx >= 0) users[idx] = entry; else users.push(entry);
     await AsyncStorage.setItem(OFFLINE_USERS_KEY, JSON.stringify(users));
     await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(user));
-    // aussi pour compat hooks
     await AsyncStorage.setItem("mock_user", JSON.stringify(user));
   } catch {}
 }
@@ -45,9 +91,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     if (initializing) return;
+    // ne pas rediriger pendant le splash/index ou language — laissé à app/index.tsx
+    if (!pathname || pathname === "/" || pathname === "/language") return;
     const inAuth = pathname?.startsWith("/welcome") || pathname?.startsWith("/login") || pathname?.startsWith("/sign-up") || pathname?.startsWith("/forgot") || pathname?.startsWith("/(auth)");
     if (user && inAuth) router.replace("/(tabs)" as any);
-    else if (!user && !inAuth) router.replace("/(auth)/welcome" as any);
+    else if (!user && !inAuth) {
+      // évite de forcer welcome si on est sur tabs sans user (tabs/_layout gère déjà)
+      const inTabs = pathname?.startsWith("/(tabs)") || pathname === "/more" || pathname === "/wallet" || pathname === "/statistics";
+      if (!inTabs) router.replace("/(auth)/welcome" as any);
+    }
   }, [initializing, user, pathname]);
 
   useEffect(() => {
@@ -107,53 +159,74 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const login = async (email: string, password: string) => {
-    // Toujours permettre le login offline (test app / mode avion)
+    // rate limiting
+    const rateMsg = await checkRateLimit();
+    if (rateMsg) return { success: false, msg: rateMsg };
+    // validation basique
+    if (!email?.includes("@") || !password || password.length < 6) {
+      await incRateLimit();
+      return { success: false, msg: "Email ou mot de passe incorrect" };
+    }
     try {
       if (isSupabaseConfigured) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (!error) return { success: true };
+        if (!error) {
+          await resetRateLimit();
+          return { success: true };
+        }
         if (!isOfflineError(error.message)) {
+          await incRateLimit();
           let msg = error.message;
           if (msg.includes("Invalid login credentials")) msg = "Email ou mot de passe incorrect";
           return { success: false, msg };
         }
-        // offline → fallback ci-dessous
+        // offline → fallback ci-dessous (uniquement comptes déjà créés)
       }
-      // Fallback offline : cherche dans les comptes créés localement
+      // Fallback offline : seulement comptes créés localement avec vérif hash
       const users = await getOfflineUsers();
-      const found = users.find((u: any) => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+      const found = users.find((u: any) => u.email.toLowerCase() === email.toLowerCase());
       if (found) {
-        const u: UserType = { uid: found.uid, email: found.email, name: found.name, image: null };
-        setUser(u);
-        await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u));
-        return { success: true };
-      }
-      // Mode démo offline : si aucun compte, on crée une session à la volée (test app)
-      // On accepte tout email valide + password >=6 comme compte offline auto-créé
-      if (email.includes("@") && password.length >= 6) {
-        const uid = `offline-${email.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
-        const u: UserType = { uid, email, name: email.split("@")[0], image: null };
-        setUser(u);
-        await saveOfflineUser(u, password);
-        return { success: true };
-      }
-      return { success: false, msg: "Email ou mot de passe incorrect (hors ligne)" };
-    } catch (error: any) {
-      if (isOfflineError(error.message)) {
-        const users = await getOfflineUsers();
-        const found = users.find((u: any) => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
-        if (found) {
+        const hash = found.passwordHash || found.password;
+        const ok = await verifyPassword(password, hash);
+        if (ok) {
           const u: UserType = { uid: found.uid, email: found.email, name: found.name, image: null };
           setUser(u);
           await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u));
+          await resetRateLimit();
           return { success: true };
         }
       }
+      await incRateLimit();
+      return { success: false, msg: "Email ou mot de passe incorrect (hors ligne - compte non trouvé)" };
+    } catch (error: any) {
+      if (isOfflineError(error.message)) {
+        const users = await getOfflineUsers();
+        const found = users.find((u: any) => u.email.toLowerCase() === email.toLowerCase());
+        if (found) {
+          const hash = found.passwordHash || found.password;
+          const ok = await verifyPassword(password, hash);
+          if (ok) {
+            const u: UserType = { uid: found.uid, email: found.email, name: found.name, image: null };
+            setUser(u);
+            await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u));
+            await resetRateLimit();
+            return { success: true };
+          }
+        }
+        await incRateLimit();
+        return { success: false, msg: "Hors ligne — compte non trouvé" };
+      }
+      await incRateLimit();
       return { success: false, msg: error.message };
     }
   };
 
   const signUp = async (email: string, password: string, name: string) => {
+    const rateMsg = await checkRateLimit();
+    if (rateMsg) return { success: false, msg: rateMsg };
+    if (!email?.includes("@") || password.length < 6 || name.trim().length < 2) {
+      return { success: false, msg: "Données invalides" };
+    }
     try {
       if (isSupabaseConfigured) {
         const { data, error } = await supabase.auth.signUp({
@@ -168,44 +241,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u));
             await saveOfflineUser(u, password);
           }
+          await resetRateLimit();
           return { success: true };
         }
         if (!isOfflineError(error.message)) {
+          await incRateLimit();
           let msg = error.message;
           if (msg.includes("already registered")) msg = "Email déjà utilisé";
           return { success: false, msg };
         }
-        // offline → fallback local
+        // offline → fallback local (uniquement si pas online)
       }
-      // Fallback offline : création locale
+      // Fallback offline : création locale uniquement hors-ligne et sans auto-login aveugle
       const users = await getOfflineUsers();
       if (users.some((u: any) => u.email.toLowerCase() === email.toLowerCase())) {
         return { success: false, msg: "Email déjà utilisé (hors ligne)" };
       }
+      // avertir que c'est un compte local temporaire
       const uid = `offline-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
       const u: UserType = { uid, email, name, image: null };
       setUser(u);
       await saveOfflineUser(u, password);
+      await resetRateLimit();
       return { success: true };
     } catch (error: any) {
       if (isOfflineError(error.message)) {
+        const users = await getOfflineUsers();
+        if (users.some((u: any) => u.email.toLowerCase() === email.toLowerCase())) {
+          return { success: false, msg: "Email déjà utilisé (hors ligne)" };
+        }
         const uid = `offline-${Date.now().toString(36)}`;
         const u: UserType = { uid, email, name, image: null };
         setUser(u);
         await saveOfflineUser(u, password);
+        await resetRateLimit();
         return { success: true };
       }
+      await incRateLimit();
       return { success: false, msg: error.message };
     }
   };
 
   const forgotPassword = async (email: string) => {
     if (!isSupabaseConfigured) return { success: false, msg: "Supabase non configuré" };
+    const rateMsg = await checkRateLimit();
+    if (rateMsg) return { success: false, msg: rateMsg };
+    if (!email?.includes("@")) return { success: false, msg: "Email invalide" };
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email);
-      if (error) return { success: false, msg: error.message };
+      if (error) {
+        await incRateLimit();
+        return { success: false, msg: error.message };
+      }
+      await resetRateLimit();
       return { success: true };
     } catch (error: any) {
+      await incRateLimit();
       return { success: false, msg: error.message };
     }
   };
@@ -246,6 +337,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         await AsyncStorage.removeItem(OFFLINE_USER_KEY);
         await AsyncStorage.removeItem("mock_user");
+        // purge sensible: wallets, transactions, pending
+        const keys = await AsyncStorage.getAllKeys();
+        const toRemove = keys.filter((k: string) => k.startsWith("wallets_") || k.startsWith("txs_") || k.startsWith("mock_") || k.startsWith("pending_") || k.startsWith("cached_") || k.startsWith("seen_"));
+        if (toRemove.length) await AsyncStorage.multiRemove(toRemove);
       } catch {}
       return { success: true };
     } catch (error: any) {
