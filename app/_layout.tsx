@@ -32,12 +32,17 @@ export default function RootLayout() {
     let cancelled = false;
     (async () => {
       try {
-        // Précharge l'icône splash pour qu'elle apparaisse instantanément dans app/index.tsx
         await Asset.fromModule(require("../public/images/splash-icon.png")).downloadAsync();
       } catch {}
       if (!cancelled) setReady(true);
-      // Cache le splash natif seulement quand l'asset est prêt — évite flash/flicker
       SplashScreen.hideAsync().catch(() => {});
+      // cache le splash HTML web quand React est prêt
+      try {
+        if (typeof document !== "undefined") {
+          const s = document.getElementById("splash");
+          if (s) { s.style.transition = "opacity 0.35s ease"; s.style.opacity = "0"; setTimeout(() => { s.style.display = "none"; }, 400); }
+        }
+      } catch {}
     })();
     return () => { cancelled = true; };
   }, []);
