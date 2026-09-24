@@ -93,7 +93,7 @@ const WalletModal = () => {
       name,
       image: finalImage,
       uid: user?.uid,
-      amount: oldWallet?.id ? undefined : cleanAmount,
+      amount: cleanAmount,
       currency,
     } as any
 
@@ -171,15 +171,14 @@ const WalletModal = () => {
           {/* Montant initial + Devise */}
           <View style={styles.row}>
             <View style={[styles.inputContainer, { flex: 1 }]}>
-              <Typo color={colors.neutral200}>Solde initial</Typo>
+              <Typo color={colors.neutral200}>{oldWallet?.id ? "Solde" : "Solde initial"}</Typo>
               <TextInputComponent
                 placeholder="0"
                 value={formatNumberInput(initialAmount)}
                 onChangeText={(v: string) => setInitialAmount(getNumberInput(v))}
                 keyboardType="numeric"
-                editable={!oldWallet?.id}
               />
-              {oldWallet?.id && <Typo size={11} color={colors.neutral500}>Modifiable via transactions</Typo>}
+              <Typo size={11} color={colors.neutral500}>{oldWallet?.id ? "Modifiable ici ou via transactions" : "Montant de départ"}</Typo>
             </View>
             <View style={[styles.inputContainer, { flex: 1.1 }]}>
               <Typo color={colors.neutral200}>Devise</Typo>
