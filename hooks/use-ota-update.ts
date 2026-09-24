@@ -3,16 +3,18 @@ import { Alert, AppState, Platform } from "react-native";
 import * as Updates from "expo-updates";
 import * as Notifications from "expo-notifications";
 
-// Permet aux notifs locales de s'afficher même au premier plan
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// Permet aux notifs locales de s'afficher même au premier plan — uniquement natif
+if (Platform.OS !== "web") {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+}
 
 export function useOTAUpdate() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
@@ -78,6 +80,18 @@ export function useOTAUpdate() {
   useEffect(() => {
     const sub = AppState.addEventListener("change", (state) => {
       if (state === "active") checkAndNotify(true);
+    });
+    return () => sub.remove();
+  }, []);
+
+  // clic sur notif système → propose redémarrage
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    const sub = Notifications.addNotificationResponseReceivedListener(() => {
+      Alert.alert("Mise à jour disponible", "Redémarrer pour installer ?", [
+        { text: "Plus tard", style: "cancel" },
+        { text: "Redémarrer", onPress: async () => { await Updates.reloadAsync(); } },
+      ]);
     });
     return () => sub.remove();
   }, []);

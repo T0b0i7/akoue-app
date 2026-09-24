@@ -42,18 +42,29 @@ export const transformCurrencyData = (
   }));
 };
 
+const sanitizeCurrencyCode = (code: string): string => {
+  const c = String(code || "EUR").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3);
+  if (!c || c.length !== 3) throw new Error("Devise invalide");
+  if (!currencyMap[c] && !["EUR","USD","XOF","XAF","GBP","JPY","CNY","CAD","CHF","MAD","NGN","GHS","VND","KRW","INR","AUD","HKD","IDR","MYR","PHP","RUB","SAR","SEK"].includes(c)) {
+    // whitelist stricte des devises supportées
+    throw new Error(`Devise non supportée: ${c}`);
+  }
+  return c;
+};
+
 export const fetchCurrencies = async (
   base_currency: string
 ): Promise<CurrencyType[]> => {
   try {
+    const safeBase = sanitizeCurrencyCode(base_currency || "EUR");
     // Si config manquante, fallback sur Frankfurter (gratuit, sans clé) + open.er-api
     const hasConfig = !!CURRENCY_CONFIG.API_URL && !!CURRENCY_CONFIG.API_KEY;
     if (!hasConfig) {
-      const base = base_currency || "EUR";
+      const base = safeBase;
       // Frankfurter supporte EUR base uniquement pour la version gratuite → on utilise open.er-api pour autres bases
       const url = base === "EUR"
-        ? `https://api.frankfurter.app/latest?from=${base}`
-        : `https://open.er-api.com/v6/latest/${base}`;
+        ? `https://api.frankfurter.app/latest?from=${encodeURIComponent(base)}`
+        : `https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`;
       const res = await fetch(url);
       const json: any = await res.json();
       // Normalise les deux formats
@@ -67,9 +78,9 @@ export const fetchCurrencies = async (
       }));
     }
     const currencies = CURRENCY_CONFIG.currencies || FALLBACK_CURRENCIES;
-    const url = base_currency
-      ? `${CURRENCY_CONFIG.API_URL}apikey=${CURRENCY_CONFIG.API_KEY}&currencies=${currencies}&base_currency=${base_currency}`
-      : `${CURRENCY_CONFIG.API_URL}apikey=${CURRENCY_CONFIG.API_KEY}&currencies=${currencies}`;
+    const url = safeBase
+      ? `${CURRENCY_CONFIG.API_URL}apikey=${encodeURIComponent(String(CURRENCY_CONFIG.API_KEY))}&currencies=${encodeURIComponent(String(currencies))}&base_currency=${encodeURIComponent(String(safeBase))}`
+      : `${CURRENCY_CONFIG.API_URL}apikey=${encodeURIComponent(String(CURRENCY_CONFIG.API_KEY))}&currencies=${encodeURIComponent(String(currencies))}`;
     const response = await fetch(url);
     const data: CurrencyApiResponse = await response.json();
     // @ts-ignore currencyapi renvoie {data:{USD:{code, value}}}
@@ -90,7 +101,9 @@ export const fetchCurrencies = async (
     const fallbackRates: Record<string, number> = {
       EUR: 1, USD: 1.09, XOF: 655.96, XAF: 655.96, GBP: 0.85, JPY: 165, CNY: 7.85, CAD: 1.47, CHF: 0.95, MAD: 10.8, NGN: 1650, GHS: 16.5, VND: 27000, KRW: 1450, INR: 90,
     };
-    const base = base_currency || "EUR";
+    let baseSafe: string = "EUR";
+    try { baseSafe = sanitizeCurrencyCode(base_currency || "EUR"); } catch { baseSafe = "EUR"; }
+    const base = baseSafe || "EUR";
     const baseRate = fallbackRates[base] || 1;
     return Object.entries(fallbackRates)
       .filter(([code]) => code !== base)

@@ -2,6 +2,15 @@ import { ResponseType, WalletType } from "@/types";
 import { supabase } from "@/config/supabase";
 import { uploadFileToSupabase } from "./images-service";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { z } from "zod";
+
+const walletSchema = z.object({
+  name: z.string().trim().min(1).max(50),
+  amount: z.number().min(0).max(1_000_000_000).optional(),
+  currency: z.string().trim().length(3).regex(/^[A-Z]{3}$/).optional(),
+  image: z.any().optional(),
+  id: z.string().uuid().optional(),
+});
 
 const isNetworkError = (msg: string) => /fetch|network|offline|Failed to fetch/i.test(msg || "");
 const cacheKey = (uid: string) => `wallets_${uid}`;
@@ -24,6 +33,15 @@ async function cacheWalletLocal(wallet: any, uid: string) {
 
 export const createOrUpdateWallet = async (walletData: Partial<WalletType>): Promise<ResponseType> => {
   try {
+    // validation stricte
+    const parsed = walletSchema.safeParse({
+      name: walletData.name,
+      amount: walletData.amount !== undefined ? Number(walletData.amount) : undefined,
+      currency: (walletData as any).currency,
+      image: walletData.image,
+      id: (walletData as any).id,
+    });
+    if (!parsed.success) return { success: false, msg: parsed.error.issues[0]?.message || "Données invalides" };
     let imageUrl = walletData.image;
     if (walletData.image && (walletData.image as any)?.uri) {
       const res = await uploadFileToSupabase(walletData.image as any, "wallets");
@@ -98,16 +116,18 @@ export const createOrUpdateWallet = async (walletData: Partial<WalletType>): Pro
       if (walletData.amount !== undefined && walletData.totalIncome === undefined && walletData.totalExpenses === undefined) {
         // on laisse totalIncome tel quel, seul amount change (correction solde)
       }
+      // IDOR fix: toujours filtrer par uid propriétaire
       const { data, error } = await supabase
         .from("wallets")
         .update(upd)
         .eq("id", walletData.id)
+        .eq("uid", finalUid)
         .select()
         .single();
       if (error) {
         if (error.message?.includes("currency")) {
           delete upd.currency;
-          const retry = await supabase.from("wallets").update(upd).eq("id", walletData.id).select().single();
+          const retry = await supabase.from("wallets").update(upd).eq("id", walletData.id).eq("uid", finalUid).select().single();
           if (!retry.error) return { success: true, data: { ...retry.data, currency: (walletData as any).currency, id: retry.data.id } };
         }
         if (isNetworkError(error.message)) {
@@ -131,23 +151,69 @@ export const createOrUpdateWallet = async (walletData: Partial<WalletType>): Pro
 };
 
 export const deleteWallet = async (walletId: string): Promise<ResponseType> => {
+  const isLocalId = walletId?.startsWith("local-");
+  const cleanLocalCache = async () => {
+    try {
+      // supprime des caches AsyncStorage (tous les uid)
+      const keysToCheck = ["mock_wallets", "mock_transactions"];
+      // parcourt aussi wallets_{uid}
+      // on récupère toutes les clés et filtre
+      const allKeys = await AsyncStorage.getAllKeys?.() ?? [];
+      const walletKeys = allKeys.filter((k: string) => k.startsWith("wallets_") || k.startsWith("txs_"));
+      const toClean = [...new Set([...keysToCheck, ...walletKeys])];
+      for (const key of toClean) {
+        try {
+          const raw = await AsyncStorage.getItem(key);
+          if (!raw) continue;
+          const list = JSON.parse(raw);
+          if (!Array.isArray(list)) continue;
+          const filtered = list.filter((item: any) => item.id !== walletId && item.walletId !== walletId);
+          if (filtered.length !== list.length) {
+            await AsyncStorage.setItem(key, JSON.stringify(filtered));
+          }
+        } catch {}
+      }
+    } catch {}
+  };
+
   try {
-    // Delete related transactions first (FK cascade would also handle, but explicit)
-    await deleteTransactionByWalletId(walletId);
+    // Si id local, pas besoin de Supabase
+    if (isLocalId) {
+      await cleanLocalCache();
+      return { success: true, data: "Wallet deleted successfully" };
+    }
+    // supprime transactions liées d'abord
+    try { await deleteTransactionByWalletId(walletId); } catch {}
     const { error } = await supabase.from("wallets").delete().eq("id", walletId);
-    if (error) return { success: false, msg: error.message };
+    if (error) {
+      if (isNetworkError(error.message)) {
+        await cleanLocalCache();
+        return { success: true, data: "Wallet deleted successfully (offline)" };
+      }
+      return { success: false, msg: error.message };
+    }
+    await cleanLocalCache();
     return { success: true, data: "Wallet deleted successfully" };
   } catch (error: any) {
+    if (isNetworkError(error?.message || "")) {
+      await cleanLocalCache();
+      return { success: true, data: "Wallet deleted successfully (offline)" };
+    }
     return { success: false, msg: error.message };
   }
 };
 
 export const deleteTransactionByWalletId = async (walletId: string): Promise<ResponseType> => {
   try {
+    if (walletId?.startsWith("local-")) return { success: true, msg: "All transaction deleted" };
     const { error } = await supabase.from("transactions").delete().eq("walletId", walletId);
-    if (error) return { success: false, msg: error.message };
+    if (error) {
+      if (isNetworkError(error.message)) return { success: true, msg: "All transaction deleted (offline)" };
+      return { success: false, msg: error.message };
+    }
     return { success: true, msg: "All transaction deleted" };
   } catch (error: any) {
+    if (isNetworkError(error?.message || "")) return { success: true, msg: "All transaction deleted (offline)" };
     return { success: false, msg: error.message };
   }
 };

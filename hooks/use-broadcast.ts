@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef } from "react";
-import { Alert, AppState } from "react-native";
+import { Alert, AppState, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase, isSupabaseConfigured } from "@/config/supabase";
 import { useToast } from "@/context/toast-context";
+import * as Notifications from "expo-notifications";
 
 const CACHE_KEY = "cached_broadcasts";
 const SEEN_KEY = "seen_broadcasts"; // JSON array of ids
@@ -100,6 +101,19 @@ export function useBroadcast() {
   useEffect(() => {
     const id = setInterval(() => fetchAndShow(true), 60000);
     return () => clearInterval(id);
+  }, [fetchAndShow]);
+
+  // clic sur notif broadcast si on en fait une système plus tard
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    const sub = Notifications.addNotificationResponseReceivedListener((resp) => {
+      const data = resp.notification.request.content.data as any;
+      if (data?.broadcastId) {
+        // réaffiche le broadcast correspondant
+        fetchAndShow(false);
+      }
+    });
+    return () => sub.remove();
   }, [fetchAndShow]);
 
   return { fetchAndShow, markSeen };

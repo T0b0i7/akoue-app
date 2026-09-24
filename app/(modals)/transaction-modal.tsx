@@ -31,6 +31,7 @@ import {
   View,
 } from "react-native"
 import { Dropdown } from "react-native-element-dropdown"
+import ConfirmDialog from "@/components/confirm-dialog"
 
 const TransactionModal = () => {
   const { user } = useAuth()
@@ -49,7 +50,19 @@ const TransactionModal = () => {
   const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null)
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const [confirmVisible, setConfirmVisible] = useState(false)
   const router = useRouter()
+
+  function closeModal() {
+    try { (router as any).dismiss?.(); } catch {}
+    setTimeout(() => {
+      try {
+        const still = typeof window !== "undefined" && window.location.pathname.endsWith("transaction-modal");
+        if (!still) return;
+        if (router.canGoBack()) router.back(); else router.replace("/(tabs)" as any);
+      } catch {}
+    }, 250);
+  }
 
   const {
     data: wallets,
@@ -114,15 +127,13 @@ const TransactionModal = () => {
     const result = await createOrUpdateTransaction(transactionData)
     setLoading(false)
     if (result.success) {
+      if (loading) return;
       const isEdit = !!oldTransaction?.id
       const walletName = wallets.find((w:any)=>w.id===walletId)?.name || "portefeuille"
       const msg = isEdit ? `${type === "income" ? "Revenu" : "Dépense"} mise à jour • ${amount} sur ${walletName} ✏️` : `${type === "income" ? "💰 Revenu" : "💸 Dépense"} de ${amount} ajoutée sur ${walletName} • ${description || category || ""}`.trim()
       setFeedback({ type: "success", msg: t("transactionAdded") })
       showToast("success", isEdit ? "Transaction mise à jour" : "Transaction ajoutée", msg)
-      setTimeout(() => {
-        try { (router as any).dismiss?.(); } catch {}
-        setTimeout(() => { try { router.replace("/(tabs)" as any); } catch { router.back(); } }, 100)
-      }, 700)
+      setTimeout(() => closeModal(), 700)
     } else {
       const msg = result.msg || "Erreur"
       setFeedback({ type: "error", msg })
@@ -142,10 +153,7 @@ const TransactionModal = () => {
     if (result!.success) {
       setFeedback({ type: "success", msg: t("walletDeleted") })
       showToast("success", "Transaction supprimée", "Transaction supprimée 🗑️")
-      setTimeout(() => {
-        try { (router as any).dismiss?.(); } catch {}
-        setTimeout(() => { try { router.replace("/(tabs)" as any); } catch { router.back(); } }, 100)
-      }, 600)
+      setTimeout(() => closeModal(), 600)
     } else {
       const msg = result!.msg || "Erreur"
       setFeedback({ type: "error", msg })
@@ -156,18 +164,7 @@ const TransactionModal = () => {
 
   //Function show delete alert for deleting wallet
   const showDeleteAlert = () => {
-    Alert.alert(
-      t("deleteTransaction"),
-      t("deleteTransactionMsg"),
-      [
-        { text: t("cancel"), onPress: () => {}, style: "cancel" },
-        {
-          text: t("delete"),
-          onPress: () => OnDelete(),
-          style: "destructive",
-        },
-      ],
-    )
+    setConfirmVisible(true);
   }
 
   // const renderLabel = () => {
@@ -423,6 +420,19 @@ const TransactionModal = () => {
           </Typo>
         </ButtonComponent>
       </View>
+      <ConfirmDialog
+        visible={confirmVisible}
+        title={t("deleteTransaction")}
+        message={t("deleteTransactionMsg")}
+        confirmLabel={t("delete")}
+        cancelLabel={t("cancel")}
+        destructive
+        onCancel={() => setConfirmVisible(false)}
+        onConfirm={() => {
+          setConfirmVisible(false);
+          OnDelete();
+        }}
+      />
     </ModalWrapper>
   )
 }

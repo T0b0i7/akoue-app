@@ -1,6 +1,6 @@
 import { colors } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
-import { useRouter } from "expo-router";
+import { useRootNavigationState, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
@@ -8,20 +8,29 @@ import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
 const Index = () => {
   const router = useRouter();
   const { user } = useAuth();
+  const navigationState = useRootNavigationState();
   const [logoReady, setLogoReady] = useState(false);
   useEffect(() => {
-    // Délai réduit 800ms + attend que le logo soit décodé pour éviter apparition tardive
+    if (!navigationState?.key) return; // attend que le router soit prêt (fix web blanc)
+    let cancelled = false;
     const t = setTimeout(async () => {
-      const lang = await AsyncStorage.getItem("app_locale");
-      if (!lang) {
+      if (cancelled) return;
+      try {
+        const lang = await AsyncStorage.getItem("app_locale");
+        if (cancelled) return;
+        if (!lang) {
+          router.replace("/language" as any);
+          return;
+        }
+        if (user) router.replace("/(tabs)" as any);
+        else router.replace("/(auth)/welcome" as any);
+      } catch (e) {
+        // fallback : si AsyncStorage échoue sur web, va vers language
         router.replace("/language" as any);
-        return;
       }
-      if (user) router.replace("/(tabs)" as any);
-      else router.replace("/(auth)/welcome" as any);
-    }, 900);
-    return () => clearTimeout(t);
-  }, [user]);
+    }, 700);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [user, navigationState?.key]);
 
   return (
     <View style={styles.container}>

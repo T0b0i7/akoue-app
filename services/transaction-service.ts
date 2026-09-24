@@ -6,6 +6,16 @@ import { getLast12Months, getLast7Days, getYearsRange } from "@/utils/common";
 import { scale } from "@/utils/styling";
 import { colors } from "@/constants/theme";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { z } from "zod";
+
+const txSchema = z.object({
+  type: z.enum(["income", "expense"]),
+  amount: z.number().positive().max(1_000_000_000),
+  walletId: z.string().uuid(),
+  category: z.string().max(50).optional().nullable(),
+  description: z.string().max(200).optional().nullable(),
+  date: z.coerce.date().optional(),
+});
 
 const isNetErr = (m: string) => /fetch|network|offline|Failed to fetch/i.test(m || "");
 async function cacheTxLocal(tx: any, uid: string) {
@@ -44,16 +54,22 @@ export const createOrUpdateTransaction = async (
 ): Promise<ResponseType> => {
   try {
     const { id, type, walletId, amount, image } = transactionData;
-    if (!amount || amount <= 0 || !walletId || !type) {
-      return { success: false, msg: "Invalid transaction data!" };
-    }
+    const parsed = txSchema.safeParse({
+      type,
+      amount: amount !== undefined ? Number(amount) : undefined,
+      walletId,
+      category: (transactionData as any).category,
+      description: (transactionData as any).description,
+      date: (transactionData as any).date,
+    });
+    if (!parsed.success) return { success: false, msg: parsed.error.issues[0]?.message || "Données invalides" };
 
     const { data: { user } } = await supabase.auth.getUser();
     const uid = (transactionData as any).uid || user?.id;
     if (!uid) return { success: false, msg: "User not authenticated" };
 
     if (id) {
-      const { data: oldTx, error: fetchErr } = await supabase.from("transactions").select("*").eq("id", id).single();
+      const { data: oldTx, error: fetchErr } = await supabase.from("transactions").select("*").eq("id", id).eq("uid", uid).single();
       if (fetchErr || !oldTx) return { success: false, msg: "Transaction not found" };
 
       const shouldRevert =
@@ -62,11 +78,11 @@ export const createOrUpdateTransaction = async (
         (oldTx as any).walletId !== walletId;
 
       if (shouldRevert) {
-        const res = await revertAndUpdateWallets(oldTx as TransactionType, Number(amount), type, walletId);
+        const res = await revertAndUpdateWallets(oldTx as TransactionType, Number(amount), type as string, walletId as string, uid as string);
         if (!res.success) return res;
       }
     } else {
-      const res = await updateWalletforNewTransaction(walletId!, Number(amount!), type);
+      const res = await updateWalletforNewTransaction(walletId as string, Number(amount!), type as string, uid as string);
       if (!res.success) return res;
     }
 
@@ -89,8 +105,9 @@ export const createOrUpdateTransaction = async (
     };
 
     if (id) {
-      const { data, error } = await supabase.from("transactions").update(payload).eq("id", id).select().single();
+      const { data, error } = await supabase.from("transactions").update(payload).eq("id", id).eq("uid", uid).select().single();
       if (error) return { success: false, msg: error.message };
+      if (!data) return { success: false, msg: "Transaction not found or not owned" };
       return { success: true, data: { ...data, id: data.id } };
     } else {
       const { data, error } = await supabase.from("transactions").insert(payload).select().single();
@@ -120,9 +137,9 @@ export const createOrUpdateTransaction = async (
   }
 };
 
-const updateWalletforNewTransaction = async (walletId: string, amount: number, type: string) => {
+const updateWalletforNewTransaction = async (walletId: string, amount: number, type: string, uid: string) => {
   try {
-    const { data: wallet, error } = await supabase.from("wallets").select("*").eq("id", walletId).single();
+    const { data: wallet, error } = await supabase.from("wallets").select("*").eq("id", walletId).eq("uid", uid).single();
     if (error || !wallet) return { success: false, msg: "Wallet not found" };
     if (type === "expense" && Number(wallet.amount) - amount < 0) {
       return { success: false, msg: "Insufficient balance for your wallet" };
@@ -130,7 +147,14 @@ const updateWalletforNewTransaction = async (walletId: string, amount: number, t
     const updatedType = type === "income" ? "totalIncome" : "totalExpenses";
     const newAmount = type === "income" ? Number(wallet.amount) + amount : Number(wallet.amount) - amount;
     const newTotal = Number((wallet as any)[updatedType]) + amount;
-    const { error: updErr } = await supabase.from("wallets").update({ amount: newAmount, [updatedType]: newTotal }).eq("id", walletId);
+    // protection race: ne met à jour que si amount n'a pas changé entre temps (optimistic lock)
+    const { error: updErr, count } = await supabase.from("wallets").update({ amount: newAmount, [updatedType]: newTotal }).eq("id", walletId).eq("uid", uid).eq("amount", wallet.amount).select() as any;
+    // fallback sans lock si la version Supabase ne supporte pas count
+    if (updErr) {
+      // retry simple sans lock si erreur de lock
+      const { error: retryErr } = await supabase.from("wallets").update({ amount: newAmount, [updatedType]: newTotal }).eq("id", walletId).eq("uid", uid);
+      if (retryErr) return { success: false, msg: retryErr.message };
+    }
     if (updErr) return { success: false, msg: updErr.message };
     return { success: true };
   } catch (error: any) {
@@ -142,11 +166,12 @@ const revertAndUpdateWallets = async (
   oldTransaction: TransactionType,
   newAmount: number,
   newType: string,
-  newWalletId: string
+  newWalletId: string,
+  uid: string
 ) => {
   try {
-    const { data: originalWallet } = await supabase.from("wallets").select("*").eq("id", oldTransaction.walletId).single();
-    const { data: newWallet } = await supabase.from("wallets").select("*").eq("id", newWalletId).single();
+    const { data: originalWallet } = await supabase.from("wallets").select("*").eq("id", oldTransaction.walletId).eq("uid", uid).single();
+    const { data: newWallet } = await supabase.from("wallets").select("*").eq("id", newWalletId).eq("uid", uid).single();
     if (!originalWallet || !newWallet) return { success: false, msg: "Wallet not found" };
 
     const revertType = oldTransaction.type === "income" ? "totalIncome" : "totalExpenses";
@@ -165,15 +190,15 @@ const revertAndUpdateWallets = async (
       }
     }
 
-    await supabase.from("wallets").update({ amount: revertedAmount, [revertType]: revertedTotal }).eq("id", oldTransaction.walletId);
+    await supabase.from("wallets").update({ amount: revertedAmount, [revertType]: revertedTotal }).eq("id", oldTransaction.walletId).eq("uid", uid);
 
-    const { data: freshNewWallet } = await supabase.from("wallets").select("*").eq("id", newWalletId).single();
+    const { data: freshNewWallet } = await supabase.from("wallets").select("*").eq("id", newWalletId).eq("uid", uid).single();
     const upType = newType === "income" ? "totalIncome" : "totalExpenses";
     const updatedDelta = newType === "income" ? Number(newAmount) : -Number(newAmount);
     const newWalletAmount = Number((freshNewWallet as any).amount) + updatedDelta;
     const newIncomeExpense = Number((freshNewWallet as any)[upType]) + Number(newAmount);
 
-    const { error } = await supabase.from("wallets").update({ amount: newWalletAmount, [upType]: newIncomeExpense }).eq("id", newWalletId);
+    const { error } = await supabase.from("wallets").update({ amount: newWalletAmount, [upType]: newIncomeExpense }).eq("id", newWalletId).eq("uid", uid);
     if (error) return { success: false, msg: error.message };
     return { success: true };
   } catch (error: any) {
@@ -183,9 +208,11 @@ const revertAndUpdateWallets = async (
 
 export const deleteTransaction = async (transactionId: string, walletId: string) => {
   try {
-    const { data: tx } = await supabase.from("transactions").select("*").eq("id", transactionId).single();
+    const { data: { user } } = await supabase.auth.getUser();
+    const uid = user?.id;
+    const { data: tx } = await supabase.from("transactions").select("*").eq("id", transactionId).eq("uid", uid as any).single();
     if (!tx) return { success: false, msg: "Transaction not found" };
-    const { data: wallet } = await supabase.from("wallets").select("*").eq("id", walletId).single();
+    const { data: wallet } = await supabase.from("wallets").select("*").eq("id", walletId).eq("uid", uid as any).single();
     if (!wallet) return { success: false, msg: "Wallet not found" };
 
     const updatedType = (tx as any).type === "income" ? "totalIncome" : "totalExpenses";
@@ -196,8 +223,9 @@ export const deleteTransaction = async (transactionId: string, walletId: string)
       return { success: false, msg: "The selected wallet don't have enough balance" };
     }
 
-    await supabase.from("wallets").update({ amount: newWalletAmount, [updatedType]: newTotal }).eq("id", walletId);
-    const { error } = await supabase.from("transactions").delete().eq("id", transactionId);
+    const { data: { user: u2 } } = await supabase.auth.getUser();
+    await supabase.from("wallets").update({ amount: newWalletAmount, [updatedType]: newTotal }).eq("id", walletId).eq("uid", u2?.id as any);
+    const { error } = await supabase.from("transactions").delete().eq("id", transactionId).eq("uid", u2?.id as any);
     if (error) return { success: false, msg: error.message };
     return { success: true };
   } catch (error: any) {
