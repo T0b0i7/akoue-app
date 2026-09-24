@@ -114,17 +114,16 @@ const WalletModal = () => {
     }
   }
 
-  const closeModal = () => {
-    try {
-      // @ts-ignore
-      if ((router as any).dismiss) (router as any).dismiss();
-      else if (router.canGoBack()) router.back();
-      else router.replace("/(tabs)/wallet" as any);
-    } catch {
-      try { router.back(); } catch { router.replace("/(tabs)/wallet" as any); }
-    }
-    setTimeout(() => { try { if (router.canGoBack()) router.back(); } catch {} }, 400);
-  };
+  function closeModal() {
+    try { (router as any).dismiss?.(); } catch {}
+    // revient toujours vers la liste des portefeuilles
+    setTimeout(() => {
+      try { router.replace("/(tabs)/wallet" as any); } catch {
+        try { router.back(); } catch {}
+      }
+    }, 100);
+    setTimeout(() => { try { if (router.canGoBack()) router.back(); } catch {} }, 500);
+  }
 
   const OnDelete = async () => {
     if (!oldWallet?.id) return
