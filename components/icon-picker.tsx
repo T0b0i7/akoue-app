@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, TouchableOpacity, View, ScrollView } from "react-native";
+import { StyleSheet, TouchableOpacity, View, Pressable } from "react-native";
 import Typo from "./typo";
 import { colors, radius } from "@/constants/theme";
 import { verticalScale, scale } from "@/utils/styling";
@@ -21,7 +21,7 @@ export default function IconPicker({ selectedId, selectedColor, onSelectId, onSe
           const IconComp: any = def.icon;
           const isSelected = def.id === selectedId;
           return (
-            <TouchableOpacity
+            <Pressable
               key={def.id}
               onPress={() => onSelectId(def.id)}
               style={[
@@ -30,27 +30,30 @@ export default function IconPicker({ selectedId, selectedColor, onSelectId, onSe
               ]}
             >
               <IconComp size={verticalScale(20)} color={isSelected ? colors.white : colors.neutral200} weight={isSelected ? "fill" : "regular"} />
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>
 
       <Typo size={13} color={colors.neutral400} style={{ marginTop: 14, marginBottom: 8 }}>Couleur</Typo>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.colorRow}>
+      <View style={styles.colorRow}>
         {WALLET_COLORS.map((c) => {
           const isActive = c === selectedColor;
           return (
-            <TouchableOpacity
+            <Pressable
               key={c}
               onPress={() => onSelectColor(c)}
+              hitSlop={8}
               style={[
                 styles.colorDot,
-                { backgroundColor: c, borderColor: isActive ? colors.white : "transparent" },
+                { backgroundColor: c, borderColor: isActive ? colors.white : "transparent", borderWidth: isActive ? 3 : 0 },
               ]}
-            />
+            >
+              {isActive && <View style={styles.colorInnerCheck} />}
+            </Pressable>
           );
         })}
-      </ScrollView>
+      </View>
 
       <View style={[styles.preview, { backgroundColor: selectedColor }]}>
         {(() => {
@@ -80,14 +83,23 @@ const styles = StyleSheet.create({
   },
   colorRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
     paddingVertical: 4,
   },
   colorDot: {
-    width: scale(32),
-    height: scale(32),
-    borderRadius: 16,
+    width: scale(36),
+    height: scale(36),
+    borderRadius: 18,
     borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  colorInnerCheck: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.white,
   },
   preview: {
     marginTop: 14,
