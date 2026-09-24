@@ -11,6 +11,7 @@ import { ToastProvider } from "@/context/toast-context";
 import { ThemeProvider } from "@/context/theme-context";
 import { AppToast } from "@/components/app-toast";
 import { useOTAUpdate } from "@/hooks/use-ota-update";
+import { useBroadcast } from "@/hooks/use-broadcast";
 
 import "./global.css";
 
@@ -18,6 +19,10 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function OTAWatcher() {
   useOTAUpdate();
+  return null;
+}
+function BroadcastWatcher() {
+  useBroadcast();
   return null;
 }
 
@@ -43,6 +48,7 @@ export default function RootLayout() {
 				<AuthProvider>
 					<LocaleProvider>
 						<OTAWatcher />
+						<BroadcastWatcher />
 						<AppToast />
 						<View style={styles.appBackground}>
 				<Stack

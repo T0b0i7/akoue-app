@@ -68,6 +68,21 @@ drop policy if exists "receipts_own" on storage.objects;
 create policy "receipts_own" on storage.objects for all using (bucket_id = 'receipts' and auth.uid()::text = (storage.foldername(name))[1])
 with check (bucket_id = 'receipts' and auth.uid()::text = (storage.foldername(name))[1]);
 
+-- 4. Broadcasts (messages admin -> tous les users, offline via cache)
+create table if not exists public.broadcasts (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  body text not null,
+  active boolean default true,
+  created_at timestamptz default now()
+);
+alter table public.broadcasts enable row level security;
+drop policy if exists "broadcasts_read" on public.broadcasts;
+create policy "broadcasts_read" on public.broadcasts for select using (active = true);
+-- seul service_role peut insert/update/delete (pas de policy insert pour anon/auth)
+
+create index if not exists idx_broadcasts_active_created on public.broadcasts(active, created_at desc);
+
 -- Vue stats rapide (remplace l'agrégation client Firestore)
 create or replace view public.wallet_stats as
 select
