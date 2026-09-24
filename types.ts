@@ -173,6 +173,7 @@ export type WalletType = {
   image: any;
   uid?: string;
   created?: Date;
+  currency?: string;
 };
 
 export type CurrencyType = {

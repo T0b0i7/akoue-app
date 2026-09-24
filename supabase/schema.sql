@@ -19,8 +19,11 @@ create table if not exists public.wallets (
   amount numeric default 0,
   "totalIncome" numeric default 0,
   "totalExpenses" numeric default 0,
+  currency text default 'XOF',
   created_at timestamptz default now()
 );
+-- ajout colonne currency si table existait avant
+alter table public.wallets add column if not exists currency text default 'XOF';
 
 -- 3. Transactions
 create table if not exists public.transactions (

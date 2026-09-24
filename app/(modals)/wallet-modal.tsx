@@ -6,8 +6,9 @@ import IconPicker from "@/components/icon-picker"
 import ModalWrapper from "@/components/modal-wrapper"
 import TextInputComponent from "@/components/text-input"
 import Typo from "@/components/typo"
-import { colors, spacingX, spacingY } from "@/constants/theme"
+import { colors, radius, spacingX, spacingY } from "@/constants/theme"
 import { WALLET_ICONS, toIconString, parseIconString } from "@/constants/wallet-icons"
+import { WORLD_CURRENCIES, DEFAULT_CURRENCY } from "@/constants/currencies"
 import { useAuth } from "@/context/auth-context"
 import { useLocale } from "@/context/locale-context"
 import { createOrUpdateWallet, deleteWallet } from "@/services/wallet-service"
@@ -17,6 +18,8 @@ import { useLocalSearchParams, useRouter } from "expo-router"
 import * as Icons from "phosphor-react-native"
 import React, { useEffect, useState } from "react"
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native"
+import { Dropdown } from "react-native-element-dropdown"
+import { getNumberInput, formatNumberInput } from "@/utils/common"
 
 const WalletModal = () => {
   const { user } = useAuth()
@@ -28,14 +31,15 @@ const WalletModal = () => {
   const [iconId, setIconId] = useState("wallet")
   const [iconColor, setIconColor] = useState(WALLET_ICONS[0].bgColor)
   const [mode, setMode] = useState<"icon" | "photo">("icon")
+  const [initialAmount, setInitialAmount] = useState("")
+  const [currency, setCurrency] = useState(DEFAULT_CURRENCY)
 
   const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null)
   const router = useRouter()
 
   //retrieve data from wallte to update
-  const oldWallet: { name: string; image: string; id: string } =
-    useLocalSearchParams()
+  const oldWallet: any = useLocalSearchParams()
 
   useEffect(() => {
     if (oldWallet?.id) {
@@ -43,6 +47,8 @@ const WalletModal = () => {
         name: oldWallet?.name || "",
         image: oldWallet?.image || null,
       })
+      if (oldWallet?.currency) setCurrency(oldWallet.currency)
+      if (oldWallet?.amount) setInitialAmount(String(oldWallet.amount))
       const parsed = parseIconString(oldWallet?.image as any)
       if (parsed) {
         setIconId(parsed.id)
@@ -50,6 +56,19 @@ const WalletModal = () => {
         setMode("icon")
       } else if (oldWallet?.image) {
         setMode("photo")
+      }
+      // fetch full wallet to get currency/amount if not in params
+      if (!oldWallet?.currency || !oldWallet?.amount) {
+        (async () => {
+          try {
+            const { supabase } = await import("@/config/supabase");
+            const { data } = await supabase.from("wallets").select("currency,amount").eq("id", oldWallet.id).single();
+            if (data) {
+              if ((data as any).currency) setCurrency((data as any).currency)
+              if ((data as any).amount != null) setInitialAmount(String((data as any).amount))
+            }
+          } catch {}
+        })()
       }
     }
   }, [])
@@ -69,11 +88,14 @@ const WalletModal = () => {
     } else {
       finalImage = typeof image === "string" ? image : (image as any)?.uri ?? null
     }
+    const cleanAmount = Number(getNumberInput(initialAmount) || "0")
     const data: WalletType = {
       name,
       image: finalImage,
       uid: user?.uid,
-    }
+      amount: oldWallet?.id ? undefined : cleanAmount,
+      currency,
+    } as any
 
     if (oldWallet?.id) data.id = oldWallet?.id
 
@@ -145,6 +167,44 @@ const WalletModal = () => {
                 setWalletData({ ...wallet, name: value })
               }
             />
+          </View>
+          {/* Montant initial + Devise */}
+          <View style={styles.row}>
+            <View style={[styles.inputContainer, { flex: 1 }]}>
+              <Typo color={colors.neutral200}>Solde initial</Typo>
+              <TextInputComponent
+                placeholder="0"
+                value={formatNumberInput(initialAmount)}
+                onChangeText={(v: string) => setInitialAmount(getNumberInput(v))}
+                keyboardType="numeric"
+                editable={!oldWallet?.id}
+              />
+              {oldWallet?.id && <Typo size={11} color={colors.neutral500}>Modifiable via transactions</Typo>}
+            </View>
+            <View style={[styles.inputContainer, { flex: 1.1 }]}>
+              <Typo color={colors.neutral200}>Devise</Typo>
+              <Dropdown
+                style={styles.dropdown}
+                containerStyle={styles.dropdownList}
+                selectedTextStyle={styles.dropdownText}
+                placeholderStyle={styles.dropdownText}
+                itemTextStyle={styles.dropdownItemText}
+                activeColor={colors.neutral700}
+                data={WORLD_CURRENCIES.map((c) => ({ label: `${c.code} — ${c.name}`, value: c.code }))}
+                labelField="label"
+                valueField="value"
+                value={currency}
+                onChange={(it) => setCurrency(it.value)}
+                search
+                searchPlaceholder="Rechercher..."
+                inputSearchStyle={styles.searchInput}
+                maxHeight={320}
+              />
+            </View>
+          </View>
+          <View style={styles.currencyHint}>
+            <Icons.Info size={14} color={colors.neutral400} />
+            <Typo size={12} color={colors.neutral400}>{WORLD_CURRENCIES.find((c) => c.code === currency)?.symbol} — {WORLD_CURRENCIES.find((c) => c.code === currency)?.name}</Typo>
           </View>
           <View style={styles.inputContainer}>
             <Typo color={colors.neutral200}>{t("chooseIcon")}</Typo>
@@ -259,6 +319,25 @@ const styles = StyleSheet.create({
   inputContainer: {
     gap: spacingY._10,
   },
+  row: { flexDirection: "row", gap: 12, alignItems: "flex-start" },
+  dropdown: {
+    height: verticalScale(54),
+    borderWidth: 1,
+    borderColor: colors.neutral500,
+    borderRadius: radius._12,
+    paddingHorizontal: spacingX._12,
+    backgroundColor: colors.neutral800,
+  },
+  dropdownText: { color: colors.white, fontSize: 14 },
+  dropdownItemText: { color: colors.white, fontSize: 13 },
+  dropdownList: {
+    backgroundColor: colors.neutral800,
+    borderRadius: radius._12,
+    borderColor: colors.neutral600,
+    borderWidth: 1,
+  },
+  searchInput: { color: colors.white, borderColor: colors.neutral600 },
+  currencyHint: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: -16 },
   tabRow: {
     flexDirection: "row",
     gap: 8,

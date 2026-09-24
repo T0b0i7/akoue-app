@@ -9,6 +9,8 @@ import { StyleSheet, TouchableOpacity, View } from "react-native"
 import Animated, { FadeInDown } from "react-native-reanimated"
 import Typo from "./typo"
 import { findWalletIcon, parseIconString } from "@/constants/wallet-icons"
+import { getCurrencyInfo } from "@/constants/currencies"
+import { formatCurrency } from "@/utils/common"
 
 const WalletListItem = ({
   item,
@@ -63,7 +65,10 @@ const WalletListItem = ({
         <View style={styles.nameContainer}>
           <Typo size={16}>{item?.name}</Typo>
           <Typo size={14} color={colors.neutral400}>
-            ${item?.amount}
+            {(() => {
+              const cur = (item as any)?.currency || "XOF";
+              try { return formatCurrency(Number(item?.amount || 0), "fr-FR", cur, 0); } catch { return `${getCurrencyInfo(cur)?.symbol || cur} ${Number(item?.amount || 0).toLocaleString("fr-FR")}`; }
+            })()}
           </Typo>
         </View>
         <Icons.CaretRight
