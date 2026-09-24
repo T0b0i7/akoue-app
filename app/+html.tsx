@@ -1,5 +1,4 @@
-// @ts-ignore
-import { ScrollViewStyleReset } from "expo-router/head";
+
 import { type PropsWithChildren } from "react";
 
 export default function Root({ children }: PropsWithChildren) {
@@ -10,7 +9,6 @@ export default function Root({ children }: PropsWithChildren) {
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <link rel="preload" as="image" href="/images/splash-icon.png" />
-        <ScrollViewStyleReset />
         <style dangerouslySetInnerHTML={{
           __html: `
           #splash{position:fixed;inset:0;background:#171717;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.35s ease}
