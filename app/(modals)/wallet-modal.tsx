@@ -2,10 +2,12 @@ import BackButton from "@/components/back-button"
 import ButtonComponent from "@/components/button"
 import HeaderComponent from "@/components/header"
 import ImageUpload from "@/components/image-upload"
+import IconPicker from "@/components/icon-picker"
 import ModalWrapper from "@/components/modal-wrapper"
 import TextInputComponent from "@/components/text-input"
 import Typo from "@/components/typo"
 import { colors, spacingX, spacingY } from "@/constants/theme"
+import { WALLET_ICONS, toIconString, parseIconString } from "@/constants/wallet-icons"
 import { useAuth } from "@/context/auth-context"
 import { useLocale } from "@/context/locale-context"
 import { createOrUpdateWallet, deleteWallet } from "@/services/wallet-service"
@@ -14,7 +16,7 @@ import { scale, verticalScale } from "@/utils/styling"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import * as Icons from "phosphor-react-native"
 import React, { useEffect, useState } from "react"
-import { Alert, ScrollView, StyleSheet, View } from "react-native"
+import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native"
 
 const WalletModal = () => {
   const { user } = useAuth()
@@ -23,6 +25,9 @@ const WalletModal = () => {
     name: "",
     image: null,
   })
+  const [iconId, setIconId] = useState("wallet")
+  const [iconColor, setIconColor] = useState(WALLET_ICONS[0].bgColor)
+  const [mode, setMode] = useState<"icon" | "photo">("icon")
 
   const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null)
@@ -38,6 +43,14 @@ const WalletModal = () => {
         name: oldWallet?.name || "",
         image: oldWallet?.image || null,
       })
+      const parsed = parseIconString(oldWallet?.image as any)
+      if (parsed) {
+        setIconId(parsed.id)
+        setIconColor(parsed.color)
+        setMode("icon")
+      } else if (oldWallet?.image) {
+        setMode("photo")
+      }
     }
   }, [])
 
@@ -50,7 +63,12 @@ const WalletModal = () => {
       Alert.alert(t("wallet"), msg)
       return
     }
-    const finalImage = typeof image === "string" ? image : (image as any)?.uri ?? null
+    let finalImage: string | null = null
+    if (mode === "icon") {
+      finalImage = toIconString(iconId, iconColor)
+    } else {
+      finalImage = typeof image === "string" ? image : (image as any)?.uri ?? null
+    }
     const data: WalletType = {
       name,
       image: finalImage,
@@ -130,15 +148,26 @@ const WalletModal = () => {
           </View>
           <View style={styles.inputContainer}>
             <Typo color={colors.neutral200}>{t("chooseIcon")}</Typo>
-            {/* Image input */}
-            <ImageUpload
-              file={wallet.image}
-              onSelect={(file: any) =>
-                setWalletData({ ...wallet, image: file })
-              }
-              onClear={() => setWalletData({ ...wallet, image: null })}
-              placeholder={t("addImage")}
-            />
+            <View style={styles.tabRow}>
+              <Pressable onPress={() => setMode("icon")} style={[styles.tab, mode === "icon" && styles.tabActive]}>
+                <Icons.Smiley size={16} color={mode === "icon" ? colors.white : colors.neutral400} weight="fill" />
+                <Typo size={13} color={mode === "icon" ? colors.white : colors.neutral400} fontWeight="700">Icônes</Typo>
+              </Pressable>
+              <Pressable onPress={() => setMode("photo")} style={[styles.tab, mode === "photo" && styles.tabActive]}>
+                <Icons.Image size={16} color={mode === "photo" ? colors.white : colors.neutral400} weight="fill" />
+                <Typo size={13} color={mode === "photo" ? colors.white : colors.neutral400} fontWeight="700">Photo</Typo>
+              </Pressable>
+            </View>
+            {mode === "icon" ? (
+              <IconPicker selectedId={iconId} selectedColor={iconColor} onSelectId={setIconId} onSelectColor={setIconColor} />
+            ) : (
+              <ImageUpload
+                file={wallet.image}
+                onSelect={(file: any) => setWalletData({ ...wallet, image: file })}
+                onClear={() => setWalletData({ ...wallet, image: null })}
+                placeholder={t("addImage")}
+              />
+            )}
           </View>
           {feedback && (
             <View style={[styles.feedback, { backgroundColor: feedback.type === "success" ? "#16a34a20" : "#ef444420", borderColor: feedback.type === "success" ? "#16a34a" : "#ef4444" }]}>
@@ -229,6 +258,25 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     gap: spacingY._10,
+  },
+  tabRow: {
+    flexDirection: "row",
+    gap: 8,
+    backgroundColor: colors.neutral800,
+    padding: 4,
+    borderRadius: 12,
+    alignSelf: "flex-start",
+  },
+  tab: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  tabActive: {
+    backgroundColor: colors.neutral700,
   },
   feedback: { borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 4 },
 })
