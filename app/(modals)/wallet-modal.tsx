@@ -106,13 +106,25 @@ const WalletModal = () => {
     if (result.success) {
       setFeedback({ type: "success", msg: oldWallet?.id ? "Portefeuille mis à jour ✓" : "Portefeuille créé ✓" })
       Alert.alert(t("wallet"), oldWallet?.id ? "Portefeuille mis à jour" : "Portefeuille créé")
-      setTimeout(() => router.back(), 800)
+      setTimeout(() => closeModal(), 700)
     } else {
       const msg = result.msg || "Erreur"
       setFeedback({ type: "error", msg })
       Alert.alert(t("wallet"), msg)
     }
   }
+
+  const closeModal = () => {
+    try {
+      // @ts-ignore
+      if ((router as any).dismiss) (router as any).dismiss();
+      else if (router.canGoBack()) router.back();
+      else router.replace("/(tabs)/wallet" as any);
+    } catch {
+      try { router.back(); } catch { router.replace("/(tabs)/wallet" as any); }
+    }
+    setTimeout(() => { try { if (router.canGoBack()) router.back(); } catch {} }, 400);
+  };
 
   const OnDelete = async () => {
     if (!oldWallet?.id) return
@@ -122,7 +134,7 @@ const WalletModal = () => {
     if (result.success) {
       setFeedback({ type: "success", msg: t("walletDeleted") })
       Alert.alert(t("wallet"), t("walletDeleted"))
-      setTimeout(() => router.back(), 700)
+      setTimeout(() => closeModal(), 600)
     } else {
       const msg = result.msg || "Erreur"
       setFeedback({ type: "error", msg })

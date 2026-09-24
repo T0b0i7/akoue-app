@@ -13,10 +13,18 @@ const BackButton = ({
   const router = useRouter();
 
   const handleBack = () => {
-    router.setParams({});
+    try {
+      // @ts-ignore dismiss existe en expo-router 3+
+      if ((router as any).dismiss) (router as any).dismiss();
+      else if (router.canGoBack()) router.back();
+      else router.replace("/(tabs)/wallet" as any);
+    } catch {
+      try { router.back(); } catch { router.replace("/(tabs)/wallet" as any); }
+    }
+    // fallback si dismiss n'a pas fermé (web)
     setTimeout(() => {
-      router.back();
-    }, 50);
+      try { if (router.canGoBack()) router.back(); } catch {}
+    }, 300);
   };
 
   return (
