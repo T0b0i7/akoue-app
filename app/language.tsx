@@ -6,6 +6,7 @@ import * as Icons from "phosphor-react-native"
 import React from "react"
 import { StyleSheet, TouchableOpacity, View } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
+import { Image } from "expo-image"
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated"
 import Typo from "@/components/typo"
 
@@ -52,8 +53,8 @@ export default function LanguageSelect() {
           <Animated.View entering={FadeInDown.springify().damping(18).delay(220)} style={styles.outerShell}>
             <TouchableOpacity activeOpacity={0.88} onPress={() => choose("fr")} style={styles.innerCore}>
               <View style={styles.cardTop}>
-                <View style={[styles.flagCircle, { backgroundColor: "#fff", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }]}>
-                  <Typo size={28} style={{ lineHeight: 32 }}>🇫🇷</Typo>
+                <View style={[styles.flagCircle, { backgroundColor: "#fff", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", overflow: "hidden" }]}>
+                  <Image source={{ uri: "https://flagcdn.com/w80/fr.png" }} style={{ width: 48, height: 48 }} contentFit="cover" />
                 </View>
                 <View style={styles.cardText}>
                   <Typo size={18} fontWeight="700">Français</Typo>
@@ -75,8 +76,8 @@ export default function LanguageSelect() {
           <Animated.View entering={FadeInDown.springify().damping(18).delay(340)} style={styles.outerShell}>
             <TouchableOpacity activeOpacity={0.88} onPress={() => choose("en")} style={styles.innerCore}>
               <View style={styles.cardTop}>
-                <View style={[styles.flagCircle, { backgroundColor: "#fff", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }]}>
-                  <Typo size={28} style={{ lineHeight: 32 }}>🇺🇸</Typo>
+                <View style={[styles.flagCircle, { backgroundColor: "#fff", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)", overflow: "hidden" }]}>
+                  <Image source={{ uri: "https://flagcdn.com/w80/us.png" }} style={{ width: 48, height: 48 }} contentFit="cover" />
                 </View>
                 <View style={styles.cardText}>
                   <Typo size={18} fontWeight="700">English</Typo>
