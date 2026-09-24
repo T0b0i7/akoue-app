@@ -13,6 +13,10 @@ import { StyleSheet, TouchableOpacity, View } from "react-native"
 import Animated, { FadeInDown } from "react-native-reanimated"
 import LoadingCompenent from "./loading"
 import Typo from "./typo"
+import { useSupabaseWallets } from "@/hooks/use-supabase-data"
+import { useAuth } from "@/context/auth-context"
+import { getCurrencyInfo } from "@/constants/currencies"
+import { formatCurrency } from "@/utils/common"
 
 export const TransactionList = ({
   data,
@@ -86,11 +90,15 @@ const TransactionItem = ({
   index,
   handleClick,
 }: TransactionItemProps) => {
+  const { user } = useAuth()
+  const { data: wallets } = useSupabaseWallets(user?.uid)
   let category =
     item?.type === "income"
       ? incomeCategory
       : (expenseCategories[item?.category as string] || expenseCategories.others)
   const IconComponent = category?.icon || expenseCategories.others.icon
+  const walletCur = (wallets.find((w: any) => w.id === (item as any).walletId)?.currency || "XOF") as string
+  const curInfo = getCurrencyInfo(walletCur)
 
   //format transaction date
   const date = (() => {
@@ -127,11 +135,20 @@ const TransactionItem = ({
         </View>
         <View style={styles.amountDate}>
           <Typo
-            size={17}
-            fontWeight={"500"}
+            size={15}
+            fontWeight={"600"}
             color={item?.type === "income" ? colors.green : colors.rose}
+            textProps={{ numberOfLines: 1 } as any}
           >
-            {`${item.type === "income" ? "+ $" : "- $"}${item.amount}`}
+            {(() => {
+              try {
+                const sign = item.type === "income" ? "+ " : "- ";
+                return sign + formatCurrency(Number(item.amount), "fr-FR", walletCur, 0);
+              } catch {
+                const sign = item.type === "income" ? "+ " : "- ";
+                return sign + `${curInfo?.symbol || walletCur} ${Number(item.amount).toLocaleString("fr-FR")}`;
+              }
+            })()}
           </Typo>
           <Typo size={13} color={colors.neutral400}>
             {date}

@@ -228,10 +228,12 @@ const TransactionModal = () => {
               placeholderStyle={styles.dropdownPlaceholder}
               selectedTextStyle={styles.dropDownSelectedText}
               iconStyle={styles.dropDownIcon}
-              data={wallets?.map((wallet) => ({
-                label: `${wallet?.name} ($ ${wallet.amount})`,
-                value: wallet?.id,
-              }))}
+              data={wallets?.map((wallet) => {
+                const cur = (wallet as any)?.currency || "XOF";
+                const sym = (() => { try { const { getCurrencyInfo } = require("@/constants/currencies"); return getCurrencyInfo(cur)?.symbol || cur; } catch { return cur; } })();
+                const amt = Number(wallet.amount || 0).toLocaleString("fr-FR");
+                return { label: `${wallet?.name} (${sym} ${amt})`, value: wallet?.id };
+              })}
               maxHeight={300}
               labelField="label"
               valueField="value"
