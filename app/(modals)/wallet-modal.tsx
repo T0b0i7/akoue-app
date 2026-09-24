@@ -11,6 +11,7 @@ import { WALLET_ICONS, toIconString, parseIconString } from "@/constants/wallet-
 import { WORLD_CURRENCIES, DEFAULT_CURRENCY } from "@/constants/currencies"
 import { useAuth } from "@/context/auth-context"
 import { useLocale } from "@/context/locale-context"
+import { useToast } from "@/context/toast-context"
 import { createOrUpdateWallet, deleteWallet } from "@/services/wallet-service"
 import { WalletType } from "@/types"
 import { scale, verticalScale } from "@/utils/styling"
@@ -24,6 +25,7 @@ import { getNumberInput, formatNumberInput } from "@/utils/common"
 const WalletModal = () => {
   const { user } = useAuth()
   const { t } = useLocale()
+  const { showToast } = useToast()
   const [wallet, setWalletData] = useState<WalletType>({
     name: "",
     image: null,
@@ -104,12 +106,15 @@ const WalletModal = () => {
     const result = await createOrUpdateWallet(data)
     setLoading(false)
     if (result.success) {
-      setFeedback({ type: "success", msg: oldWallet?.id ? "Portefeuille mis à jour ✓" : "Portefeuille créé ✓" })
-      Alert.alert(t("wallet"), oldWallet?.id ? "Portefeuille mis à jour" : "Portefeuille créé")
+      const isEdit = !!oldWallet?.id
+      const msg = isEdit ? `Portefeuille ${name} mis à jour ✏️` : `Portefeuille ${name} créé • ${cleanAmount ? `${formatNumberInput(String(cleanAmount))} ${currency} 💼` : "prêt"}`;
+      setFeedback({ type: "success", msg })
+      showToast("success", isEdit ? "Portefeuille mis à jour" : "Portefeuille créé", msg)
       setTimeout(() => closeModal(), 700)
     } else {
       const msg = result.msg || "Erreur"
       setFeedback({ type: "error", msg })
+      showToast("error", "Erreur", msg)
       Alert.alert(t("wallet"), msg)
     }
   }
@@ -132,11 +137,12 @@ const WalletModal = () => {
     setLoading(false)
     if (result.success) {
       setFeedback({ type: "success", msg: t("walletDeleted") })
-      Alert.alert(t("wallet"), t("walletDeleted"))
+      showToast("success", "Portefeuille supprimé", `${wallet.name || oldWallet?.name || "Portefeuille"} supprimé 🗑️`)
       setTimeout(() => closeModal(), 600)
     } else {
       const msg = result.msg || "Erreur"
       setFeedback({ type: "error", msg })
+      showToast("error", "Erreur", msg)
       Alert.alert(t("wallet"), msg)
     }
   }

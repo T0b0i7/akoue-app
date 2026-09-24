@@ -9,6 +9,7 @@ import { getExpenseCategories, getTransactionTypes } from "@/constants/data"
 import { colors, radius, spacingX, spacingY } from "@/constants/theme"
 import { useAuth } from "@/context/auth-context"
 import { useLocale } from "@/context/locale-context"
+import { useToast } from "@/context/toast-context"
 import { useSupabaseWallets } from "@/hooks/use-supabase-data"
 import {
   createOrUpdateTransaction,
@@ -34,6 +35,7 @@ import { Dropdown } from "react-native-element-dropdown"
 const TransactionModal = () => {
   const { user } = useAuth()
   const { t } = useLocale()
+  const { showToast } = useToast()
   const [transaction, setTransactionData] = useState<TransactionType>({
     type: "expense",
     amount: 0,
@@ -112,12 +114,19 @@ const TransactionModal = () => {
     const result = await createOrUpdateTransaction(transactionData)
     setLoading(false)
     if (result.success) {
+      const isEdit = !!oldTransaction?.id
+      const walletName = wallets.find((w:any)=>w.id===walletId)?.name || "portefeuille"
+      const msg = isEdit ? `${type === "income" ? "Revenu" : "Dépense"} mise à jour • ${amount} sur ${walletName} ✏️` : `${type === "income" ? "💰 Revenu" : "💸 Dépense"} de ${amount} ajoutée sur ${walletName} • ${description || category || ""}`.trim()
       setFeedback({ type: "success", msg: t("transactionAdded") })
-      Alert.alert(t("transaction"), t("transactionAdded"))
-      setTimeout(() => router.back(), 800)
+      showToast("success", isEdit ? "Transaction mise à jour" : "Transaction ajoutée", msg)
+      setTimeout(() => {
+        try { (router as any).dismiss?.(); } catch {}
+        setTimeout(() => { try { router.replace("/(tabs)" as any); } catch { router.back(); } }, 100)
+      }, 700)
     } else {
       const msg = result.msg || "Erreur"
       setFeedback({ type: "error", msg })
+      showToast("error", "Erreur", msg)
       Alert.alert(t("transaction"), msg)
     }
   }
@@ -132,11 +141,15 @@ const TransactionModal = () => {
     setLoading(false)
     if (result!.success) {
       setFeedback({ type: "success", msg: t("walletDeleted") })
-      Alert.alert(t("wallet"), t("walletDeleted"))
-      setTimeout(() => router.back(), 700)
+      showToast("success", "Transaction supprimée", "Transaction supprimée 🗑️")
+      setTimeout(() => {
+        try { (router as any).dismiss?.(); } catch {}
+        setTimeout(() => { try { router.replace("/(tabs)" as any); } catch { router.back(); } }, 100)
+      }, 600)
     } else {
       const msg = result!.msg || "Erreur"
       setFeedback({ type: "error", msg })
+      showToast("error", "Erreur", msg)
       Alert.alert(t("wallet"), msg)
     }
   }

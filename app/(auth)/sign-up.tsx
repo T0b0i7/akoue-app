@@ -45,7 +45,7 @@ const SignUp = () => {
         showToast("error", t("error"), res.msg || t("somethingWentWrong"))
         Alert.alert(t("error"), res.msg || t("somethingWentWrong"))
       } else {
-        showToast("success", "Compte créé", "Bienvenue sur Akouè 👋")
+        showToast("success", `Bienvenue ${parsed.name} 🎉`, "Compte créé avec succès")
         router.replace("/(tabs)" as any)
       }
     } catch (err) {

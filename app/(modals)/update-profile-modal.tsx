@@ -7,6 +7,7 @@ import Typo from "@/components/typo"
 import { colors, radius, spacingX, spacingY } from "@/constants/theme"
 import { useAuth } from "@/context/auth-context"
 import { useLocale } from "@/context/locale-context"
+import { useToast } from "@/context/toast-context"
 import { getProfileImage } from "@/services/images-service"
 import { updateUser } from "@/services/user-service"
 import { UserDataType } from "@/types"
@@ -27,6 +28,7 @@ import {
 const EditProfileModal = () => {
   const { user, updateUserData } = useAuth()
   const { t } = useLocale()
+  const { showToast } = useToast()
   const router = useRouter()
   const [userData, setUserData] = useState<UserDataType>({
     name: "",
@@ -62,11 +64,12 @@ const EditProfileModal = () => {
     if (res.success) {
       await updateUserData(user?.uid as string)
       setFeedback({ type: "success", msg: "Profil mis à jour ✓" })
-      Alert.alert(t("success"), "Profil mis à jour")
-      setTimeout(() => router.back(), 900)
+      showToast("success", "Profil mis à jour", `Bien joué ${userData.name} ✨`)
+      setTimeout(() => { try { (router as any).dismiss?.(); } catch {}; setTimeout(() => { try { router.replace("/(tabs)/more" as any); } catch { router.back(); } }, 100); }, 800)
     } else {
       const msg = res.msg || t("updateFailed")
       setFeedback({ type: "error", msg })
+      showToast("error", "Erreur", msg)
       Alert.alert(t("error"), msg)
     }
   }

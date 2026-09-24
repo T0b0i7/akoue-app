@@ -36,7 +36,8 @@ const Login = () => {
         showToast("error", t("error"), res.msg || t("somethingWentWrong"))
         Alert.alert(t("error"), res.msg || t("somethingWentWrong"))
       } else {
-        showToast("success", "Connexion réussie", "Bienvenue 👋")
+        const name = parsed.email.split("@")[0]
+        showToast("success", `Ravi de te revoir, ${name} 👋`, "Connexion réussie")
         router.replace("/(tabs)" as any)
       }
     } catch (err) {
