@@ -10,23 +10,29 @@ const [shortDimension, longDimension] =
 const guidelineBaseWidth = 375;
 const guidelineBaseHeight = 812;
 
-export const scale = (size: number) =>
-  Math.round(
+export const scale = (size: number) => {
+  if (!shortDimension || shortDimension === 0) return size;
+  return Math.round(
     PixelRatio.roundToNearestPixel(
       (shortDimension / guidelineBaseWidth) * (size as number)
     )
   );
+};
 
-export const verticalScale = (size: number) =>
-  Math.round(
+export const verticalScale = (size: number) => {
+  if (!longDimension || longDimension === 0) return size;
+  return Math.round(
     PixelRatio.roundToNearestPixel(
       (longDimension / guidelineBaseHeight) * (size as number)
     )
   );
+};
 
-export const horizontalScale = (size: number) =>
-  Math.round(
+export const horizontalScale = (size: number) => {
+  if (!shortDimension || shortDimension === 0) return size;
+  return Math.round(
     PixelRatio.roundToNearestPixel(
       (shortDimension / guidelineBaseWidth) * (size as number)
     )
   );
+};
