@@ -7,6 +7,7 @@ import Typo from "@/components/typo"
 import { colors, spacingX, spacingY } from "@/constants/theme"
 import { useAuth } from "@/context/auth-context"
 import { useLocale } from "@/context/locale-context"
+import { useToast } from "@/context/toast-context"
 import { scale, verticalScale } from "@/utils/styling"
 import { useRouter } from "expo-router"
 import * as Icons from "phosphor-react-native"
@@ -16,6 +17,7 @@ import { Alert, ScrollView, StyleSheet, View } from "react-native"
 const ChangePasswordModal = () => {
   const { updatePassword } = useAuth()
   const { t } = useLocale()
+  const { showToast } = useToast()
   const router = useRouter()
   const [passwords, setPasswords] = useState({
     oldPassword: "",
@@ -50,11 +52,11 @@ const ChangePasswordModal = () => {
 
     if (res.success) {
       setFeedback({ type: "success", msg: t("passwordUpdated") })
-      Alert.alert(t("success"), t("passwordUpdated"))
-      setTimeout(() => router.back(), 900)
+      showToast("success", "Mot de passe mis à jour", "Sécurité renforcée 🔒")
+      setTimeout(() => { try { (router as any).dismiss?.(); } catch {}; setTimeout(() => { try { router.replace("/(tabs)/more" as any); } catch { router.back(); } }, 100); }, 800)
     } else {
       const msg = res.msg || t("failedUpdatePassword")
-      setFeedback({ type: "error", msg }); Alert.alert(t("error"), msg)
+      setFeedback({ type: "error", msg }); showToast("error", "Erreur", msg); Alert.alert(t("error"), msg)
     }
   }
 

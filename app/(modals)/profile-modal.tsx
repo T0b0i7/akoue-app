@@ -44,9 +44,10 @@ const ProfileModal = () => {
   ]
 
   const handleLogout = async () => {
+    const name = user?.name || user?.email?.split("@")[0] || ""
     const res = await logout()
     if (res.success) {
-      showToast("success", "Déconnexion réussie", "À bientôt 👋")
+      showToast("success", "Déconnexion réussie", name ? `À bientôt ${name} 👋` : "À bientôt 👋")
       if (Platform.OS === "web") {
         setTimeout(() => { window.location.href = "/welcome" }, 600)
         return
