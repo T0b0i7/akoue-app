@@ -6,7 +6,7 @@ import { colors, radius, spacingX, spacingY } from "@/constants/theme"
 import { OptionType } from "@/types"
 import { verticalScale } from "@/utils/styling"
 import * as Icons from "phosphor-react-native"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { Alert, StyleSheet, Switch, TouchableOpacity, View } from "react-native"
 import { useRouter } from "expo-router"
 import Animated, { FadeInDown } from "react-native-reanimated"
@@ -16,6 +16,8 @@ import { supabase } from "@/config/supabase"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import ConfirmDialog from "@/components/confirm-dialog"
 import { useToast } from "@/context/toast-context"
+import { WORLD_CURRENCIES } from "@/constants/currencies"
+import { Dropdown } from "react-native-element-dropdown"
 
 const SettingsModal = () => {
   const { t, language, setLanguage } = useLocale()
@@ -25,6 +27,12 @@ const SettingsModal = () => {
   const isFR = language === "fr"
   const [confirm, setConfirm] = useState<"data" | "account" | null>(null)
   const [loading, setLoading] = useState(false)
+  const [displayCurrency, setDisplayCurrency] = useState("XOF")
+  useEffect(() => { AsyncStorage.getItem("display_currency").then(v => { if (v) setDisplayCurrency(v); }); }, [])
+  const handleDisplayCurrencyChange = async (code: string) => {
+    setDisplayCurrency(code)
+    await AsyncStorage.setItem("display_currency", code)
+  }
 
   const handleNotificationPress = () => {
     router.push("/(modals)/notifications-modal" as any);
@@ -174,6 +182,38 @@ const SettingsModal = () => {
           </View>
         </View>
 
+        {/* Affichage */}
+        <View style={[styles.cardContainer, { marginTop: 16 }]}>
+          <View style={{ padding: 12, gap: 10 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Icons.Eye size={16} color={colors.primary} weight="fill" />
+              <Typo size={13} fontWeight="700" color={colors.white}>Affichage</Typo>
+            </View>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <View style={[styles.listIcon, { backgroundColor: "#0ea5e9", width: 36, height: 36 }]}>
+                  <Icons.CurrencyDollar size={18} color="#fff" weight="fill" />
+                </View>
+                <Typo size={14} fontWeight="600" color={colors.white}>Devise d'affichage</Typo>
+              </View>
+              <Dropdown
+                style={{ minWidth: 110, height: 36, backgroundColor: colors.neutral700, borderRadius: 10, paddingHorizontal: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }}
+                containerStyle={{ backgroundColor: colors.neutral800, borderRadius: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }}
+                selectedTextStyle={{ color: colors.white, fontSize: 13, fontWeight: "600" }}
+                itemTextStyle={{ color: colors.white, fontSize: 12 }}
+                activeColor={colors.neutral700}
+                data={WORLD_CURRENCIES.slice(0, 20).map(c => ({ label: `${c.code} ${c.symbol}`, value: c.code }))}
+                labelField="label"
+                valueField="value"
+                value={displayCurrency}
+                onChange={item => handleDisplayCurrencyChange(item.value)}
+                maxHeight={260}
+              />
+            </View>
+            <Typo size={11} color={colors.neutral500}>Total Balance converti en temps réel dans cette devise</Typo>
+          </View>
+        </View>
+
         {/* Zone danger */}
         <View style={[styles.cardContainer, { marginTop: 16, borderWidth: 1, borderColor: "rgba(239,68,68,0.25)" }]}>
           <View style={{ padding: 12, gap: 8 }}>
@@ -254,7 +294,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacingX._10,
-    paddingVertical: spacingY._8,
+    paddingVertical: spacingY._10,
   },
   listIcon: {
     height: verticalScale(44),
