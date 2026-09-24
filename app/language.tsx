@@ -52,9 +52,9 @@ export default function LanguageSelect() {
           <Animated.View entering={FadeInDown.springify().damping(18).delay(220)} style={styles.outerShell}>
             <TouchableOpacity activeOpacity={0.88} onPress={() => choose("fr")} style={styles.innerCore}>
               <View style={styles.cardTop}>
-                <LinearGradient colors={["#0ea5e9", "#0284c7"]} style={styles.flagCircle}>
-                  <Typo size={20} fontWeight="800" color="#fff">FR</Typo>
-                </LinearGradient>
+                <View style={[styles.flagCircle, { backgroundColor: "#fff", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }]}>
+                  <Typo size={28} style={{ lineHeight: 32 }}>🇫🇷</Typo>
+                </View>
                 <View style={styles.cardText}>
                   <Typo size={18} fontWeight="700">Français</Typo>
                   <Typo size={12} color={colors.neutral400}>Continuer en français</Typo>
@@ -75,9 +75,9 @@ export default function LanguageSelect() {
           <Animated.View entering={FadeInDown.springify().damping(18).delay(340)} style={styles.outerShell}>
             <TouchableOpacity activeOpacity={0.88} onPress={() => choose("en")} style={styles.innerCore}>
               <View style={styles.cardTop}>
-                <LinearGradient colors={["#7A4DFF", "#5D3AE0"]} style={styles.flagCircle}>
-                  <Typo size={20} fontWeight="800" color="#fff">EN</Typo>
-                </LinearGradient>
+                <View style={[styles.flagCircle, { backgroundColor: "#fff", borderWidth: 1, borderColor: "rgba(0,0,0,0.08)" }]}>
+                  <Typo size={28} style={{ lineHeight: 32 }}>🇺🇸</Typo>
+                </View>
                 <View style={styles.cardText}>
                   <Typo size={18} fontWeight="700">English</Typo>
                   <Typo size={12} color={colors.neutral400}>Continue in English</Typo>
