@@ -190,7 +190,7 @@ const WalletModal = () => {
                 placeholderStyle={styles.dropdownText}
                 itemTextStyle={styles.dropdownItemText}
                 activeColor={colors.neutral700}
-                data={WORLD_CURRENCIES.map((c) => ({ label: `${c.code} — ${c.name}`, value: c.code }))}
+                data={WORLD_CURRENCIES.map((c) => ({ label: `${c.code} ${c.name}`, value: c.code }))}
                 labelField="label"
                 valueField="value"
                 value={currency}
@@ -204,7 +204,7 @@ const WalletModal = () => {
           </View>
           <View style={styles.currencyHint}>
             <Icons.Info size={14} color={colors.neutral400} />
-            <Typo size={12} color={colors.neutral400}>{WORLD_CURRENCIES.find((c) => c.code === currency)?.symbol} — {WORLD_CURRENCIES.find((c) => c.code === currency)?.name}</Typo>
+            <Typo size={12} color={colors.neutral400}>{WORLD_CURRENCIES.find((c) => c.code === currency)?.symbol} {WORLD_CURRENCIES.find((c) => c.code === currency)?.name}</Typo>
           </View>
           <View style={styles.inputContainer}>
             <Typo color={colors.neutral200}>{t("chooseIcon")}</Typo>
