@@ -88,8 +88,16 @@ export const createOrUpdateWallet = async (walletData: Partial<WalletType>): Pro
       } catch {}
       return { success: true, data: { ...data, id: data.id } };
     } else {
-      const upd: any = { name: walletData.name, image: imageUrl, amount: walletData.amount, totalIncome: walletData.totalIncome, totalExpenses: walletData.totalExpenses };
+      const upd: any = { name: walletData.name, image: imageUrl };
+      if (walletData.amount !== undefined) upd.amount = walletData.amount;
       if ((walletData as any).currency) upd.currency = (walletData as any).currency;
+      // ne pas écraser totalIncome/totalExpenses si non fournis
+      if (walletData.totalIncome !== undefined) upd.totalIncome = walletData.totalIncome;
+      if (walletData.totalExpenses !== undefined) upd.totalExpenses = walletData.totalExpenses;
+      // si amount modifié manuellement, ajuste totalIncome pour garder cohérence si besoin
+      if (walletData.amount !== undefined && walletData.totalIncome === undefined && walletData.totalExpenses === undefined) {
+        // on laisse totalIncome tel quel, seul amount change (correction solde)
+      }
       const { data, error } = await supabase
         .from("wallets")
         .update(upd)
