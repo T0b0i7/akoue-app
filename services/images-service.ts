@@ -48,6 +48,7 @@ export const getProfileImage = (file: any) => {
   if (file === "male") return require("../public/images/defaultAvatar.png");
   if (file === "female") return require("../public/images/profile.png");
   if (file && typeof file === "string" && file.startsWith("http")) return { uri: file };
+  if (file && typeof file === "string" && file.startsWith("icon:")) return null;
   if (file && typeof file === "string") return file;
   if (file && typeof file === "object") return file.uri;
   return require("../public/images/defaultAvatar.png");
@@ -57,4 +58,12 @@ export const getFilePath = (file: any) => {
   if (file && typeof file === "string") return file;
   if (file && typeof file === "object") return file.uri;
   return null;
+};
+
+export const isIconString = (value: any) => typeof value === "string" && value.startsWith("icon:");
+
+export const getWalletIconData = (value: any) => {
+  if (!isIconString(value)) return null;
+  const [, id, color] = (value as string).split(":");
+  return { id: id || "wallet", color: color || "#7A4DFF" };
 };

@@ -8,6 +8,7 @@ import React from "react"
 import { StyleSheet, TouchableOpacity, View } from "react-native"
 import Animated, { FadeInDown } from "react-native-reanimated"
 import Typo from "./typo"
+import { findWalletIcon, parseIconString } from "@/constants/wallet-icons"
 
 const WalletListItem = ({
   item,
@@ -37,14 +38,28 @@ const WalletListItem = ({
         .damping(50)}
     >
       <TouchableOpacity style={styles.container} onPress={openWallet}>
-        <View style={styles.imageContainer}>
-          <Image
-            style={{ flex: 1 }}
-            source={item?.image}
-            contentFit="cover"
-            transition={100}
-          />
-        </View>
+        {(() => {
+          const parsed = parseIconString(item?.image as any);
+          if (parsed) {
+            const def = findWalletIcon(parsed.id);
+            const IconComp: any = def.icon;
+            return (
+              <View style={[styles.imageContainer, { backgroundColor: parsed.color, borderColor: parsed.color, alignItems: "center", justifyContent: "center" }]}>
+                <IconComp size={verticalScale(22)} color={colors.white} weight="fill" />
+              </View>
+            );
+          }
+          return (
+            <View style={styles.imageContainer}>
+              <Image
+                style={{ flex: 1 }}
+                source={item?.image as any}
+                contentFit="cover"
+                transition={100}
+              />
+            </View>
+          );
+        })()}
         <View style={styles.nameContainer}>
           <Typo size={16}>{item?.name}</Typo>
           <Typo size={14} color={colors.neutral400}>
