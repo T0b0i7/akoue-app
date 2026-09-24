@@ -62,27 +62,21 @@ export function useBroadcast() {
       const unseen = broadcasts.filter((b) => !seen.includes(b.id));
       if (!unseen.length) return;
 
-      // affiche le plus récent non vu
+      // affiche le plus récent non vu — Alert bien visible + toast
       const latest = unseen[0];
-      if (silent) {
-        showToast("success", latest.title, latest.body);
-      } else {
+      showToast("success", latest.title, latest.body);
+      // Alert plus visible, surtout sur web
+      setTimeout(() => {
         Alert.alert(latest.title, latest.body, [
           { text: "OK", onPress: () => markSeen(latest.id) },
           { text: "Plus tard", style: "cancel" },
         ]);
-        // marque comme vu après affichage toast aussi
-        await markSeen(latest.id);
-        return;
-      }
-      // en silent on marque comme vu pour ne pas re-spammer, mais on laisse Alert pour le prochain focus si besoin
-      await markSeen(latest.id);
+      }, silent ? 800 : 0);
 
-      // si plusieurs non vus, on les notifie en toast séquentiel
+      // si plusieurs non vus, toast séquentiel (sans marquer tout de suite pour re-essai)
       if (unseen.length > 1) {
         for (let i = 1; i < unseen.length; i++) {
           setTimeout(() => showToast("success", unseen[i].title, unseen[i].body), i * 4000);
-          await markSeen(unseen[i].id);
         }
       }
     } catch {}
@@ -90,8 +84,8 @@ export function useBroadcast() {
   }, [showToast]);
 
   useEffect(() => {
-    // premier fetch 4s après lancement (laisse OTA + auth se faire)
-    const t = setTimeout(() => fetchAndShow(true), 4000);
+    // premier fetch 2.5s après lancement pour test rapide
+    const t = setTimeout(() => fetchAndShow(true), 2500);
     return () => clearTimeout(t);
   }, [fetchAndShow]);
 
