@@ -115,10 +115,11 @@ export default function CustomTabs({ state, descriptors, navigation }: any) {
 const styles = StyleSheet.create({
 	tabBarShadow: {
 		position: "absolute",
-		bottom: Platform.OS === "ios" ? verticalScale(20) : verticalScale(20),
-		left: scale(20),
-		right: scale(20),
-		height: verticalScale(75),
+		bottom: 0,
+		left: scale(12),
+		right: scale(12),
+		height: verticalScale(72),
+		paddingBottom: Platform.OS === "ios" ? verticalScale(10) : 0,
 		shadowColor: "#000",
 		shadowOffset: {
 			width: 0,
