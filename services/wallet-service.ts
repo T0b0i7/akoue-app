@@ -51,6 +51,28 @@ async function cacheWalletLocal(wallet: any, uid: string) {
   } catch {}
 }
 
+// Garantit une session Supabase valide AVANT toute écriture en base.
+// Sans ça, auth.uid() = NULL → RLS bloque tout INSERT/UPDATE.
+export async function ensureValidSession(): Promise<{ uid: string | null; error?: string }> {
+  try {
+    // 1) Session actuelle
+    let { data: { session } } = await supabase.auth.getSession();
+    if (session?.user?.id) return { uid: session.user.id };
+
+    // 2) Tentative de refresh (token expiré)
+    const { data: { session: refreshed }, error: refreshErr } = await supabase.auth.refreshSession();
+    if (refreshed?.user?.id) return { uid: refreshed.user.id };
+
+    // 3) getUser (parfois valide même si getSession échoue)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id) return { uid: user.id };
+
+    return { uid: null, error: "Votre session a expiré. Reconnectez-vous pour sauvegarder vos données." };
+  } catch {
+    return { uid: null, error: "Impossible de vérifier votre session. Reconnectez-vous." };
+  }
+}
+
 export const createOrUpdateWallet = async (walletData: Partial<WalletType>): Promise<ResponseType> => {
   try {
     // validation stricte
@@ -69,11 +91,10 @@ export const createOrUpdateWallet = async (walletData: Partial<WalletType>): Pro
       imageUrl = res.data;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    const uid = walletData.uid || (user as any)?.id || (walletData as any)?.uid;
-    // auth-context stocke uid, supabase renvoie id — on couvre les deux
-    const finalUid = uid || (await supabase.auth.getSession()).data.session?.user?.id;
-    if (!finalUid) return { success: false, msg: "User not authenticated" };
+    // Vérifier la session Supabase AVANT écriture (RLS exige auth.uid() valide)
+    const { uid: sessionUid, error: sessionErr } = await ensureValidSession();
+    if (!sessionUid) return { success: false, msg: sessionErr || "Reconnectez-vous pour sauvegarder." };
+    const finalUid = sessionUid;
 
     const initialAmount = Number(walletData.amount || 0);
     const currency = (walletData as any).currency || "XOF";
@@ -114,11 +135,25 @@ export const createOrUpdateWallet = async (walletData: Partial<WalletType>): Pro
           await cacheWalletLocal(local, finalUid);
           return { success: true, data: local };
         }
-        // RLS bloqué (pas de session Supabase) → sauvegarde locale
+        // RLS bloqué → tente de rafraîchir la session puis re-essaie une fois
         if (error.message?.includes("row-level security")) {
-          const local = { id: `local-${Date.now()}`, uid: finalUid, name: walletData.name, image: typeof imageUrl === "string" ? imageUrl : null, amount: initialAmount, totalIncome: initialAmount > 0 ? initialAmount : 0, totalExpenses: 0, currency, created_at: new Date().toISOString(), _offline: true };
-          await cacheWalletLocal(local, finalUid);
-          return { success: true, data: local };
+          const retrySession = await ensureValidSession();
+          if (retrySession.uid) {
+            payload.uid = retrySession.uid;
+            const retry2 = await supabase.from("wallets").insert(payload).select().single();
+            if (!retry2.error) {
+              try {
+                const raw = await AsyncStorage.getItem(cacheKey(retrySession.uid));
+                const list = raw ? JSON.parse(raw) : [];
+                list.unshift(retry2.data);
+                await AsyncStorage.setItem(cacheKey(retrySession.uid), JSON.stringify(list));
+                await AsyncStorage.setItem("mock_wallets", JSON.stringify(list));
+              } catch {}
+              return { success: true, data: { ...retry2.data, id: retry2.data.id } };
+            }
+            return { success: false, msg: humanizeError(retry2.error.message) };
+          }
+          return { success: false, msg: "Session expirée. Reconnectez-vous pour sauvegarder en base." };
         }
         return { success: false, msg: humanizeError(error.message) };
       }
@@ -160,6 +195,16 @@ export const createOrUpdateWallet = async (walletData: Partial<WalletType>): Pro
           const local = { id: walletData.id, uid: finalUid, name: walletData.name, image: typeof imageUrl === "string" ? imageUrl : null, amount: walletData.amount, totalIncome: walletData.totalIncome, totalExpenses: walletData.totalExpenses, currency: (walletData as any).currency, created_at: new Date().toISOString(), _offline: true };
           await cacheWalletLocal(local, finalUid);
           return { success: true, data: local };
+        }
+        // RLS bloqué → refresh session + retry
+        if (error.message?.includes("row-level security")) {
+          const retrySession = await ensureValidSession();
+          if (retrySession.uid) {
+            const retry2 = await supabase.from("wallets").update(upd).eq("id", walletData.id).eq("uid", retrySession.uid).select().single();
+            if (!retry2.error) return { success: true, data: { ...retry2.data, id: retry2.data.id } };
+            return { success: false, msg: humanizeError(retry2.error.message) };
+          }
+          return { success: false, msg: "Session expirée. Reconnectez-vous pour sauvegarder en base." };
         }
         return { success: false, msg: humanizeError(error.message) };
       }
