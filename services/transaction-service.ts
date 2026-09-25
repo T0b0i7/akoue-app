@@ -1,7 +1,7 @@
 import { supabase } from "@/config/supabase";
 import { TransactionType, ResponseType, WalletType } from "@/types";
 import { uploadFileToSupabase } from "./images-service";
-import { createOrUpdateWallet } from "./wallet-service";
+import { createOrUpdateWallet, humanizeError } from "./wallet-service";
 import { getLast12Months, getLast7Days, getYearsRange } from "@/utils/common";
 import { scale } from "@/utils/styling";
 import { colors } from "@/constants/theme";
@@ -106,12 +106,12 @@ export const createOrUpdateTransaction = async (
 
     if (id) {
       const { data, error } = await supabase.from("transactions").update(payload).eq("id", id).eq("uid", uid).select().single();
-      if (error) return { success: false, msg: error.message };
+      if (error) return { success: false, msg: humanizeError(error.message) };
       if (!data) return { success: false, msg: "Transaction not found or not owned" };
       return { success: true, data: { ...data, id: data.id } };
     } else {
       const { data, error } = await supabase.from("transactions").insert(payload).select().single();
-      if (error) return { success: false, msg: error.message };
+      if (error) return { success: false, msg: humanizeError(error.message) };
       return { success: true, data: { ...data, id: data.id } };
     }
   } catch (error: any) {
@@ -133,7 +133,7 @@ export const createOrUpdateTransaction = async (
       await cacheTxLocal(localTx, uid2);
       return { success: true, data: localTx };
     }
-    return { success: false, msg: error.message };
+    return { success: false, msg: humanizeError(error.message) };
   }
 };
 
@@ -158,7 +158,7 @@ const updateWalletforNewTransaction = async (walletId: string, amount: number, t
     if (updErr) return { success: false, msg: updErr.message };
     return { success: true };
   } catch (error: any) {
-    return { success: false, msg: error.message };
+    return { success: false, msg: humanizeError(error.message) };
   }
 };
 
@@ -199,10 +199,10 @@ const revertAndUpdateWallets = async (
     const newIncomeExpense = Number((freshNewWallet as any)[upType]) + Number(newAmount);
 
     const { error } = await supabase.from("wallets").update({ amount: newWalletAmount, [upType]: newIncomeExpense }).eq("id", newWalletId).eq("uid", uid);
-    if (error) return { success: false, msg: error.message };
+    if (error) return { success: false, msg: humanizeError(error.message) };
     return { success: true };
   } catch (error: any) {
-    return { success: false, msg: error.message };
+    return { success: false, msg: humanizeError(error.message) };
   }
 };
 
@@ -226,10 +226,10 @@ export const deleteTransaction = async (transactionId: string, walletId: string)
     const { data: { user: u2 } } = await supabase.auth.getUser();
     await supabase.from("wallets").update({ amount: newWalletAmount, [updatedType]: newTotal }).eq("id", walletId).eq("uid", u2?.id as any);
     const { error } = await supabase.from("transactions").delete().eq("id", transactionId).eq("uid", u2?.id as any);
-    if (error) return { success: false, msg: error.message };
+    if (error) return { success: false, msg: humanizeError(error.message) };
     return { success: true };
   } catch (error: any) {
-    return { success: false, msg: error.message };
+    return { success: false, msg: humanizeError(error.message) };
   }
 };
 
@@ -265,7 +265,7 @@ export const fetchWeeklyStats = async (uid: string): Promise<ResponseType> => {
         });
         return { success: true, data: { stats: formatStats(weeklyData, "day"), transactions: filtered } };
       }
-      return { success: false, msg: error.message };
+      return { success: false, msg: humanizeError(error.message) };
     }
     const weeklyData = getLast7Days();
     data?.forEach((t: any) => {
@@ -283,7 +283,7 @@ export const fetchWeeklyStats = async (uid: string): Promise<ResponseType> => {
       const cached = raw ? JSON.parse(raw) : [];
       return { success: true, data: { stats: [], transactions: cached } };
     }
-    return { success: false, msg: error.message };
+    return { success: false, msg: humanizeError(error.message) };
   }
 };
 
@@ -305,7 +305,7 @@ export const fetchMonthlyStats = async (uid: string): Promise<ResponseType> => {
         const cached = raw ? JSON.parse(raw) : [];
         return { success: true, data: { stats: [], transactions: cached } };
       }
-      return { success: false, msg: error.message };
+      return { success: false, msg: humanizeError(error.message) };
     }
     const monthlyData = getLast12Months();
     data?.forEach((t: any) => {
@@ -324,7 +324,7 @@ export const fetchMonthlyStats = async (uid: string): Promise<ResponseType> => {
     ]);
     return { success: true, data: { stats, transactions: data } };
   } catch (error: any) {
-    return { success: false, msg: error.message };
+    return { success: false, msg: humanizeError(error.message) };
   }
 };
 
@@ -337,7 +337,7 @@ export const fetchYearlyStats = async (uid: string): Promise<ResponseType> => {
         const cached = raw ? JSON.parse(raw) : [];
         return { success: true, data: { stats: [], transactions: cached } };
       }
-      return { success: false, msg: error.message };
+      return { success: false, msg: humanizeError(error.message) };
     }
     if (!data?.length) return { success: true, data: { stats: [], transactions: [] } };
     const firstYear = new Date(data[0].date).getFullYear();
@@ -356,6 +356,6 @@ export const fetchYearlyStats = async (uid: string): Promise<ResponseType> => {
     ]);
     return { success: true, data: { stats, transactions: data } };
   } catch (error: any) {
-    return { success: false, msg: error.message };
+    return { success: false, msg: humanizeError(error.message) };
   }
 };

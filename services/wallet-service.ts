@@ -13,6 +13,26 @@ const walletSchema = z.object({
 });
 
 const isNetworkError = (msg: string) => /fetch|network|offline|Failed to fetch/i.test(msg || "");
+
+// Traduit les erreurs techniques en messages compréhensibles
+export const humanizeError = (msg: string): string => {
+  if (!msg) return "Une erreur inconnue est survenue";
+  if (msg.includes("row-level security") || msg.includes("RLS"))
+    return "Vous n'êtes pas connecté(e). Connectez-vous pour ajouter un portefeuille.";
+  if (msg.includes("duplicate key") || msg.includes("unique"))
+    return "Ce portefeuille existe déjà.";
+  if (msg.includes("violates foreign key"))
+    return "Référence invalide. Réessayez.";
+  if (msg.includes("permission") || msg.includes("unauthorized") || msg.includes("401"))
+    return "Session expirée. Reconnectez-vous.";
+  if (msg.includes("value too long"))
+    return "Le nom est trop long (max 50 caractères).";
+  if (msg.includes("invalid input syntax") || msg.includes("invalid"))
+    return "Données invalides. Vérifiez le formulaire.";
+  if (msg.includes("network") || msg.includes("fetch"))
+    return "Problème de connexion internet. Réessayez.";
+  return "Une erreur est survenue. Réessayez.";
+};
 const cacheKey = (uid: string) => `wallets_${uid}`;
 
 async function cacheWalletLocal(wallet: any, uid: string) {
@@ -94,7 +114,13 @@ export const createOrUpdateWallet = async (walletData: Partial<WalletType>): Pro
           await cacheWalletLocal(local, finalUid);
           return { success: true, data: local };
         }
-        return { success: false, msg: error.message };
+        // RLS bloqué (pas de session Supabase) → sauvegarde locale
+        if (error.message?.includes("row-level security")) {
+          const local = { id: `local-${Date.now()}`, uid: finalUid, name: walletData.name, image: typeof imageUrl === "string" ? imageUrl : null, amount: initialAmount, totalIncome: initialAmount > 0 ? initialAmount : 0, totalExpenses: 0, currency, created_at: new Date().toISOString(), _offline: true };
+          await cacheWalletLocal(local, finalUid);
+          return { success: true, data: local };
+        }
+        return { success: false, msg: humanizeError(error.message) };
       }
       // cache success
       try {
@@ -135,7 +161,7 @@ export const createOrUpdateWallet = async (walletData: Partial<WalletType>): Pro
           await cacheWalletLocal(local, finalUid);
           return { success: true, data: local };
         }
-        return { success: false, msg: error.message };
+        return { success: false, msg: humanizeError(error.message) };
       }
       return { success: true, data: { ...data, id: data.id } };
     }
@@ -146,7 +172,7 @@ export const createOrUpdateWallet = async (walletData: Partial<WalletType>): Pro
       try { await cacheWalletLocal(local, uid2); } catch {}
       return { success: true, data: local };
     }
-    return { success: false, msg: error.message || "Could not create or update wallet" };
+    return { success: false, msg: humanizeError(error.message || "Could not create or update wallet") };
   }
 };
 
@@ -190,7 +216,7 @@ export const deleteWallet = async (walletId: string): Promise<ResponseType> => {
         await cleanLocalCache();
         return { success: true, data: "Wallet deleted successfully (offline)" };
       }
-      return { success: false, msg: error.message };
+      return { success: false, msg: humanizeError(error.message) };
     }
     await cleanLocalCache();
     return { success: true, data: "Wallet deleted successfully" };
@@ -199,7 +225,7 @@ export const deleteWallet = async (walletId: string): Promise<ResponseType> => {
       await cleanLocalCache();
       return { success: true, data: "Wallet deleted successfully (offline)" };
     }
-    return { success: false, msg: error.message };
+    return { success: false, msg: humanizeError(error.message) };
   }
 };
 
@@ -209,18 +235,18 @@ export const deleteTransactionByWalletId = async (walletId: string): Promise<Res
     const { error } = await supabase.from("transactions").delete().eq("walletId", walletId);
     if (error) {
       if (isNetworkError(error.message)) return { success: true, msg: "All transaction deleted (offline)" };
-      return { success: false, msg: error.message };
+      return { success: false, msg: humanizeError(error.message) };
     }
     return { success: true, msg: "All transaction deleted" };
   } catch (error: any) {
     if (isNetworkError(error?.message || "")) return { success: true, msg: "All transaction deleted (offline)" };
-    return { success: false, msg: error.message };
+    return { success: false, msg: humanizeError(error.message) };
   }
 };
 
 // Helper to fetch wallets for current user
 export const fetchWallets = async (uid: string) => {
   const { data, error } = await supabase.from("wallets").select("*").eq("uid", uid).order("created_at", { ascending: false });
-  if (error) return { success: false, msg: error.message };
+  if (error) return { success: false, msg: humanizeError(error.message) };
   return { success: true, data };
 };
