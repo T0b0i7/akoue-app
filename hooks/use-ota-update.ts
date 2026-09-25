@@ -9,12 +9,24 @@ if (Platform.OS !== "web") {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
-      shouldPlaySound: false,
-      shouldSetBadge: false,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
       shouldShowBanner: true,
       shouldShowList: true,
     }),
   });
+
+  // Créer le canal de notification Android (obligatoire depuis Android 8)
+  Notifications.setNotificationChannelAsync("updates", {
+    name: "Mises à jour",
+    importance: Notifications.AndroidImportance.HIGH,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: "#FF9500",
+    enableVibrate: true,
+    enableLights: true,
+    bypassDnd: false,
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+  }).catch(() => {});
 }
 
 const UPDATE_SEEN_KEY = "update_seen_at";
@@ -87,8 +99,14 @@ export function useOTAUpdate() {
         if (req.status !== "granted") return;
       }
       await Notifications.scheduleNotificationAsync({
-        content: { title, body, sound: false, badge: updateAvailable ? 1 : 0 },
-        trigger: null,
+        content: {
+          title,
+          body,
+          sound: true,
+          badge: updateAvailable ? 1 : 0,
+          priority: Notifications.AndroidNotificationPriority.HIGH,
+        },
+        trigger: Platform.OS === "android" ? { channelId: "updates" } : null,
       });
     } catch {}
   };
