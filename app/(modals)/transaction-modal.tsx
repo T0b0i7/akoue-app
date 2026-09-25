@@ -109,9 +109,24 @@ const TransactionModal = () => {
       Alert.alert(t("transaction"), msg)
       return
     }
+    // Validation montant : arrondi + bornes claires
+    const numAmount = Number(amount)
+    if (isNaN(numAmount) || !isFinite(numAmount) || numAmount <= 0) {
+      const msg = "Le montant doit être un nombre positif."
+      setFeedback({ type: "error", msg })
+      Alert.alert(t("transaction"), msg)
+      return
+    }
+    if (numAmount > 1_000_000_000) {
+      const msg = "Le montant est trop grand (maximum 1 milliard)."
+      setFeedback({ type: "error", msg })
+      Alert.alert(t("transaction"), msg)
+      return
+    }
+    const roundedAmount = Math.round(numAmount * 100) / 100
     let transactionData: TransactionType = {
       type,
-      amount,
+      amount: roundedAmount,
       description,
       category,
       date,

@@ -12,25 +12,52 @@ const walletSchema = z.object({
   id: z.string().uuid().optional(),
 });
 
+// Nettoie un montant : arrondit à 2 décimales, supprime les flottants parasites
+export const cleanAmount = (n: any): number => {
+  const num = Number(n);
+  if (!isFinite(num) || isNaN(num)) return 0;
+  // Arrondit à 2 décimales pour éviter 100.00000000000001
+  return Math.round(num * 100) / 100;
+};
+
+// Validation montant avec message clair
+export const validateAmount = (n: any): string | null => {
+  const num = Number(n);
+  if (isNaN(num) || !isFinite(num)) return "Le montant n'est pas un nombre valide.";
+  if (num < 0) return "Le montant ne peut pas être négatif.";
+  if (num > 1_000_000_000) return "Le montant est trop grand (maximum 1 milliard).";
+  return null;
+};
+
 const isNetworkError = (msg: string) => /fetch|network|offline|Failed to fetch/i.test(msg || "");
 
 // Traduit les erreurs techniques en messages compréhensibles
 export const humanizeError = (msg: string): string => {
   if (!msg) return "Une erreur inconnue est survenue";
   if (msg.includes("row-level security") || msg.includes("RLS"))
-    return "Vous n'êtes pas connecté(e). Connectez-vous pour ajouter un portefeuille.";
-  if (msg.includes("duplicate key") || msg.includes("unique"))
-    return "Ce portefeuille existe déjà.";
-  if (msg.includes("violates foreign key"))
-    return "Référence invalide. Réessayez.";
+    return "Session expirée. Reconnectez-vous pour sauvegarder.";
+  if (msg.includes("duplicate key") || msg.includes("unique") || msg.includes("already exists"))
+    return "Cet élément existe déjà.";
+  if (msg.includes("violates foreign key") || msg.includes("foreign key"))
+    return "Référence introuvable. Réessayez.";
   if (msg.includes("permission") || msg.includes("unauthorized") || msg.includes("401"))
     return "Session expirée. Reconnectez-vous.";
   if (msg.includes("value too long"))
-    return "Le nom est trop long (max 50 caractères).";
+    return "Le texte est trop long. Raccourcissez-le.";
+  if (msg.includes("numeric") || msg.includes("overflow") || msg.includes("out of range"))
+    return "Le montant est trop grand ou invalide. Vérifiez le montant.";
+  if (msg.includes("check constraint") || msg.includes("violates check"))
+    return "Valeur non autorisée. Vérifiez le formulaire.";
+  if (msg.includes("not null") || msg.includes("null value"))
+    return "Un champ obligatoire est vide. Remplissez tous les champs.";
   if (msg.includes("invalid input syntax") || msg.includes("invalid"))
     return "Données invalides. Vérifiez le formulaire.";
-  if (msg.includes("network") || msg.includes("fetch"))
+  if (msg.includes("network") || msg.includes("fetch") || msg.includes("Failed to fetch"))
     return "Problème de connexion internet. Réessayez.";
+  if (msg.includes("timeout") || msg.includes("timed out"))
+    return "Connexion trop lente. Réessayez.";
+  if (msg.includes("SyntaxError") || msg.includes("JSON"))
+    return "Erreur interne. Réessayez.";
   return "Une erreur est survenue. Réessayez.";
 };
 const cacheKey = (uid: string) => `wallets_${uid}`;
@@ -75,6 +102,12 @@ export async function ensureValidSession(): Promise<{ uid: string | null; error?
 
 export const createOrUpdateWallet = async (walletData: Partial<WalletType>): Promise<ResponseType> => {
   try {
+    // Validation montant AVANT tout (message clair pour l'utilisateur)
+    if (walletData.amount !== undefined) {
+      const amtErr = validateAmount(walletData.amount);
+      if (amtErr) return { success: false, msg: amtErr };
+      walletData.amount = cleanAmount(walletData.amount);
+    }
     // validation stricte
     const parsed = walletSchema.safeParse({
       name: walletData.name,
