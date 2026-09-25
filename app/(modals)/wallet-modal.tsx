@@ -92,7 +92,21 @@ const WalletModal = () => {
     } else {
       finalImage = typeof image === "string" ? image : (image as any)?.uri ?? null
     }
-    const cleanAmount = Number(getNumberInput(initialAmount) || "0")
+    const rawAmount = Number(getNumberInput(initialAmount) || "0")
+    // Arrondit à 2 décimales pour éviter 100.00000000000001
+    const cleanAmount = Math.round(rawAmount * 100) / 100
+    if (rawAmount < 0) {
+      const msg = "Le montant ne peut pas être négatif."
+      setFeedback({ type: "error", msg })
+      Alert.alert(t("wallet"), msg)
+      return
+    }
+    if (rawAmount > 1_000_000_000) {
+      const msg = "Le montant est trop grand (maximum 1 milliard)."
+      setFeedback({ type: "error", msg })
+      Alert.alert(t("wallet"), msg)
+      return
+    }
     const data: WalletType = {
       name,
       image: finalImage,
