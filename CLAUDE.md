@@ -28,4 +28,5 @@
 
 ## Session actuelle
 - 2026-09-18: Activation mémoire demandée par l'utilisateur (conversations non persistées avant)
+- 2026-09-25: Session OTA updates + devise + erreurs RLS (voir .memory/conversation-2026-09-25.md)
 - Utilisateur: Eucher O. ABATTI
