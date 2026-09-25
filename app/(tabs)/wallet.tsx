@@ -1,11 +1,11 @@
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
-import React from "react";
+import React, { useCallback } from "react";
 import ScreenWrapper from "@/components/screen-wrapper";
 import Typo from "@/components/typo";
 import { colors, radius, spacingX, spacingY } from "@/constants/theme";
 import { verticalScale } from "@/utils/styling";
 import * as Icons from "phosphor-react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useSupabaseWallets } from "@/hooks/use-supabase-data";
 import WalletListItem from "@/components/wallet-list-item";
 import Loading from "@/components/loading";
@@ -24,7 +24,15 @@ export default function Wallet() {
     data: wallets,
     loading,
     error,
+    refetch,
   } = useSupabaseWallets(user?.uid);
+
+  // Rafraîchir immédiatement quand on revient sur cet écran (après création modal)
+  useFocusEffect(
+    useCallback(() => {
+      refetch(true);
+    }, [refetch])
+  );
 
   // Devise d'affichage (même logique que home-card)
   const dominantCurrency = (() => {
