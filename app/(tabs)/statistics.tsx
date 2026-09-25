@@ -15,6 +15,8 @@ import {
 	fetchYearlyStats,
 } from "@/services/transaction-service";
 import { scale, verticalScale } from "@/utils/styling";
+import { getCurrencyInfo } from "@/constants/currencies";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const isIos = Platform.OS === "ios";
 
@@ -25,6 +27,11 @@ export default function Statistic() {
 	const [chartData, setChartData] = useState([]);
 	const [chartLoading, setChartLoading] = useState(false);
 	const [transactions, setTransactions] = useState([]);
+	const [displayCurrency, setDisplayCurrency] = useState("XOF");
+
+	useEffect(() => {
+		AsyncStorage.getItem("display_currency").then(v => { if (v) setDisplayCurrency(v); });
+	}, []);
 
 	useEffect(() => {
 		if (activeIndex === 0) {
@@ -109,7 +116,7 @@ export default function Statistic() {
 							roundedBottom
 							// hideRules
 							rulesColor={colors.neutral700}
-							yAxisLabelPrefix="$"
+							yAxisLabelPrefix={getCurrencyInfo(displayCurrency)?.symbol || displayCurrency + " "}
 							yAxisThickness={0}
 							xAxisThickness={0}
 							// yAxisLabelWidth={
