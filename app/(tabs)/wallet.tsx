@@ -11,6 +11,9 @@ import WalletListItem from "@/components/wallet-list-item";
 import Loading from "@/components/loading";
 import { useAuth } from "@/context/auth-context";
 import { useLocale } from "@/context/locale-context";
+import { formatCurrency } from "@/utils/common";
+import { getCurrencyInfo } from "@/constants/currencies";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Wallet() {
   const router = useRouter();
@@ -23,7 +26,26 @@ export default function Wallet() {
     error,
   } = useSupabaseWallets(user?.uid);
 
-  // console.log("wallets", wallets);
+  // Devise d'affichage (même logique que home-card)
+  const dominantCurrency = (() => {
+    if (!wallets.length) return "XOF";
+    const counts: Record<string, number> = {};
+    wallets.forEach((w: any) => {
+      const c = (w.currency || "XOF").toUpperCase().trim();
+      const norm = c === "FCFA" || c === "F CFA" || c === "CFA" ? "XOF" : c;
+      counts[norm] = (counts[norm] || 0) + 1;
+    });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+  })();
+  const [displayCurrency, setDisplayCurrency] = React.useState<string>(dominantCurrency);
+
+  React.useEffect(() => {
+    AsyncStorage.getItem("display_currency").then(v => { if (v) setDisplayCurrency(v); });
+  }, []);
+
+  React.useEffect(() => {
+    AsyncStorage.getItem("display_currency").then(v => { if (!v) setDisplayCurrency(dominantCurrency); });
+  }, [dominantCurrency]);
 
   // Fetch total balance from API
   const getTotalBalance = () =>
@@ -32,6 +54,8 @@ export default function Wallet() {
       return total;
     }, 0);
 
+  const dominantInfo = getCurrencyInfo(displayCurrency);
+
   return (
     <ScreenWrapper style={{ backgroundColor: colors.black }}>
       <View style={styles.container}>
@@ -39,7 +63,14 @@ export default function Wallet() {
         <View style={styles.balanceView}>
           <View style={{ alignItems: "center" }}>
             <Typo size={32} fontWeight={"600"}>
-              $ {getTotalBalance()?.toFixed(2)}
+              {(() => {
+                const total = getTotalBalance();
+                try {
+                  return formatCurrency(total, "fr-FR", displayCurrency, 2);
+                } catch {
+                  return `${dominantInfo?.symbol || displayCurrency} ${total.toFixed(2)}`;
+                }
+              })()}
             </Typo>
             <Typo size={16} color={colors.neutral350}>
               {t("totalBalance")}
