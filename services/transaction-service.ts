@@ -1,7 +1,7 @@
 import { supabase } from "@/config/supabase";
 import { TransactionType, ResponseType, WalletType } from "@/types";
 import { uploadFileToSupabase } from "./images-service";
-import { createOrUpdateWallet, humanizeError } from "./wallet-service";
+import { createOrUpdateWallet, humanizeError, ensureValidSession } from "./wallet-service";
 import { getLast12Months, getLast7Days, getYearsRange } from "@/utils/common";
 import { scale } from "@/utils/styling";
 import { colors } from "@/constants/theme";
@@ -64,9 +64,10 @@ export const createOrUpdateTransaction = async (
     });
     if (!parsed.success) return { success: false, msg: parsed.error.issues[0]?.message || "Données invalides" };
 
-    const { data: { user } } = await supabase.auth.getUser();
-    const uid = (transactionData as any).uid || user?.id;
-    if (!uid) return { success: false, msg: "User not authenticated" };
+    // Session Supabase valide obligatoire (RLS exige auth.uid())
+    const { uid: sessionUid, error: sessionErr } = await ensureValidSession();
+    if (!sessionUid) return { success: false, msg: sessionErr || "Reconnectez-vous pour sauvegarder." };
+    const uid = sessionUid;
 
     if (id) {
       const { data: oldTx, error: fetchErr } = await supabase.from("transactions").select("*").eq("id", id).eq("uid", uid).single();
@@ -106,12 +107,36 @@ export const createOrUpdateTransaction = async (
 
     if (id) {
       const { data, error } = await supabase.from("transactions").update(payload).eq("id", id).eq("uid", uid).select().single();
-      if (error) return { success: false, msg: humanizeError(error.message) };
+      if (error) {
+        if (error.message?.includes("row-level security")) {
+          const retrySession = await ensureValidSession();
+          if (retrySession.uid) {
+            payload.uid = retrySession.uid;
+            const r = await supabase.from("transactions").update(payload).eq("id", id).eq("uid", retrySession.uid).select().single();
+            if (!r.error) return { success: true, data: { ...r.data, id: r.data.id } };
+            return { success: false, msg: humanizeError(r.error.message) };
+          }
+          return { success: false, msg: "Session expirée. Reconnectez-vous pour sauvegarder en base." };
+        }
+        return { success: false, msg: humanizeError(error.message) };
+      }
       if (!data) return { success: false, msg: "Transaction not found or not owned" };
       return { success: true, data: { ...data, id: data.id } };
     } else {
       const { data, error } = await supabase.from("transactions").insert(payload).select().single();
-      if (error) return { success: false, msg: humanizeError(error.message) };
+      if (error) {
+        if (error.message?.includes("row-level security")) {
+          const retrySession = await ensureValidSession();
+          if (retrySession.uid) {
+            payload.uid = retrySession.uid;
+            const r = await supabase.from("transactions").insert(payload).select().single();
+            if (!r.error) return { success: true, data: { ...r.data, id: r.data.id } };
+            return { success: false, msg: humanizeError(r.error.message) };
+          }
+          return { success: false, msg: "Session expirée. Reconnectez-vous pour sauvegarder en base." };
+        }
+        return { success: false, msg: humanizeError(error.message) };
+      }
       return { success: true, data: { ...data, id: data.id } };
     }
   } catch (error: any) {
