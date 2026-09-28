@@ -9,6 +9,12 @@ create table if not exists public.profiles (
   image text,
   created_at timestamptz default now()
 );
+-- Verrou app au choix : biometric (visage/empreinte système, aucun secret stocké)
+-- pin / password / pattern : seul le hash bcrypt est stocké, jamais le clair
+alter table public.profiles add column if not exists lock_method text default 'none'
+  check (lock_method in ('none','biometric','pin','password','pattern'));
+alter table public.profiles add column if not exists lock_hash text;
+alter table public.profiles add column if not exists lock_updated_at timestamptz default now();
 
 -- 2. Wallets
 create table if not exists public.wallets (

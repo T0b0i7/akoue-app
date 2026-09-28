@@ -12,7 +12,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.akoue.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSFaceIDUsageDescription": "Akouè utilise FaceID pour déverrouiller ton argent avec ton visage.",
+        "NSCameraUsageDescription": "Akouè demande l'accès à la caméra pour capturer ton visage et activer Face Unlock dès la première ouverture."
       }
     },
     "android": {
@@ -21,7 +23,8 @@
         "backgroundColor": "#171717"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.akoue.app"
+      "package": "com.akoue.app",
+      "permissions": ["USE_BIOMETRIC", "USE_FINGERPRINT", "CAMERA"]
     },
     "web": {
       "bundler": "metro",
@@ -30,6 +33,18 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Akouè demande l'accès à la caméra pour capturer ton visage et activer Face Unlock."
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Akouè utilise FaceID pour déverrouiller ton argent avec ton visage."
+        }
+      ],
       [
         "expo-splash-screen",
         {

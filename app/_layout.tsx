@@ -11,6 +11,8 @@ import { LocaleProvider } from "@/context/locale-context";
 import { ToastProvider } from "@/context/toast-context";
 import { ThemeProvider } from "@/context/theme-context";
 import { AppToast } from "@/components/app-toast";
+import AppLockGate from "@/components/app-lock-gate";
+import { useAppLock } from "@/hooks/use-app-lock";
 import { useOTAUpdate } from "@/hooks/use-ota-update";
 import { useBroadcast } from "@/hooks/use-broadcast";
 
@@ -31,6 +33,7 @@ function BroadcastWatcher() {
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
+  const lock = useAppLock();
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -63,6 +66,16 @@ export default function RootLayout() {
 						<OTAWatcher />
 						<BroadcastWatcher />
 						<AppToast />
+						<AppLockGate
+							locked={lock.locked}
+							method={lock.method}
+							showEnroll={lock.showEnroll}
+							faceAvailable={!!lock.support?.faceAvailable}
+							onUnlockBiometric={lock.unlockBiometric}
+							onUnlockSecret={lock.unlockSecret}
+							onChoose={lock.choose}
+							onDismissEnroll={lock.dismissEnroll}
+						/>
 						<View style={styles.appBackground}>
 				<Stack
 					screenOptions={{

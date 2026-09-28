@@ -18,6 +18,8 @@ import ConfirmDialog from "@/components/confirm-dialog"
 import { useToast } from "@/context/toast-context"
 import { WORLD_CURRENCIES } from "@/constants/currencies"
 import { Dropdown } from "react-native-element-dropdown"
+import { useAppLock } from "@/hooks/use-app-lock"
+import { LOCK_METHODS, type LockMethod } from "@/services/app-lock-service"
 
 const SettingsModal = () => {
   const { t, language, setLanguage } = useLocale()
@@ -28,6 +30,7 @@ const SettingsModal = () => {
   const [confirm, setConfirm] = useState<"data" | "account" | null>(null)
   const [loading, setLoading] = useState(false)
   const [displayCurrency, setDisplayCurrency] = useState("XOF")
+  const lock = useAppLock()
   useEffect(() => { AsyncStorage.getItem("display_currency").then(v => { if (v) setDisplayCurrency(v); }); }, [])
   const handleDisplayCurrencyChange = async (code: string) => {
     setDisplayCurrency(code)
@@ -211,6 +214,51 @@ const SettingsModal = () => {
               />
             </View>
             <Typo size={11} color={colors.neutral500}>Total Balance converti en temps réel dans cette devise</Typo>
+          </View>
+        </View>
+
+        {/* Verrou app au choix */}
+        <View style={[styles.cardContainer, { marginTop: 16 }]}>
+          <View style={{ padding: 12, gap: 10 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Icons.Lock size={16} color={colors.primary} weight="fill" />
+              <Typo size={13} fontWeight="700" color={colors.white}>Verrouillage</Typo>
+            </View>
+            <Dropdown
+              style={{ height: 40, backgroundColor: colors.neutral700, borderRadius: 10, paddingHorizontal: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }}
+              containerStyle={{ backgroundColor: colors.neutral800, borderRadius: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }}
+              selectedTextStyle={{ color: colors.white, fontSize: 13, fontWeight: "600" }}
+              itemTextStyle={{ color: colors.white, fontSize: 12 }}
+              activeColor={colors.neutral700}
+              data={LOCK_METHODS.map(m => ({ label: `${m.label} — ${m.desc}`, value: m.id }))}
+              labelField="label"
+              valueField="value"
+              value={lock.method}
+              onChange={async (item) => {
+                const m = item.value as LockMethod;
+                if (m === "none") {
+                  await lock.choose("none");
+                  showToast("success", "Verrou coupé", "Ouverture directe");
+                } else if (m === "biometric") {
+                  const r = await lock.choose("biometric");
+                  if (!r.success) showToast("error", "Biométrie", r.error || "Annulé");
+                  else showToast("success", "Biométrie activée", "Visage / empreinte ✓ (rien stocké)");
+                } else {
+                  showToast("success", "À configurer", "Rouvre l'app : l'assistant va te demander ton code.");
+                  await lock.choose(m, undefined).catch(() => {});
+                }
+              }}
+              maxHeight={300}
+            />
+            <Typo size={11} color={colors.neutral500}>Biométrie = rien en base (préférable). PIN / mot de passe / schéma = hash bcrypt en base + local.</Typo>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <Typo size={12} color={colors.neutral400}>Actuel : {LOCK_METHODS.find(m => m.id === lock.method)?.label}</Typo>
+              {lock.method !== "none" && (
+                <TouchableOpacity onPress={async () => { await lock.choose("none"); showToast("success", "Verrou coupé", ""); }}>
+                  <Typo size={12} color={colors.rose}>Désactiver</Typo>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </View>
 
