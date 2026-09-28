@@ -17,6 +17,10 @@ async function clearStorage(page: Page) {
 test.describe('Finote - Auth flows (mock mode)', () => {
   test.beforeEach(async ({ page }: { page: Page }) => {
     await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+    // index redirige vers /language si app_locale absent -> force fr puis va sur welcome
+    await page.evaluate(() => localStorage.setItem('app_locale', 'fr'));
+    await page.goto('/(auth)/welcome');
     await page.waitForLoadState('networkidle');
   });
 

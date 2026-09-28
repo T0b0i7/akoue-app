@@ -103,7 +103,7 @@ export function useOTAUpdate() {
           title,
           body,
           sound: true,
-          badge: updateAvailable ? 1 : 0,
+          badge: 1,
           priority: Notifications.AndroidNotificationPriority.HIGH,
         },
         trigger: Platform.OS === "android" ? { channelId: "updates" } : null,

@@ -11,7 +11,7 @@ export default function Layout() {
     return null
   }
   return (
-    <Tabs tabBar={CustomTabs} screenOptions={{ headerShown: false }}>
+    <Tabs tabBar={(props: any) => <CustomTabs {...props} />} screenOptions={{ headerShown: false }}>
       <Tabs.Screen name="index" options={{title: t("home")}}></Tabs.Screen>
       <Tabs.Screen name="statistics" options={{title: t("statisticsTab")}}></Tabs.Screen>
       <Tabs.Screen name="wallet" options={{title: t("walletTab")}}></Tabs.Screen>

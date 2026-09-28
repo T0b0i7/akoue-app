@@ -7,12 +7,14 @@ import {
 	TouchableOpacity,
 	View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "@/constants/theme";
 import { scale, verticalScale } from "@/utils/styling";
 
 export default function CustomTabs({ state, descriptors, navigation }: any) {
-	const insets = useSafeAreaInsets();
+	// Pas de useSafeAreaInsets ici : sur web (pnpm + react-native-web) ça provoque
+	// "Invalid hook call" via duplicate React dans safe-area-context.
+	// bottom fixe, suffisant pour la tab bar custom.
+	const bottomInset = Platform.OS === "ios" ? 20 : 0;
 	const tabbarIcons: any = {
 		index: (isFocused: boolean) => (
 			<Icons.House
@@ -45,7 +47,7 @@ export default function CustomTabs({ state, descriptors, navigation }: any) {
 	};
 
 	return (
-		<View style={[styles.tabBarShadow, { bottom: insets.bottom || 0 }]}>
+		<View style={[styles.tabBarShadow, { bottom: bottomInset }]}>
 			<View style={styles.tabBarContainer}>
 				{/* --- THIS IS THE FIX ---
           We check the Platform.OS.
