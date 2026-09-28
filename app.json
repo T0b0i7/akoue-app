@@ -24,7 +24,11 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.akoue.app",
-      "permissions": ["USE_BIOMETRIC", "USE_FINGERPRINT", "CAMERA"]
+      "permissions": [
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "CAMERA"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -52,6 +56,15 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#171717"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
         }
       ]
     ],
