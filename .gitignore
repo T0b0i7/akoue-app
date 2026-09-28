@@ -47,3 +47,13 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+# logs locaux
+expo-server.log
+
+# supabase CLI temp
+supabase/.temp/
+
+# playwright
+test-results/
+playwright-report/
