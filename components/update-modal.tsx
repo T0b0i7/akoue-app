@@ -17,12 +17,13 @@ type Props = {
   update: PendingUpdate | null;
   downloading: boolean;
   busy: boolean;
+  progress: number | null;
   onUpdate: () => void;
   onLater: () => void;
   onDone: () => void;
 };
 
-export default function UpdateModal({ update, downloading, busy, onUpdate, onLater, onDone }: Props) {
+export default function UpdateModal({ update, downloading, busy, progress, onUpdate, onLater, onDone }: Props) {
   return (
     <Modal visible={!!update} animationType="slide" transparent>
       <View style={styles.wrap}>
@@ -50,8 +51,22 @@ export default function UpdateModal({ update, downloading, busy, onUpdate, onLat
             </>
           ) : (
             <>
-              <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 10 }} />
-              <Typo size={19} fontWeight="800" style={{ textAlign: "center" }}>Téléchargement lancé…</Typo>
+              {progress !== null ? (
+                <>
+                  <Typo size={30} fontWeight="800">{Math.round(progress * 100)}%</Typo>
+                  <View style={styles.bar}>
+                    <View style={[styles.barFill, { width: `${Math.round(progress * 100)}%` }]} />
+                  </View>
+                  <Typo size={14} color={colors.neutral400} style={{ textAlign: "center", marginTop: 8 }}>
+                    Téléchargement en cours… patiente.
+                  </Typo>
+                </>
+              ) : (
+                <>
+                  <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 10 }} />
+                  <Typo size={19} fontWeight="800" style={{ textAlign: "center" }}>Téléchargement lancé…</Typo>
+                </>
+              )}
               <Typo size={13} color={colors.neutral400} style={{ textAlign: "center", marginTop: 8, lineHeight: 19 }}>
                 Le nouvel APK se télécharge. Patiente, puis installe-le quand Android te le propose.{"\n"}Tu peux quitter cet écran, le téléchargement continue.
               </Typo>
@@ -92,4 +107,9 @@ const styles = StyleSheet.create({
   },
   later: { marginTop: 12, padding: 8 },
   steps: { marginTop: 14, gap: 4, alignItems: "center" },
+  bar: {
+    width: "100%", height: 12, borderRadius: 6, backgroundColor: colors.neutral800,
+    marginTop: 12, overflow: "hidden",
+  },
+  barFill: { height: "100%", backgroundColor: "#7A4DFF", borderRadius: 6 },
 });
