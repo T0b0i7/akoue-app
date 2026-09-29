@@ -15,7 +15,6 @@ type Props = {
   onUnlockBiometric: () => Promise<{ success: boolean; error?: string }>;
   onUnlockSecret: (secret: string) => Promise<boolean>;
   onChoose: (m: LockMethod, secret?: string) => Promise<{ success: boolean; error?: string }>;
-  onDismissEnroll: () => void;
 };
 
 function PatternPad({ onDone }: { onDone: (seq: string) => void }) {
@@ -173,7 +172,8 @@ export default function AppLockGate(p: Props) {
           <View style={styles.sheet}>
             <Typo size={19} fontWeight="800" style={{ textAlign: "center" }}>Choisis ton verrou</Typo>
             <Typo size={13} color={colors.neutral400} style={{ textAlign: "center", marginTop: 8 }}>
-              Biométrie = rien stocké (préférable). PIN / mot de passe / schéma = hash bcrypt en base + local.
+              Obligatoire pour protéger ton argent : choisis une manière de verrouiller.{"\n"}
+              Elle restera active — tu pourras la changer ou la réinitialiser dans Paramètres › Verrouillage.
             </Typo>
             {!p.faceAvailable && (
               <Typo size={12} color={colors.neutral500} style={{ textAlign: "center", marginTop: 6 }}>
@@ -198,9 +198,6 @@ export default function AppLockGate(p: Props) {
               ))}
             </View>
             {renderSetup()}
-            <TouchableOpacity onPress={p.onDismissEnroll} style={styles.later}>
-              <Typo size={13} color={colors.neutral400}>Plus tard</Typo>
-            </TouchableOpacity>
           </View>
         </View>
       </Modal>

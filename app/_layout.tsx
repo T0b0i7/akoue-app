@@ -84,7 +84,6 @@ export default function RootLayout() {
 							onUnlockBiometric={lock.unlockBiometric}
 							onUnlockSecret={lock.unlockSecret}
 							onChoose={lock.choose}
-							onDismissEnroll={lock.dismissEnroll}
 						/>
 						<View style={styles.appBackground}>
 				<Stack
