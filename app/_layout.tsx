@@ -15,6 +15,7 @@ import AppLockGate from "@/components/app-lock-gate";
 import { useAppLock } from "@/hooks/use-app-lock";
 import { useOTAUpdate } from "@/hooks/use-ota-update";
 import { useBroadcast } from "@/hooks/use-broadcast";
+import UpdateModal from "@/components/update-modal";
 
 import "./global.css";
 
@@ -27,8 +28,17 @@ function OTAWatcher() {
   return null;
 }
 function BroadcastWatcher() {
-  useBroadcast();
-  return null;
+  const bc = useBroadcast();
+  return (
+    <UpdateModal
+      update={bc.update}
+      downloading={bc.downloading}
+      busy={bc.busy}
+      onUpdate={bc.openUpdate}
+      onLater={bc.laterUpdate}
+      onDone={bc.doneUpdate}
+    />
+  );
 }
 
 export default function RootLayout() {
