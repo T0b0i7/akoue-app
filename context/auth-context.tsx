@@ -338,8 +338,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         await AsyncStorage.removeItem(OFFLINE_USER_KEY);
         await AsyncStorage.removeItem("mock_user");
         // purge sensible: wallets, transactions, pending
+        // SAUF prefs appareil : broadcasts vus/notifiés/snoozés + verrou (pas liés au compte)
+        const keep = (k: string) =>
+          k === "seen_broadcasts" || k === "notified_broadcasts" || k === "cached_broadcasts" ||
+          k.startsWith("snoozed_bc_") || k === "app_lock_method" || k === "app_lock_hash" ||
+          k === "face_lock_enabled" || k === "face_enrolled_at" || k === "app_lock_enroll_v2";
         const keys = await AsyncStorage.getAllKeys();
-        const toRemove = keys.filter((k: string) => k.startsWith("wallets_") || k.startsWith("txs_") || k.startsWith("mock_") || k.startsWith("pending_") || k.startsWith("cached_") || k.startsWith("seen_"));
+        const toRemove = keys.filter((k: string) => !keep(k) && (k.startsWith("wallets_") || k.startsWith("txs_") || k.startsWith("mock_") || k.startsWith("pending_") || k.startsWith("cached_") || k.startsWith("seen_")));
         if (toRemove.length) await AsyncStorage.multiRemove(toRemove);
       } catch {}
       return { success: true };

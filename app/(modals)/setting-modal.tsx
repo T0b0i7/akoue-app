@@ -50,9 +50,13 @@ const SettingsModal = () => {
         try { await supabase.from("transactions").delete().eq("uid", uid) } catch {}
         try { await supabase.from("wallets").delete().eq("uid", uid) } catch {}
       }
-      // purge cache local sauf compte
+      // purge cache local sauf compte — prefs appareil (broadcasts, verrou) conservées
       const keys = await AsyncStorage.getAllKeys()
-      const toRemove = keys.filter(k => k.startsWith("wallets_") || k.startsWith("txs_") || k.startsWith("mock_") || k.startsWith("pending_") || k.startsWith("cached_") || k.startsWith("seen_"))
+      const keep = (k: string) =>
+        k === "seen_broadcasts" || k === "notified_broadcasts" || k === "cached_broadcasts" ||
+        k.startsWith("snoozed_bc_") || k === "app_lock_method" || k === "app_lock_hash" ||
+        k === "face_lock_enabled" || k === "face_enrolled_at" || k === "app_lock_enroll_v2"
+      const toRemove = keys.filter(k => !keep(k) && (k.startsWith("wallets_") || k.startsWith("txs_") || k.startsWith("mock_") || k.startsWith("pending_") || k.startsWith("cached_") || k.startsWith("seen_")))
       if (toRemove.length) await AsyncStorage.multiRemove(toRemove)
       showToast("success", "Données effacées", "Portefeuilles et transactions supprimés ✓")
       setConfirm(null)
