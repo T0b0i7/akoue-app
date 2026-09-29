@@ -34,6 +34,7 @@ function BroadcastWatcher() {
       update={bc.update}
       downloading={bc.downloading}
       busy={bc.busy}
+      progress={bc.progress}
       onUpdate={bc.openUpdate}
       onLater={bc.laterUpdate}
       onDone={bc.doneUpdate}

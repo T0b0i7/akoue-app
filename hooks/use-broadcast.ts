@@ -4,6 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase, isSupabaseConfigured } from "@/config/supabase";
 import { useToast } from "@/context/toast-context";
 import * as Notifications from "expo-notifications";
+import { downloadAndInstallApk } from "@/services/app-update-service";
 import type { PendingUpdate } from "@/components/update-modal";
 
 const CACHE_KEY = "cached_broadcasts";
@@ -56,6 +57,8 @@ export function useBroadcast() {
   const [update, setUpdate] = useState<PendingUpdate | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<number | null>(null);
+  const listRef = useRef<any[]>([]);
 
   const fetchAndShow = useCallback(async (silent = true) => {
     if (fetching.current) return;
@@ -86,6 +89,7 @@ export function useBroadcast() {
       }
 
       if (!broadcasts.length) return;
+      listRef.current = broadcasts;
       const seen = await getIds(SEEN_KEY);
       const candidates: any[] = [];
       for (const b of broadcasts) {
@@ -157,15 +161,33 @@ export function useBroadcast() {
     finally { fetching.current = false; }
   }, [showToast]);
 
-  // Bouton "Mettre à jour" de l'écran : ouvre le lien + passe en mode attente
+  // Bouton "Mettre à jour" : téléchargement direct dans l'app + installeur.
+  // Marque TOUTES les annonces vues d'un coup (fini les vieilles qui reviennent).
   const openUpdate = useCallback(async () => {
     if (!update) return;
     setBusy(true);
+    for (const b of listRef.current) {
+      await addId(SEEN_KEY, b.id);
+    }
+    if (Platform.OS === "android" && update.url.endsWith(".apk")) {
+      setDownloading(true);
+      setProgress(0);
+      setBusy(false);
+      const r = await downloadAndInstallApk(update.url, (ratio) => setProgress(ratio));
+      if (!r.ok) {
+        showToast("error", "Mise à jour", r.error || "Échec.");
+        setDownloading(false);
+        setProgress(null);
+        setBusy(false);
+        return;
+      }
+      setProgress(1);
+      setBusy(false);
+      return; // l'installeur Android a pris le relais, l'écran d'étapes reste affiché
+    }
     try {
       await Linking.openURL(update.url);
     } catch {}
-    // Vu définitivement : ne revient PLUS (fini la notif qui revient après OK)
-    await addId(SEEN_KEY, update.id);
     setDownloading(true);
     setBusy(false);
   }, [update]);
@@ -178,11 +200,15 @@ export function useBroadcast() {
     setDownloading(false);
   }, [update]);
 
-  // Écran de chargement fermé : ne plus jamais re-proposer
+  // Écran de chargement fermé : ne plus jamais re-proposer (tout est marqué vu)
   const doneUpdate = useCallback(async () => {
+    for (const b of listRef.current) {
+      await addId(SEEN_KEY, b.id);
+    }
     if (update) await addId(SEEN_KEY, update.id);
     setUpdate(null);
     setDownloading(false);
+    setProgress(null);
   }, [update]);
 
   useEffect(() => {
@@ -224,5 +250,5 @@ export function useBroadcast() {
     return () => sub.remove();
   }, [fetchAndShow]);
 
-  return { fetchAndShow, update, downloading, busy, openUpdate, laterUpdate, doneUpdate };
+  return { fetchAndShow, update, downloading, busy, progress, openUpdate, laterUpdate, doneUpdate };
 }

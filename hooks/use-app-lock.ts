@@ -17,6 +17,10 @@ import {
 // Choix obligatoire une fois : tant que l'utilisateur n'a pas choisi,
 // l'écran de choix revient à chaque lancement. Réinitialisable en paramètres.
 const ENROLL_DONE_KEY = "app_lock_enroll_v2";
+const BG_AT_KEY = "app_bg_at";
+// Délai de grâce : si l'app revient dans les 60s, pas de reverrouillage
+// (fini l'impression d'être "déconnecté" à chaque aller-retour).
+const GRACE_MS = 60 * 1000;
 
 export function useAppLock() {
   const [method, setMethod] = useState<LockMethod>("none");
@@ -47,9 +51,16 @@ export function useAppLock() {
 
   useEffect(() => {
     const sub = AppState.addEventListener("change", async (s) => {
+      if (s === "background" || s === "inactive") {
+        await AsyncStorage.setItem(BG_AT_KEY, String(Date.now())).catch(() => {});
+        return;
+      }
       if (s === "active") {
         const l = await getLocalLock();
-        if (l.method !== "none") setLocked(true);
+        if (l.method === "none") return;
+        const raw = await AsyncStorage.getItem(BG_AT_KEY).catch(() => null);
+        // Absent depuis plus d'1 min (ou heure inconnue) → verrouille, sinon laisse ouvert
+        if (!raw || Date.now() - Number(raw) > GRACE_MS) setLocked(true);
       }
     });
     return () => sub.remove();
