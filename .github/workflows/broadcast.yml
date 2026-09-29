@@ -1,0 +1,49 @@
+# Auto-broadcast : à chaque push sur main, insère une notif dans Supabase
+# pour que même les anciennes versions installées soient prévenues.
+# Secrets GitHub requis : SUPABASE_URL, SUPABASE_SERVICE_KEY (service_role, pas anon).
+name: broadcast-on-push
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  broadcast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Build message from commits
+        id: msg
+        run: |
+          TITLE="Nouvelle mise à jour Akouè"
+          BODY=$(git log -1 --pretty=%B | head -c 400)
+          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
+          {
+            echo "body<<EOF"
+            echo "$BODY"
+            echo ""
+            echo "Mets à jour ton app pour en profiter."
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          # Tag [no-broadcast] dans le message de commit pour sauter la notif
+          if git log -1 --pretty=%B | grep -qi "\[no-broadcast\]"; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Insert broadcast into Supabase
+        if: steps.msg.outputs.skip != 'true'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          TITLE=$(jq -Rn --arg t "${{ steps.msg.outputs.title }}" '$t')
+          BODY=$(jq -Rn --arg b "${{ steps.msg.outputs.body }}" '$b')
+          curl -sS -X POST "$SUPABASE_URL/rest/v1/broadcasts" \
+            -H "apikey: $SUPABASE_SERVICE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"title\": $TITLE, \"body\": $BODY, \"active\": true}"
+          echo "Broadcast inséré."
