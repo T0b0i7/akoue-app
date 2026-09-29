@@ -109,7 +109,7 @@ const More = () => {
     }
     try {
       setChecking(true)
-      const hasUpdate = await checkAndNotify(false)
+      const hasUpdate = await checkAndNotify()
       if (!hasUpdate) {
         // checkAndNotify a déjà alerté si update dispo, sinon on confirme "à jour"
         // On revérifie silencieusement pour éviter double alerte
