@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { AppState } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   getLocalLock,
   pullLockFromCloud,
@@ -10,10 +11,12 @@ import {
 import {
   authenticateWithFace,
   getFaceSupport,
-  markFaceFirstSeen,
-  shouldShowFaceEnroll,
   type FaceSupport,
 } from "@/services/face-lock-service";
+
+// Choix obligatoire une fois : tant que l'utilisateur n'a pas choisi,
+// l'écran de choix revient à chaque lancement. Réinitialisable en paramètres.
+const ENROLL_DONE_KEY = "app_lock_enroll_v2";
 
 export function useAppLock() {
   const [method, setMethod] = useState<LockMethod>("none");
@@ -23,17 +26,17 @@ export function useAppLock() {
   const [checking, setChecking] = useState(true);
 
   const refresh = useCallback(async () => {
-    const [local, sup, first] = await Promise.all([
+    const [local, sup] = await Promise.all([
       getLocalLock(),
       getFaceSupport(),
-      shouldShowFaceEnroll(),
     ]);
     // Si compte connecté, la base fait foi pour pin/password/pattern
     await pullLockFromCloud().catch(() => {});
     const after = await getLocalLock().catch(() => local);
+    const done = await AsyncStorage.getItem(ENROLL_DONE_KEY).catch(() => null);
     setMethod(after.method);
     setSupport(sup);
-    if (first && after.method === "none") setShowEnroll(true);
+    if (after.method === "none" && !done) setShowEnroll(true);
     setLocked(after.method !== "none");
     setChecking(false);
   }, []);
@@ -71,17 +74,26 @@ export function useAppLock() {
     }
     const r = await setAppLock(m, secret);
     if (!r.success) return { success: false as const, error: r.msg };
-    await markFaceFirstSeen().catch(() => {});
+    await AsyncStorage.setItem(ENROLL_DONE_KEY, "1").catch(() => {});
     setMethod(m);
     setLocked(m !== "none");
     setShowEnroll(false);
     return { success: true as const };
   }, []);
 
-  const dismissEnroll = useCallback(async () => {
-    await markFaceFirstSeen().catch(() => {});
-    setShowEnroll(false);
+  // Rouvre l'écran de choix (changement depuis paramètres)
+  const openSetup = useCallback(() => {
+    setShowEnroll(true);
   }, []);
 
-  return { method, locked, support, showEnroll, checking, unlockBiometric, unlockSecret, choose, dismissEnroll, refresh };
+  // Réinitialise : efface le verrou, le choix sera redemandé
+  const resetLock = useCallback(async () => {
+    await setAppLock("none");
+    await AsyncStorage.removeItem(ENROLL_DONE_KEY).catch(() => {});
+    setMethod("none");
+    setLocked(false);
+    setShowEnroll(true);
+  }, []);
+
+  return { method, locked, support, showEnroll, checking, unlockBiometric, unlockSecret, choose, openSetup, resetLock, refresh };
 }

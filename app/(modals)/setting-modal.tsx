@@ -244,13 +244,20 @@ const SettingsModal = () => {
                   if (!r.success) showToast("error", "Biométrie", r.error || "Annulé");
                   else showToast("success", "Biométrie activée", "Visage / empreinte ✓ (rien stocké)");
                 } else {
-                  showToast("success", "À configurer", "Rouvre l'app : l'assistant va te demander ton code.");
-                  await lock.choose(m, undefined).catch(() => {});
+                  // PIN / mot de passe / schéma : configuré dans l'écran de choix
+                  lock.openSetup();
                 }
               }}
               maxHeight={300}
             />
             <Typo size={11} color={colors.neutral500}>Biométrie = rien en base (préférable). PIN / mot de passe / schéma = hash bcrypt en base + local.</Typo>
+            <TouchableOpacity
+              onPress={async () => { await lock.resetLock(); showToast("success", "Verrou réinitialisé", "Choisis une nouvelle manière de verrouiller"); }}
+              style={{ paddingVertical: 6 }}
+              activeOpacity={0.7}
+            >
+              <Typo size={12} color={colors.rose}>Réinitialiser ma manière de verrouiller</Typo>
+            </TouchableOpacity>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <Typo size={12} color={colors.neutral400}>Actuel : {LOCK_METHODS.find(m => m.id === lock.method)?.label}</Typo>
               {lock.method !== "none" && (
