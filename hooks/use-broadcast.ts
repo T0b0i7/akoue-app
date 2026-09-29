@@ -65,6 +65,25 @@ export function useBroadcast() {
 
       // affiche le plus récent non vu — Alert bien visible + toast
       const latest = unseen[0];
+
+      // Notif système aussi (ancienne version → quand même prévenue, même app en fond)
+      try {
+        if (Platform.OS !== "web") {
+          const perms = await Notifications.getPermissionsAsync();
+          if (perms.status === "granted") {
+            await Notifications.scheduleNotificationAsync({
+              content: {
+                title: latest.title,
+                body: latest.body,
+                sound: true,
+                data: { broadcastId: latest.id },
+              },
+              trigger: null,
+            });
+          }
+        }
+      } catch {}
+
       showToast("success", latest.title, latest.body);
       // Alert plus visible, surtout sur web
       setTimeout(() => {
