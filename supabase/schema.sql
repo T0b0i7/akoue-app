@@ -91,6 +91,12 @@ create policy "broadcasts_read" on public.broadcasts for select using (active = 
 
 create index if not exists idx_broadcasts_active_created on public.broadcasts(active, created_at desc);
 
+-- Notifs actionnables : kind=update affiche un écran dédié avec bouton (plus de long lien dans le texte)
+alter table public.broadcasts add column if not exists kind text default 'info'
+  check (kind in ('info','update'));
+alter table public.broadcasts add column if not exists action_url text;
+alter table public.broadcasts add column if not exists action_label text default 'Mettre à jour';
+
 -- Vue stats rapide (remplace l'agrégation client Firestore)
 create or replace view public.wallet_stats as
 select
