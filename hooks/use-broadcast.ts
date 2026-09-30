@@ -4,6 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase, isSupabaseConfigured } from "@/config/supabase";
 import { useToast } from "@/context/toast-context";
 import * as Notifications from "expo-notifications";
+import * as Application from "expo-application";
 import { downloadAndInstallApk } from "@/services/app-update-service";
 import type { PendingUpdate } from "@/components/update-modal";
 
@@ -36,6 +37,19 @@ async function isSnoozed(id: string): Promise<boolean> {
     if (!raw) return false;
     return Date.now() - Number(raw) < SNOOZE_MS;
   } catch { return false; }
+}
+
+// Compare deux versions "1.2.3" → true si a < b
+function isNewer(a: string | null, b: string | null): boolean {
+  if (!b) return true; // pas de version cible = concerne tout le monde
+  if (!a) return true;
+  const pa = a.split(".").map((n) => parseInt(n, 10) || 0);
+  const pb = b.split(".").map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < 3; i++) {
+    if ((pb[i] || 0) > (pa[i] || 0)) return true;
+    if ((pb[i] || 0) < (pa[i] || 0)) return false;
+  }
+  return false;
 }
 
 async function setupUpdateCategory() {
@@ -73,7 +87,7 @@ export function useBroadcast() {
         try {
           const { data, error } = await supabase
             .from("broadcasts")
-            .select("id,title,body,kind,action_url,action_label,created_at")
+            .select("id,title,body,details,version,kind,action_url,action_label,created_at")
             .eq("active", true)
             .order("created_at", { ascending: false })
             .limit(5);
@@ -91,10 +105,16 @@ export function useBroadcast() {
       if (!broadcasts.length) return;
       listRef.current = broadcasts;
       const seen = await getIds(SEEN_KEY);
+      const installed = Application.nativeApplicationVersion || null;
       const candidates: any[] = [];
       for (const b of broadcasts) {
         if (seen.includes(b.id)) continue;
         if (await isSnoozed(b.id)) continue;
+        // Déjà à jour ? → marqué vu, jamais re-proposé (fini la notif à chaque entrée)
+        if (b.version && !isNewer(installed, b.version)) {
+          await addId(SEEN_KEY, b.id);
+          continue;
+        }
         candidates.push(b);
       }
       if (!candidates.length) return;
@@ -133,6 +153,7 @@ export function useBroadcast() {
           id: latest.id,
           title: latest.title,
           body: latest.body,
+          details: latest.details || null,
           url: latest.action_url,
           label: latest.action_label || "Mettre à jour",
         });
@@ -241,7 +262,7 @@ export function useBroadcast() {
         // recharge le broadcast pour l'écran d'attente
         try {
           const { data: row } = await supabase.from("broadcasts").select("id,title,body").eq("id", data.broadcastId).single();
-          if (row) setUpdate({ id: (row as any).id, title: (row as any).title, body: (row as any).body, url: data.actionUrl, label: "Mettre à jour" });
+          if (row) setUpdate({ id: (row as any).id, title: (row as any).title, body: (row as any).body, details: null, url: data.actionUrl, label: "Mettre à jour" });
         } catch {}
       } else if (data?.broadcastId) {
         fetchAndShow(false);

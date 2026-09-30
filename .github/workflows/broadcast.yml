@@ -18,18 +18,24 @@ jobs:
       - name: Build message from commits
         id: msg
         run: |
-          TITLE="Nouvelle mise à jour Akouè"
-          BODY=$(git log -1 --pretty=%B | head -c 400)
-          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
+          RAW=$(git log -1 --pretty=%B)
+          # Titre court + vulgarisé : retire le préfixe technique "feat:/fix:/..."
+          BODY=$(echo "$RAW" | head -n 1 | sed -E 's/^[a-z]+(\([^)]*\))?:\s*//i' | head -c 200)
           {
             echo "body<<EOF"
             echo "$BODY"
-            echo ""
-            echo "Mets à jour ton app pour en profiter."
+            echo "Appuie sur Mettre à jour."
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
+          {
+            echo "details<<EOF"
+            echo "$RAW" | head -c 800
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          VERSION=$(jq -r '.expo.version' app.json)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           # Tag [no-broadcast] dans le message de commit pour sauter la notif
-          if git log -1 --pretty=%B | grep -qi "\[no-broadcast\]"; then
+          if echo "$RAW" | grep -qi "\[no-broadcast\]"; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
 
@@ -39,11 +45,17 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
-          TITLE=$(jq -Rn --arg t "${{ steps.msg.outputs.title }}" '$t')
-          BODY=$(jq -Rn --arg b "${{ steps.msg.outputs.body }}" '$b')
+          TITLE="Nouvelle mise à jour Akouè"
+          jq -n \
+            --arg t "$TITLE" \
+            --arg b "${{ steps.msg.outputs.body }}" \
+            --arg d "${{ steps.msg.outputs.details }}" \
+            --arg v "${{ steps.msg.outputs.version }}" \
+            '{title: $t, body: $b, details: $d, version: $v, kind: "update", active: true}' > payload.json
+          # L'URL du nouvel APK est ajoutée à la main après le build (action_url)
           curl -sS -X POST "$SUPABASE_URL/rest/v1/broadcasts" \
             -H "apikey: $SUPABASE_SERVICE_KEY" \
             -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
             -H "Content-Type: application/json" \
-            -d "{\"title\": $TITLE, \"body\": $BODY, \"active\": true}"
+            --data @payload.json
           echo "Broadcast inséré."

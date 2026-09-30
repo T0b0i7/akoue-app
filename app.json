@@ -2,7 +2,7 @@
   "expo": {
     "name": "Akouè",
     "slug": "akoue-app",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./public/images/favicon.png",
     "scheme": "akoue",

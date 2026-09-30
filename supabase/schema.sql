@@ -96,6 +96,9 @@ alter table public.broadcasts add column if not exists kind text default 'info'
   check (kind in ('info','update'));
 alter table public.broadcasts add column if not exists action_url text;
 alter table public.broadcasts add column if not exists action_label text default 'Mettre à jour';
+-- Ciblage de version (fini la notif alors qu'on est déjà à jour) + détails vulgarisés
+alter table public.broadcasts add column if not exists version text;
+alter table public.broadcasts add column if not exists details text;
 
 -- Vue stats rapide (remplace l'agrégation client Firestore)
 create or replace view public.wallet_stats as

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ActivityIndicator, Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 import * as Icons from "phosphor-react-native";
 import Typo from "@/components/typo";
@@ -9,6 +9,7 @@ export type PendingUpdate = {
   id: string;
   title: string;
   body: string;
+  details: string | null;
   url: string;
   label: string;
 };
@@ -24,6 +25,7 @@ type Props = {
 };
 
 export default function UpdateModal({ update, downloading, busy, progress, onUpdate, onLater, onDone }: Props) {
+  const [showDetails, setShowDetails] = useState(false);
   return (
     <Modal visible={!!update} animationType="slide" transparent>
       <View style={styles.wrap}>
@@ -39,6 +41,20 @@ export default function UpdateModal({ update, downloading, busy, progress, onUpd
               <Typo size={14} color={colors.neutral400} style={{ textAlign: "center", marginTop: 8, lineHeight: 20 }}>
                 {update?.body}
               </Typo>
+              {update?.details ? (
+                <>
+                  <TouchableOpacity onPress={() => setShowDetails(!showDetails)} style={styles.later} activeOpacity={0.7}>
+                    <Typo size={13} color={colors.primary}>
+                      {showDetails ? "Masquer les détails" : "Voir plus : qu'est-ce qui change ?"}
+                    </Typo>
+                  </TouchableOpacity>
+                  {showDetails && (
+                    <Typo size={13} color={colors.neutral100} style={{ textAlign: "center", marginTop: 4, lineHeight: 19 }}>
+                      {update.details}
+                    </Typo>
+                  )}
+                </>
+              ) : null}
               <TouchableOpacity style={styles.btn} onPress={onUpdate} disabled={busy} activeOpacity={0.85}>
                 <Icons.DownloadSimple size={18} color="#fff" weight="fill" />
                 <Typo size={15} fontWeight="700" color={colors.white}>
