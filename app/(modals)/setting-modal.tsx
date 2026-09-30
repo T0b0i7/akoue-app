@@ -245,7 +245,7 @@ const SettingsModal = () => {
                   else showToast("success", "Biométrie activée", "Visage / empreinte ✓ (rien stocké)");
                 } else {
                   // PIN / mot de passe / schéma : configuré sur la page dédiée
-                  router.push(`/(modals)/app-lock-setup?method=${m}` as any);
+                  router.push(`/app-lock-setup?method=${m}` as any);
                 }
               }}
             />

@@ -52,7 +52,7 @@ function LockSetupRedirect({ showEnroll, locked, checking }: { showEnroll: boole
     if (checking || locked) return;
     if (showEnroll && pathname !== "/app-lock-setup" && !redirected.current) {
       redirected.current = true;
-      router.replace("/(modals)/app-lock-setup" as any);
+      router.replace("/app-lock-setup" as any);
     }
     if (!showEnroll) redirected.current = false;
   }, [showEnroll, locked, checking, pathname]);
