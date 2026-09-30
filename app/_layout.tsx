@@ -103,6 +103,7 @@ export default function RootLayout() {
 						<AppLockGate
 							locked={lock.locked}
 							method={lock.method}
+							lockoutSecs={lock.lockoutSecs}
 							onUnlockBiometric={lock.unlockBiometric}
 							onUnlockSecret={lock.unlockSecret}
 						/>
