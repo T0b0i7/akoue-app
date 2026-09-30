@@ -43,14 +43,18 @@ function BroadcastWatcher() {
 
 // Choix du verrou obligatoire sur une PAGE (pas de bottom-sheet) :
 // redirige vers la page tant que l'utilisateur n'a pas choisi.
+// Note : usePathname() masque les groupes → "/app-lock-setup", pas "/(modals)/...".
 function LockSetupRedirect({ showEnroll, locked, checking }: { showEnroll: boolean; locked: boolean; checking: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
+  const redirected = useRef(false);
   useEffect(() => {
     if (checking || locked) return;
-    if (showEnroll && pathname !== "/(modals)/app-lock-setup") {
+    if (showEnroll && pathname !== "/app-lock-setup" && !redirected.current) {
+      redirected.current = true;
       router.replace("/(modals)/app-lock-setup" as any);
     }
+    if (!showEnroll) redirected.current = false;
   }, [showEnroll, locked, checking, pathname]);
   return null;
 }
