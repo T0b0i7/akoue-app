@@ -1,10 +1,14 @@
 import React, { useState } from "react";
 import { Modal, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import * as Icons from "phosphor-react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as bcrypt from "bcryptjs";
 import Typo from "@/components/typo";
 import { colors, radius, spacingX, spacingY } from "@/constants/theme";
 import { verticalScale } from "@/utils/styling";
 import { PatternPad, PinPad } from "@/components/lock-setup-ui";
+import { supabase, isSupabaseConfigured } from "@/config/supabase";
+import { useAuth } from "@/context/auth-context";
 import type { LockMethod } from "@/services/app-lock-service";
 
 type Props = {
@@ -13,12 +17,18 @@ type Props = {
   lockoutSecs: number;
   onUnlockBiometric: () => Promise<{ success: boolean; error?: string }>;
   onUnlockSecret: (secret: string) => Promise<{ ok: boolean; error?: string }>;
+  onReset: () => Promise<void>;
 };
 
 export default function AppLockGate(p: Props) {
+  const { user } = useAuth();
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [pwd, setPwd] = useState("");
+  const [showRecovery, setShowRecovery] = useState(false);
+  const [recPwd, setRecPwd] = useState("");
+  const [recBusy, setRecBusy] = useState(false);
+  const [recErr, setRecErr] = useState<string | null>(null);
 
   const bio = async () => {
     if (p.lockoutSecs > 0) return;
@@ -37,6 +47,37 @@ export default function AppLockGate(p: Props) {
     setBusy(false);
   };
 
+  // Schéma/PIN/mot de passe oublié : prouve ton compte puis choisis un nouveau verrou
+  const recover = async () => {
+    if (!user?.email) { setRecErr("Reconnecte toi pour réinitialiser."); return; }
+    if (!recPwd) { setRecErr("Entre ton mot de passe de compte."); return; }
+    setRecBusy(true); setRecErr(null);
+    try {
+      let ok = false;
+      if (isSupabaseConfigured) {
+        const { error } = await supabase.auth.signInWithPassword({ email: user.email, password: recPwd });
+        ok = !error;
+      }
+      if (!ok) {
+        const raw = await AsyncStorage.getItem("offline_users");
+        const users = raw ? JSON.parse(raw) : [];
+        const found = users.find((u: any) => u.email?.toLowerCase() === user.email?.toLowerCase());
+        const hash = found?.passwordHash || found?.password;
+        if (hash) {
+          ok = hash.startsWith("$2") ? await bcrypt.compare(recPwd, hash) : recPwd === hash;
+        }
+      }
+      if (!ok) { setRecErr("Mot de passe de compte incorrect."); setRecBusy(false); return; }
+      setRecPwd("");
+      setShowRecovery(false);
+      await p.onReset(); // efface le verrou, la page de choix revient
+    } catch (e: any) {
+      setRecErr(e?.message || "Échec de vérification.");
+    } finally {
+      setRecBusy(false);
+    }
+  };
+
   return (
     <Modal visible={p.locked} animationType="fade" transparent={false}>
       <View style={styles.root}>
@@ -49,7 +90,7 @@ export default function AppLockGate(p: Props) {
         {p.lockoutSecs > 0 && (
           <View style={styles.lockout}>
             <Icons.Timer size={18} color={colors.rose} weight="fill" />
-            <Typo size={14} fontWeight="700" color={colors.rose}>Pause {p.lockoutSecs}s — trop d'essais</Typo>
+            <Typo size={14} fontWeight="700" color={colors.rose}>Pause {p.lockoutSecs}s. Trop d'essais</Typo>
           </View>
         )}
         <View style={{ marginTop: 18, width: "100%", alignItems: "center" }}>
@@ -74,6 +115,30 @@ export default function AppLockGate(p: Props) {
           )}
           {p.method === "pattern" && <PatternPad onDone={secret} />}
         </View>
+        {p.method !== "biometric" && !showRecovery && (
+          <TouchableOpacity onPress={() => { setShowRecovery(true); setRecErr(null); }} style={{ marginTop: 14 }} activeOpacity={0.7}>
+            <Typo size={13} color={colors.primary}>Code oublié ?</Typo>
+          </TouchableOpacity>
+        )}
+        {showRecovery && (
+          <View style={{ width: "100%", marginTop: 14, gap: 10 }}>
+            <Typo size={13} color={colors.neutral400} style={{ textAlign: "center" }}>
+              Prouve ton compte ({user?.email}) puis choisis un nouveau verrou.
+            </Typo>
+            <TextInput
+              value={recPwd} onChangeText={setRecPwd} secureTextEntry
+              placeholder="Mot de passe du compte" placeholderTextColor={colors.neutral500}
+              style={styles.input} onSubmitEditing={recover}
+            />
+            {recErr && <Typo size={13} color={colors.rose} style={{ textAlign: "center" }}>{recErr}</Typo>}
+            <TouchableOpacity style={styles.btn} onPress={recover} disabled={recBusy} activeOpacity={0.85}>
+              <Typo size={15} fontWeight="700" color={colors.white}>{recBusy ? "…" : "Vérifier et réinitialiser"}</Typo>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowRecovery(false)} style={{ alignItems: "center", padding: 6 }} activeOpacity={0.7}>
+              <Typo size={13} color={colors.neutral400}>Retour</Typo>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     </Modal>
   );

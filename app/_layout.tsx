@@ -106,6 +106,7 @@ export default function RootLayout() {
 							lockoutSecs={lock.lockoutSecs}
 							onUnlockBiometric={lock.unlockBiometric}
 							onUnlockSecret={lock.unlockSecret}
+							onReset={lock.resetLock}
 						/>
 						<View style={styles.appBackground}>
 				<Stack
