@@ -20,7 +20,7 @@ import { useToast } from "@/context/toast-context"
 import { WORLD_CURRENCIES } from "@/constants/currencies"
 import { Dropdown } from "react-native-element-dropdown"
 import { useAppLock } from "@/hooks/use-app-lock"
-import { LOCK_METHODS, type LockMethod } from "@/services/app-lock-service"
+import { type LockMethod } from "@/services/app-lock-service"
 import { LockMethodCards } from "@/components/lock-setup-ui"
 
 const SettingsModal = () => {
