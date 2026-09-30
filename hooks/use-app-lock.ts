@@ -27,6 +27,7 @@ export function useAppLock() {
   const [locked, setLocked] = useState(false);
   const [support, setSupport] = useState<FaceSupport | null>(null);
   const [showEnroll, setShowEnroll] = useState(false);
+  const [setupFor, setSetupFor] = useState<LockMethod | null>(null);
   const [checking, setChecking] = useState(true);
 
   const refresh = useCallback(async () => {
@@ -92,8 +93,9 @@ export function useAppLock() {
     return { success: true as const };
   }, []);
 
-  // Rouvre l'écran de choix (changement depuis paramètres)
-  const openSetup = useCallback(() => {
+  // Rouvre l'écran de choix (changement depuis paramètres), avec pré-sélection
+  const openSetup = useCallback((m: LockMethod | null = null) => {
+    setSetupFor(m);
     setShowEnroll(true);
   }, []);
 
@@ -106,5 +108,5 @@ export function useAppLock() {
     setShowEnroll(true);
   }, []);
 
-  return { method, locked, support, showEnroll, checking, unlockBiometric, unlockSecret, choose, openSetup, resetLock, refresh };
+  return { method, locked, support, showEnroll, setupFor, checking, unlockBiometric, unlockSecret, choose, openSetup, resetLock, refresh };
 }

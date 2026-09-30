@@ -7,8 +7,9 @@ import { OptionType } from "@/types"
 import { verticalScale } from "@/utils/styling"
 import * as Icons from "phosphor-react-native"
 import React, { useEffect, useState } from "react"
-import { Alert, StyleSheet, Switch, TouchableOpacity, View } from "react-native"
+import { Alert, StyleSheet, Switch, TouchableOpacity, View, ScrollView } from "react-native"
 import { useRouter } from "expo-router"
+import Constants from "expo-constants"
 import Animated, { FadeInDown } from "react-native-reanimated"
 import { useLocale } from "@/context/locale-context"
 import { useAuth } from "@/context/auth-context"
@@ -20,6 +21,7 @@ import { WORLD_CURRENCIES } from "@/constants/currencies"
 import { Dropdown } from "react-native-element-dropdown"
 import { useAppLock } from "@/hooks/use-app-lock"
 import { LOCK_METHODS, type LockMethod } from "@/services/app-lock-service"
+import { LockMethodCards } from "@/components/app-lock-gate"
 
 const SettingsModal = () => {
   const { t, language, setLanguage } = useLocale()
@@ -115,7 +117,7 @@ const SettingsModal = () => {
       title: t("version"),
       icon: <Icons.Info size={26} color={colors.white} weight="fill" />,
       type: "text",
-      value: "1.0.0",
+      value: Constants.expoConfig?.version ?? "1.0.0",
       bgColor: "#6366f1",
     },
   ]
@@ -152,7 +154,8 @@ const SettingsModal = () => {
 
   return (
     <ModalWrapper>
-      <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <View>
         <Header
           title={t("settings")}
           leftIcon={<BackButton />}
@@ -228,18 +231,11 @@ const SettingsModal = () => {
               <Icons.Lock size={16} color={colors.primary} weight="fill" />
               <Typo size={13} fontWeight="700" color={colors.white}>Verrouillage</Typo>
             </View>
-            <Dropdown
-              style={{ height: 40, backgroundColor: colors.neutral700, borderRadius: 10, paddingHorizontal: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }}
-              containerStyle={{ backgroundColor: colors.neutral800, borderRadius: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }}
-              selectedTextStyle={{ color: colors.white, fontSize: 13, fontWeight: "600" }}
-              itemTextStyle={{ color: colors.white, fontSize: 12 }}
-              activeColor={colors.neutral700}
-              data={LOCK_METHODS.map(m => ({ label: `${m.label} — ${m.desc}`, value: m.id }))}
-              labelField="label"
-              valueField="value"
-              value={lock.method}
-              onChange={async (item) => {
-                const m = item.value as LockMethod;
+            <LockMethodCards
+              methods={["none", "biometric", "pin", "password", "pattern"]}
+              selected={lock.method}
+              onPick={async (m) => {
+                if (m === lock.method) return;
                 if (m === "none") {
                   await lock.choose("none");
                   showToast("success", "Verrou coupé", "Ouverture directe");
@@ -248,11 +244,10 @@ const SettingsModal = () => {
                   if (!r.success) showToast("error", "Biométrie", r.error || "Annulé");
                   else showToast("success", "Biométrie activée", "Visage / empreinte ✓ (rien stocké)");
                 } else {
-                  // PIN / mot de passe / schéma : configuré dans l'écran de choix
-                  lock.openSetup();
+                  // PIN / mot de passe / schéma : configuré dans le joli écran de choix
+                  lock.openSetup(m);
                 }
               }}
-              maxHeight={300}
             />
             <Typo size={11} color={colors.neutral500}>Biométrie = rien en base (préférable). PIN / mot de passe / schéma = hash bcrypt en base + local.</Typo>
             <TouchableOpacity
@@ -262,14 +257,6 @@ const SettingsModal = () => {
             >
               <Typo size={12} color={colors.rose}>Réinitialiser ma manière de verrouiller</Typo>
             </TouchableOpacity>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-              <Typo size={12} color={colors.neutral400}>Actuel : {LOCK_METHODS.find(m => m.id === lock.method)?.label}</Typo>
-              {lock.method !== "none" && (
-                <TouchableOpacity onPress={async () => { await lock.choose("none"); showToast("success", "Verrou coupé", ""); }}>
-                  <Typo size={12} color={colors.rose}>Désactiver</Typo>
-                </TouchableOpacity>
-              )}
-            </View>
           </View>
         </View>
 
@@ -304,6 +291,7 @@ const SettingsModal = () => {
           </View>
         </View>
       </View>
+      </ScrollView>
 
       <ConfirmDialog
         visible={confirm === "data"}

@@ -81,6 +81,7 @@ export default function RootLayout() {
 							locked={lock.locked}
 							method={lock.method}
 							showEnroll={lock.showEnroll}
+							setupFor={lock.setupFor}
 							faceAvailable={!!lock.support?.faceAvailable}
 							onUnlockBiometric={lock.unlockBiometric}
 							onUnlockSecret={lock.unlockSecret}
