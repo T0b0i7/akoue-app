@@ -24,9 +24,47 @@ const BG_AT_KEY = "app_bg_at";
 // (fini l'impression d'être "déconnecté" à chaque aller-retour).
 const GRACE_MS = 60 * 1000;
 
+// Anti force brute : 5 échecs rapprochés → pause 30 secondes
+const FAILS_KEY = "app_lock_fails";
+const LOCKOUT_KEY = "app_lock_until";
+const MAX_FAILS = 5;
+const LOCKOUT_MS = 30 * 1000;
+const FAIL_WINDOW_MS = 5 * 60 * 1000;
+
+async function getLockoutSecs(): Promise<number> {
+  try {
+    const raw = await AsyncStorage.getItem(LOCKOUT_KEY);
+    if (!raw) return 0;
+    return Math.max(0, Math.ceil((Number(raw) - Date.now()) / 1000));
+  } catch { return 0; }
+}
+
+async function recordFail(): Promise<number> {
+  try {
+    const raw = await AsyncStorage.getItem(FAILS_KEY);
+    const now = Date.now();
+    const fails: number[] = (raw ? JSON.parse(raw) : []).filter((t: number) => now - t < FAIL_WINDOW_MS);
+    fails.push(now);
+    if (fails.length >= MAX_FAILS) {
+      await AsyncStorage.multiRemove([FAILS_KEY]);
+      await AsyncStorage.setItem(LOCKOUT_KEY, String(now + LOCKOUT_MS));
+      return Math.ceil(LOCKOUT_MS / 1000);
+    }
+    await AsyncStorage.setItem(FAILS_KEY, JSON.stringify(fails));
+    return 0;
+  } catch { return 0; }
+}
+
+async function clearFails() {
+  try {
+    await AsyncStorage.multiRemove([FAILS_KEY, LOCKOUT_KEY]);
+  } catch {}
+}
+
 export function useAppLock() {
   const [method, setMethod] = useState<LockMethod>("none");
   const [locked, setLocked] = useState(false);
+  const [lockoutSecs, setLockoutSecs] = useState(0);
   const [support, setSupport] = useState<FaceSupport | null>(null);
   const [showEnroll, setShowEnroll] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -52,7 +90,19 @@ export function useAppLock() {
     if (after.method === "none" && !done) setShowEnroll(true);
     setLocked(after.method !== "none");
     setChecking(false);
+    setLockoutSecs(await getLockoutSecs());
   }, []);
+
+  // Compte à rebours de la pause anti force brute
+  useEffect(() => {
+    if (lockoutSecs <= 0) return;
+    const id = setInterval(async () => {
+      const s = await getLockoutSecs();
+      setLockoutSecs(s);
+      if (s <= 0) clearInterval(id);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [lockoutSecs > 0]);
 
   useEffect(() => {
     refresh();
@@ -76,15 +126,43 @@ export function useAppLock() {
   }, []);
 
   const unlockBiometric = useCallback(async () => {
+    const wait = await getLockoutSecs();
+    if (wait > 0) {
+      setLockoutSecs(wait);
+      return { success: false as const, error: `Trop d'essais. Réessaie dans ${wait}s.` };
+    }
     const r = await authenticateWithFace("Déverrouille Akouè");
-    if (r.success) setLocked(false);
+    if (r.success) {
+      setLocked(false);
+      await clearFails();
+    } else {
+      const s = await recordFail();
+      if (s > 0) {
+        setLockoutSecs(s);
+        return { success: false as const, error: `Trop d'essais. Pause ${s}s.` };
+      }
+    }
     return r;
   }, []);
 
   const unlockSecret = useCallback(async (secret: string) => {
+    const wait = await getLockoutSecs();
+    if (wait > 0) {
+      setLockoutSecs(wait);
+      return { ok: false as const, error: `Trop d'essais. Réessaie dans ${wait}s.` };
+    }
     const ok = await verifyAppLock(secret);
-    if (ok) setLocked(false);
-    return ok;
+    if (ok) {
+      setLocked(false);
+      await clearFails();
+      return { ok: true as const };
+    }
+    const s = await recordFail();
+    if (s > 0) {
+      setLockoutSecs(s);
+      return { ok: false as const, error: `Trop d'essais. Pause ${s}s.` };
+    }
+    return { ok: false as const };
   }, []);
 
   const choose = useCallback(async (m: LockMethod, secret?: string) => {
@@ -110,5 +188,5 @@ export function useAppLock() {
     setShowEnroll(true);
   }, []);
 
-  return { method, locked, support, showEnroll, checking, unlockBiometric, unlockSecret, choose, resetLock, refresh, syncEnroll };
+  return { method, locked, lockoutSecs, support, showEnroll, checking, unlockBiometric, unlockSecret, choose, resetLock, refresh, syncEnroll };
 }

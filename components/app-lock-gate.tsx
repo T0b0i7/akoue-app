@@ -10,8 +10,9 @@ import type { LockMethod } from "@/services/app-lock-service";
 type Props = {
   locked: boolean;
   method: LockMethod;
+  lockoutSecs: number;
   onUnlockBiometric: () => Promise<{ success: boolean; error?: string }>;
-  onUnlockSecret: (secret: string) => Promise<boolean>;
+  onUnlockSecret: (secret: string) => Promise<{ ok: boolean; error?: string }>;
 };
 
 export default function AppLockGate(p: Props) {
@@ -20,6 +21,7 @@ export default function AppLockGate(p: Props) {
   const [pwd, setPwd] = useState("");
 
   const bio = async () => {
+    if (p.lockoutSecs > 0) return;
     setBusy(true); setErr(null);
     const r = await p.onUnlockBiometric();
     if (!r.success) setErr(r.error || "Échec reconnaissance.");
@@ -27,9 +29,10 @@ export default function AppLockGate(p: Props) {
   };
 
   const secret = async (s: string) => {
+    if (p.lockoutSecs > 0) return;
     setBusy(true); setErr(null);
-    const ok = await p.onUnlockSecret(s);
-    if (!ok) setErr("Code incorrect.");
+    const r = await p.onUnlockSecret(s);
+    if (!r.ok) setErr(r.error || "Code incorrect.");
     else setPwd("");
     setBusy(false);
   };
@@ -43,6 +46,12 @@ export default function AppLockGate(p: Props) {
           {p.method === "biometric" ? "Montre ton visage / pose ton doigt." : p.method === "pin" ? "Entre ton PIN." : p.method === "password" ? "Entre ton mot de passe." : "Trace ton schéma."}
         </Typo>
         {err && <Typo size={13} color={colors.rose} style={{ textAlign: "center", marginTop: 10 }}>{err}</Typo>}
+        {p.lockoutSecs > 0 && (
+          <View style={styles.lockout}>
+            <Icons.Timer size={18} color={colors.rose} weight="fill" />
+            <Typo size={14} fontWeight="700" color={colors.rose}>Pause {p.lockoutSecs}s — trop d'essais</Typo>
+          </View>
+        )}
         <View style={{ marginTop: 18, width: "100%", alignItems: "center" }}>
           {p.method === "biometric" && (
             <TouchableOpacity style={styles.btn} onPress={bio} disabled={busy} activeOpacity={0.85}>
@@ -75,4 +84,5 @@ const styles = StyleSheet.create({
   avatar: { width: 96, height: 96, borderRadius: 48, backgroundColor: "#7A4DFF", alignItems: "center", justifyContent: "center", marginBottom: verticalScale(18) },
   btn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: "#7A4DFF", borderRadius: radius._15, paddingVertical: spacingY._12, paddingHorizontal: spacingX._20, marginTop: 6, minWidth: 220 },
   input: { backgroundColor: colors.neutral800, borderRadius: 12, padding: 12, color: colors.white, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
+  lockout: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12, backgroundColor: "rgba(244,63,94,0.12)", borderRadius: 12, paddingVertical: 8, paddingHorizontal: 14 },
 });
