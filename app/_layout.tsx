@@ -17,8 +17,6 @@ import { useOTAUpdate } from "@/hooks/use-ota-update";
 import { useBroadcast } from "@/hooks/use-broadcast";
 import UpdateModal from "@/components/update-modal";
 
-import "./global.css";
-
 if (Platform.OS !== "web") {
   SplashScreen.preventAutoHideAsync().catch(() => {});
 }
