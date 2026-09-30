@@ -19,8 +19,8 @@ export function validateSecret(method: LockMethod, secret: string): string | nul
   if (method === "pin" && !/^\d{4,6}$/.test(secret)) return "PIN : 4 à 6 chiffres.";
   if (method === "password" && secret.length < 8) return "Mot de passe : 8 caractères minimum.";
   if (method === "pattern") {
-    const pts = secret.split("-").filter(Boolean);
-    if (pts.length < 4) return "Schéma : relie au moins 4 points.";
+    const pts = secret.replace(/-/g, ""); // sans tirets : "2573"
+    if (!/^[0-8]{4,9}$/.test(pts)) return "Schéma : glisse sur au moins 4 points.";
     if (new Set(pts).size !== pts.length) return "Schéma : un point une seule fois.";
   }
   return null;
