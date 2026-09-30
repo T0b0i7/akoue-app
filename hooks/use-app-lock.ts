@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { AppState } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
+  clearEnrollDone,
   getLocalLock,
+  isEnrollDone,
+  markEnrollDone,
   pullLockFromCloud,
   setAppLock,
   verifyAppLock,
@@ -14,9 +17,8 @@ import {
   type FaceSupport,
 } from "@/services/face-lock-service";
 
-// Choix obligatoire une fois : tant que l'utilisateur n'a pas choisi,
-// l'écran de choix revient à chaque lancement. Réinitialisable en paramètres.
-const ENROLL_DONE_KEY = "app_lock_enroll_v2";
+// Choix obligatoire une fois (page plein écran) : tant que l'utilisateur
+// n'a pas choisi, il est redirigé vers la page. Réinitialisable en paramètres.
 const BG_AT_KEY = "app_bg_at";
 // Délai de grâce : si l'app revient dans les 60s, pas de reverrouillage
 // (fini l'impression d'être "déconnecté" à chaque aller-retour).
@@ -27,8 +29,14 @@ export function useAppLock() {
   const [locked, setLocked] = useState(false);
   const [support, setSupport] = useState<FaceSupport | null>(null);
   const [showEnroll, setShowEnroll] = useState(false);
-  const [setupFor, setSetupFor] = useState<LockMethod | null>(null);
   const [checking, setChecking] = useState(true);
+
+  // Resync légère (retour de la page de configuration) : ne touche pas au verrou
+  const syncEnroll = useCallback(async () => {
+    const [l, done] = await Promise.all([getLocalLock(), isEnrollDone()]);
+    setMethod(l.method);
+    setShowEnroll(l.method === "none" && !done);
+  }, []);
 
   const refresh = useCallback(async () => {
     const [local, sup] = await Promise.all([
@@ -38,7 +46,7 @@ export function useAppLock() {
     // Si compte connecté, la base fait foi pour pin/password/pattern
     await pullLockFromCloud().catch(() => {});
     const after = await getLocalLock().catch(() => local);
-    const done = await AsyncStorage.getItem(ENROLL_DONE_KEY).catch(() => null);
+    const done = await isEnrollDone();
     setMethod(after.method);
     setSupport(sup);
     if (after.method === "none" && !done) setShowEnroll(true);
@@ -86,27 +94,21 @@ export function useAppLock() {
     }
     const r = await setAppLock(m, secret);
     if (!r.success) return { success: false as const, error: r.msg };
-    await AsyncStorage.setItem(ENROLL_DONE_KEY, "1").catch(() => {});
+    await markEnrollDone();
     setMethod(m);
     setLocked(m !== "none");
     setShowEnroll(false);
     return { success: true as const };
   }, []);
 
-  // Rouvre l'écran de choix (changement depuis paramètres), avec pré-sélection
-  const openSetup = useCallback((m: LockMethod | null = null) => {
-    setSetupFor(m);
-    setShowEnroll(true);
-  }, []);
-
-  // Réinitialise : efface le verrou, le choix sera redemandé
+  // Réinitialise : efface le verrou, la page de choix sera redemandée
   const resetLock = useCallback(async () => {
     await setAppLock("none");
-    await AsyncStorage.removeItem(ENROLL_DONE_KEY).catch(() => {});
+    await clearEnrollDone();
     setMethod("none");
     setLocked(false);
     setShowEnroll(true);
   }, []);
 
-  return { method, locked, support, showEnroll, setupFor, checking, unlockBiometric, unlockSecret, choose, openSetup, resetLock, refresh };
+  return { method, locked, support, showEnroll, checking, unlockBiometric, unlockSecret, choose, resetLock, refresh, syncEnroll };
 }

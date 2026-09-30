@@ -6,6 +6,28 @@ export type LockMethod = "none" | "biometric" | "pin" | "password" | "pattern";
 
 const METHOD_KEY = "app_lock_method";
 const HASH_KEY = "app_lock_hash";
+// Choix effectué une fois (écran de configuration plein écran, pas de bottom-sheet)
+const ENROLL_DONE_KEY = "app_lock_enroll_v2";
+
+export async function isEnrollDone(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(ENROLL_DONE_KEY)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export async function markEnrollDone() {
+  try {
+    await AsyncStorage.setItem(ENROLL_DONE_KEY, "1");
+  } catch {}
+}
+
+export async function clearEnrollDone() {
+  try {
+    await AsyncStorage.removeItem(ENROLL_DONE_KEY);
+  } catch {}
+}
 
 export const LOCK_METHODS: { id: LockMethod; label: string; desc: string }[] = [
   { id: "none", label: "Aucun", desc: "Ouverture directe" },
