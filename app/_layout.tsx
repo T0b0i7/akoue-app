@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { usePathname, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 // @ts-ignore expo-asset déjà présent via expo mais types pnpm non résolus
