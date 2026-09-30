@@ -91,8 +91,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     if (initializing) return;
-    // ne pas rediriger pendant le splash/index ou language — laissé à app/index.tsx
-    if (!pathname || pathname === "/" || pathname === "/language") return;
+    // ne pas rediriger pendant le splash/index, language ou choix du verrou — laissés à leurs écrans
+    if (!pathname || pathname === "/" || pathname === "/language" || pathname === "/app-lock-setup") return;
     const inAuth = pathname?.startsWith("/welcome") || pathname?.startsWith("/login") || pathname?.startsWith("/sign-up") || pathname?.startsWith("/forgot") || pathname?.startsWith("/(auth)");
     if (user && inAuth) router.replace("/(tabs)" as any);
     else if (!user && !inAuth) {
