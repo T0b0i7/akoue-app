@@ -21,7 +21,7 @@ import { WORLD_CURRENCIES } from "@/constants/currencies"
 import { Dropdown } from "react-native-element-dropdown"
 import { useAppLock } from "@/hooks/use-app-lock"
 import { LOCK_METHODS, type LockMethod } from "@/services/app-lock-service"
-import { LockMethodCards } from "@/components/app-lock-gate"
+import { LockMethodCards } from "@/components/lock-setup-ui"
 
 const SettingsModal = () => {
   const { t, language, setLanguage } = useLocale()
@@ -234,7 +234,7 @@ const SettingsModal = () => {
             <LockMethodCards
               methods={["none", "biometric", "pin", "password", "pattern"]}
               selected={lock.method}
-              onPick={async (m) => {
+              onPick={async (m: LockMethod) => {
                 if (m === lock.method) return;
                 if (m === "none") {
                   await lock.choose("none");
@@ -244,8 +244,8 @@ const SettingsModal = () => {
                   if (!r.success) showToast("error", "Biométrie", r.error || "Annulé");
                   else showToast("success", "Biométrie activée", "Visage / empreinte ✓ (rien stocké)");
                 } else {
-                  // PIN / mot de passe / schéma : configuré dans le joli écran de choix
-                  lock.openSetup(m);
+                  // PIN / mot de passe / schéma : configuré sur la page dédiée
+                  router.push(`/(modals)/app-lock-setup?method=${m}` as any);
                 }
               }}
             />

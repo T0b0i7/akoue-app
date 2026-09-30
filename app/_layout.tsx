@@ -1,4 +1,5 @@
 import { Stack } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import { Platform, StyleSheet, View } from "react-native";
@@ -40,9 +41,28 @@ function BroadcastWatcher() {
   );
 }
 
+// Choix du verrou obligatoire sur une PAGE (pas de bottom-sheet) :
+// redirige vers la page tant que l'utilisateur n'a pas choisi.
+function LockSetupRedirect({ showEnroll, locked, checking }: { showEnroll: boolean; locked: boolean; checking: boolean }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  useEffect(() => {
+    if (checking || locked) return;
+    if (showEnroll && pathname !== "/(modals)/app-lock-setup") {
+      router.replace("/(modals)/app-lock-setup" as any);
+    }
+  }, [showEnroll, locked, checking, pathname]);
+  return null;
+}
+
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
   const lock = useAppLock();
+  const pathname = usePathname();
+  // Retour de la page de configuration → resync sans toucher au verrou
+  useEffect(() => {
+    lock.syncEnroll();
+  }, [pathname]);
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -74,16 +94,13 @@ export default function RootLayout() {
 					<LocaleProvider>
 						<OTAWatcher />
 						<BroadcastWatcher />
+						<LockSetupRedirect showEnroll={lock.showEnroll} locked={lock.locked} checking={lock.checking} />
 						<AppToast />
 						<AppLockGate
 							locked={lock.locked}
 							method={lock.method}
-							showEnroll={lock.showEnroll}
-							setupFor={lock.setupFor}
-							faceAvailable={!!lock.support?.faceAvailable}
 							onUnlockBiometric={lock.unlockBiometric}
 							onUnlockSecret={lock.unlockSecret}
-							onChoose={lock.choose}
 						/>
 						<View style={styles.appBackground}>
 				<Stack
