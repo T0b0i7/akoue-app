@@ -45,3 +45,15 @@ Agent: Muse Spark
 - Exécuter migration `profiles.lock_*` si pas fait (SQL Editor)
 - Tester verrou obligatoire + MAJ directe sur device avec le nouvel APK
 - Penser Play Store à terme (MAJ vraiment automatiques)
+
+## Suite session (web + verrou page + anti brute force)
+- Nettoyage warnings web : `app/global.css` tailwind supprimé (inutilisé) ; shadow* laissé (requis iOS natif) ; pipe expo-server = bénin
+- Verrou sur vraie page : `app/app-lock-setup.tsx` (hors modales, push + retour), redirect obligatoire, fix boucle infinie (pathname sans groupe + auth exclut setup + garde redirected) + 2 oublis d'import useRef/useEffect
+- Zéro tiret : PIN `○○○○`, descs sans dash, supprime gate visage mort ; service visage conservé
+- Schéma glissé au doigt (PanResponder + SVG), séquence `2573`, s'efface après essai
+- Anti force brute : 5 échecs → pause 30s avec compteur, survit au restart
+- Code oublié : reset via mot de passe du compte (online Supabase, fallback bcrypt offline) → page de choix
+- MAJ ciblée version (`expo-application`, auto-skip si à jour) + bouton détails vulgarisés ; workflow envoie version+details ; version app 1.1.0
+- 7 broadcasts auto coupés (spam) ; auto-broadcast prouvé par capture utilisateur
+- Commits : `10a4c2d`, `42602de`, `3f6878a`, `dbfb739`, `562e1af`, `da1a184`, `debc6e7`, `c5e4711`, `eed4be8`, `8164414`
+- TOUJOURS en attente : build APK du 1er oct (quota EAS) avec tout le dessus
