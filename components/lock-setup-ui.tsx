@@ -101,7 +101,17 @@ export function PatternPad({ onDone }: { onDone: (seq: string) => void }) {
   const [seq, setSeq] = useState<number[]>([]);
   const [cur, setCur] = useState<{ x: number; y: number } | null>(null);
   const seqRef = useRef<number[]>([]);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   seqRef.current = seq;
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  const reset = () => {
+    if (timer.current) clearTimeout(timer.current);
+    seqRef.current = [];
+    setSeq([]);
+    setCur(null);
+  };
 
   const addPoint = (x: number, y: number) => {
     const cx = Math.max(0, Math.min(PAT_SIZE - 1, x));
@@ -121,11 +131,18 @@ export function PatternPad({ onDone }: { onDone: (seq: string) => void }) {
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (e) => addPoint(e.nativeEvent.locationX, e.nativeEvent.locationY),
+      onPanResponderGrant: (e) => {
+        // Chaque nouveau toucher = nouvel essai, l'ancien tracé s'efface
+        seqRef.current = [];
+        setSeq([]);
+        addPoint(e.nativeEvent.locationX, e.nativeEvent.locationY);
+      },
       onPanResponderMove: (e) => addPoint(e.nativeEvent.locationX, e.nativeEvent.locationY),
       onPanResponderRelease: () => {
         setCur(null);
         if (seqRef.current.length >= 4) onDone(seqRef.current.join(""));
+        // L'écran s'efface dans tous les cas (surtout si code incorrect)
+        timer.current = setTimeout(reset, 800);
       },
     })
   ).current;
@@ -149,7 +166,7 @@ export function PatternPad({ onDone }: { onDone: (seq: string) => void }) {
           })}
         </Svg>
       </View>
-      <TouchableOpacity onPress={() => { seqRef.current = []; setSeq([]); }}>
+      <TouchableOpacity onPress={reset}>
         <Typo size={12} color={colors.neutral400}>Recommencer ({seq.length}/9)</Typo>
       </TouchableOpacity>
     </View>
