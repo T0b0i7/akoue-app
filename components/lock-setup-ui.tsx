@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { PanResponder, StyleSheet, TouchableOpacity, View } from "react-native";
 import * as Icons from "phosphor-react-native";
 import Svg, { Circle, Polyline } from "react-native-svg";
