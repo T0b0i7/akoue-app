@@ -10,7 +10,7 @@ import type { LockMethod } from "@/services/app-lock-service";
 
 const METHOD_STYLE: Record<LockMethod, { icon: any; tint: string; title: string; desc: string }> = {
   none: { icon: Icons.LockOpen, tint: "#525252", title: "Aucun", desc: "Ouverture directe" },
-  biometric: { icon: Icons.Fingerprint, tint: "#7A4DFF", title: "Visage / Empreinte", desc: "Un geste, rien stocké — recommandé" },
+  biometric: { icon: Icons.Fingerprint, tint: "#7A4DFF", title: "Visage / Empreinte", desc: "Un geste, rien stocké. Recommandé" },
   pin: { icon: Icons.Hash, tint: "#0ea5e9", title: "PIN", desc: "4 à 6 chiffres" },
   password: { icon: Icons.Key, tint: "#f59e0b", title: "Mot de passe", desc: "8 caractères minimum" },
   pattern: { icon: Icons.GridNine, tint: "#10b981", title: "Schéma", desc: "Glisse le doigt sur les points" },
@@ -68,7 +68,7 @@ export function PinPad({ onDone }: { onDone: (pin: string) => void }) {
   };
   return (
     <View style={{ alignItems: "center", gap: 12 }}>
-      <Typo size={26} fontWeight="800" style={{ letterSpacing: 6 }}>{"•".repeat(pin.length) || "––––"}</Typo>
+      <Typo size={26} fontWeight="800" style={{ letterSpacing: 6 }}>{"•".repeat(pin.length) + "○".repeat(Math.max(0, 4 - pin.length))}</Typo>
       <View style={styles.pinGrid}>
         {["1", "2", "3", "4", "5", "6", "7", "8", "9", "⌫", "0", "OK"].map((k) => (
           <TouchableOpacity

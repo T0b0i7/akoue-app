@@ -31,7 +31,7 @@ export async function clearEnrollDone() {
 
 export const LOCK_METHODS: { id: LockMethod; label: string; desc: string }[] = [
   { id: "none", label: "Aucun", desc: "Ouverture directe" },
-  { id: "biometric", label: "Visage / Empreinte", desc: "FaceID / visage / doigt système — rien stocké" },
+  { id: "biometric", label: "Visage / Empreinte", desc: "FaceID / visage / doigt système. Rien stocké" },
   { id: "pin", label: "PIN", desc: "4 à 6 chiffres, hash en base" },
   { id: "password", label: "Mot de passe", desc: "8+ caractères, hash en base" },
   { id: "pattern", label: "Schéma", desc: "4+ points reliés, hash en base" },
