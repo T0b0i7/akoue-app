@@ -10,7 +10,7 @@ import { authenticateWithFace, requestCameraForFace } from "@/services/face-lock
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Icons from "phosphor-react-native";
 import React, { useState } from "react";
-import { StyleSheet, TextInput, TouchableOpacity, View, ScrollView } from "react-native";
+import { KeyboardAvoidingView, Platform, StyleSheet, TextInput, TouchableOpacity, View, ScrollView } from "react-native";
 
 // Page plein écran : choix + application du verrou (plus de bottom-sheet).
 export default function AppLockSetup() {
@@ -61,7 +61,16 @@ export default function AppLockSetup() {
 
   return (
     <ScreenWrapper>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        bounces={false}
+      >
         <Header title="Verrouillage" leftIcon={<BackButton />} style={{ marginBottom: spacingY._10 }} />
 
         {!done ? (
@@ -117,6 +126,7 @@ export default function AppLockSetup() {
           </View>
         )}
       </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenWrapper>
   );
 }

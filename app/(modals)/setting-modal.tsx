@@ -20,6 +20,7 @@ import { useToast } from "@/context/toast-context"
 import { WORLD_CURRENCIES } from "@/constants/currencies"
 import { Dropdown } from "react-native-element-dropdown"
 import { useAppLock } from "@/hooks/use-app-lock"
+import { resetLocalToZero } from "@/services/dev-reset"
 import { type LockMethod } from "@/services/app-lock-service"
 import { LockMethodCards } from "@/components/lock-setup-ui"
 
@@ -29,7 +30,7 @@ const SettingsModal = () => {
   const { user, logout } = useAuth()
   const { showToast } = useToast()
   const isFR = language === "fr"
-  const [confirm, setConfirm] = useState<"data" | "account" | null>(null)
+  const [confirm, setConfirm] = useState<"data" | "account" | "factory" | null>(null)
   const [loading, setLoading] = useState(false)
   const [displayCurrency, setDisplayCurrency] = useState("XOF")
   const lock = useAppLock()
@@ -62,6 +63,19 @@ const SettingsModal = () => {
       if (toRemove.length) await AsyncStorage.multiRemove(toRemove)
       showToast("success", "Données effacées", "Portefeuilles et transactions supprimés ✓")
       setConfirm(null)
+    } catch (e: any) {
+      Alert.alert("Erreur", e.message)
+    } finally { setLoading(false) }
+  }
+
+  const handleFactoryReset = async () => {
+    setLoading(true)
+    try {
+      await resetLocalToZero()
+      await logout()
+      showToast("success", "App remise à zéro", "Tous les comptes locaux effacés — repars sur welcome ✓")
+      setConfirm(null)
+      setTimeout(() => router.replace("/(auth)/welcome" as any), 600)
     } catch (e: any) {
       Alert.alert("Erreur", e.message)
     } finally { setLoading(false) }
@@ -288,6 +302,17 @@ const SettingsModal = () => {
               </View>
               <Icons.CaretRight size={16} color={colors.neutral500} weight="bold" />
             </TouchableOpacity>
+            <View style={styles.divider} />
+            <TouchableOpacity onPress={() => setConfirm("factory")} style={styles.dangerRow} activeOpacity={0.7}>
+              <View style={[styles.listIcon, { backgroundColor: "#7A4DFF", width: 36, height: 36 }]}>
+                <Icons.ArrowCounterClockwise size={18} color="#fff" weight="fill" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Typo size={14} fontWeight="600" color={colors.white}>Reset usine (zéro)</Typo>
+                <Typo size={11} color={colors.neutral400}>Supprime TOUS les comptes locaux + verrou — revois la logique</Typo>
+              </View>
+              <Icons.CaretRight size={16} color={colors.neutral500} weight="bold" />
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -312,6 +337,16 @@ const SettingsModal = () => {
         destructive
         onCancel={() => setConfirm(null)}
         onConfirm={handleDeleteAccount}
+      />
+      <ConfirmDialog
+        visible={confirm === "factory"}
+        title="Remettre à zéro ?"
+        message="TOUS les comptes locaux, wallets, verrou et caches seront effacés. Tu repars sur l'écran welcome comme une fresh install."
+        confirmLabel="Tout effacer"
+        cancelLabel="Annuler"
+        destructive
+        onCancel={() => setConfirm(null)}
+        onConfirm={handleFactoryReset}
       />
     </ModalWrapper>
   )
