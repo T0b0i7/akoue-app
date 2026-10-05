@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Modal, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import * as Icons from "phosphor-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as bcrypt from "bcryptjs";
@@ -80,7 +80,18 @@ export default function AppLockGate(p: Props) {
 
   return (
     <Modal visible={p.locked} animationType="fade" transparent={false}>
-      <View style={styles.root}>
+      <KeyboardAvoidingView
+        style={styles.root}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+        <View style={styles.inner}>
         <View style={styles.avatar}><Icons.FaceMask size={44} color="#fff" weight="fill" /></View>
         <Typo size={24} fontWeight="800" style={{ textAlign: "center" }}>Akouè verrouillé</Typo>
         <Typo size={13} color={colors.neutral400} style={{ textAlign: "center", marginTop: 6 }}>
@@ -139,13 +150,17 @@ export default function AppLockGate(p: Props) {
             </TouchableOpacity>
           </View>
         )}
-      </View>
+        </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#0b0b0e", alignItems: "center", justifyContent: "center", paddingHorizontal: spacingX._25 },
+  root: { flex: 1, backgroundColor: "#0b0b0e" },
+  scroll: { flexGrow: 1, justifyContent: "center", paddingHorizontal: spacingX._25, paddingVertical: 24 },
+  inner: { width: "100%", alignItems: "center" },
   avatar: { width: 96, height: 96, borderRadius: 48, backgroundColor: "#7A4DFF", alignItems: "center", justifyContent: "center", marginBottom: verticalScale(18) },
   btn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: "#7A4DFF", borderRadius: radius._15, paddingVertical: spacingY._12, paddingHorizontal: spacingX._20, marginTop: 6, minWidth: 220 },
   input: { backgroundColor: colors.neutral800, borderRadius: 12, padding: 12, color: colors.white, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },

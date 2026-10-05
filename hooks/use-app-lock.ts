@@ -16,6 +16,7 @@ import {
   getFaceSupport,
   type FaceSupport,
 } from "@/services/face-lock-service";
+import { supabase } from "@/config/supabase";
 
 // Choix obligatoire une fois (page plein écran) : tant que l'utilisateur
 // n'a pas choisi, il est redirigé vers la page. Réinitialisable en paramètres.
@@ -71,12 +72,48 @@ export function useAppLock() {
 
   // Resync légère (retour de la page de configuration) : ne touche pas au verrou
   const syncEnroll = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) {
+        const off = (await AsyncStorage.getItem("offline_user")) || (await AsyncStorage.getItem("mock_user"));
+        if (!off) {
+          setShowEnroll(false);
+          setLocked(false);
+          return;
+        }
+      }
+    } catch {}
     const [l, done] = await Promise.all([getLocalLock(), isEnrollDone()]);
     setMethod(l.method);
     setShowEnroll(l.method === "none" && !done);
   }, []);
 
   const refresh = useCallback(async () => {
+    // Sans compte, jamais de verrou — sinon bloqué sur "Akouè verrouillé" après reset usine
+    let hasAccount = false;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.id) hasAccount = true;
+    } catch {}
+    if (!hasAccount) {
+      try {
+        const off = (await AsyncStorage.getItem("offline_user")) || (await AsyncStorage.getItem("mock_user"));
+        if (off) hasAccount = true;
+        else {
+          const raw = await AsyncStorage.getItem("offline_users");
+          const arr = raw ? JSON.parse(raw) : [];
+          if (Array.isArray(arr) && arr.length > 0) hasAccount = true;
+        }
+      } catch {}
+    }
+    if (!hasAccount) {
+      setMethod("none");
+      setLocked(false);
+      setShowEnroll(false);
+      setChecking(false);
+      setLockoutSecs(0);
+      return;
+    }
     const [local, sup] = await Promise.all([
       getLocalLock(),
       getFaceSupport(),
