@@ -168,7 +168,12 @@ const SettingsModal = () => {
 
   return (
     <ModalWrapper>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        bounces={false}
+      >
       <View>
         <Header
           title={t("settings")}
@@ -356,8 +361,9 @@ export default SettingsModal
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: spacingX._20,
+    paddingBottom: spacingY._30,
   },
   cardContainer: {
     backgroundColor: colors.neutral800,
