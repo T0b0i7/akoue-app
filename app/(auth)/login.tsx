@@ -15,12 +15,22 @@ import { z, ZodError } from "zod"
 
 const Login = () => {
   const router = useRouter()
-  const { login: loginUser } = useAuth()
+  const { login: loginUser, resendConfirmation } = useAuth()
   const { t } = useLocale()
   const { showToast } = useToast()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [verifyEmail, setVerifyEmail] = useState<string | null>(null)
+  const [resending, setResending] = useState(false)
+
+  const handleResend = async () => {
+    if (!verifyEmail) return
+    setResending(true)
+    const res = await resendConfirmation(verifyEmail)
+    showToast(res.success ? "success" : "error", t("emailResent"), res.msg || "")
+    setResending(false)
+  }
 
   const loginSchema = z.object({
     email: z.email({ message: t("pleaseEnterValidEmail") }),
@@ -33,6 +43,7 @@ const Login = () => {
       setLoading(true)
       const res = await loginUser(parsed.email.trim(), parsed.password)
       if (!res.success) {
+        if ((res as any).needsVerification) setVerifyEmail(parsed.email.trim())
         showToast("error", t("error"), res.msg || t("somethingWentWrong"))
         Alert.alert(t("error"), res.msg || t("somethingWentWrong"))
       } else {
@@ -102,6 +113,18 @@ const Login = () => {
               {t("login")}
             </Typo>
           </Button>
+          {verifyEmail && (
+            <View style={{ gap: 8, backgroundColor: "rgba(122,77,255,0.1)", borderRadius: 12, padding: 12 }}>
+              <Typo size={13} color={colors.neutral400} style={{ textAlign: "center" }}>
+                {t("verifyEmailMsg")}
+              </Typo>
+              <Pressable onPress={handleResend} disabled={resending}>
+                <Typo size={14} color={colors.primary} fontWeight={"700"} style={{ textAlign: "center" }}>
+                  {resending ? "…" : t("resendEmail")}
+                </Typo>
+              </Pressable>
+            </View>
+          )}
           <View style={styles.authOptions}>
             <Pressable onPress={() => router.navigate("/(auth)/sign-up")}>
               <Typo size={15} color={colors.primary} fontWeight={"700"}>

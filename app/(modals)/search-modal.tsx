@@ -26,8 +26,6 @@ const SearchModal = () => {
     loading: recentTransactionsLoading,
   } = useSupabaseTransactions(user?.uid, 100)
 
-  // console.log("Total transactions: ", allTransactions.length);
-
   const filteredTransactions = allTransactions.filter((item) => {
     if (search.length > 1) {
       if (

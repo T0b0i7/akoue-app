@@ -73,7 +73,7 @@ const SettingsModal = () => {
     try {
       await resetLocalToZero()
       await logout()
-      showToast("success", "App remise à zéro", "Tous les comptes locaux effacés — repars sur welcome ✓")
+      showToast("success", "App remise à zéro", "Tous les comptes locaux effacés, repars sur welcome ✓")
       setConfirm(null)
       setTimeout(() => router.replace("/(auth)/welcome" as any), 600)
     } catch (e: any) {
@@ -309,7 +309,7 @@ const SettingsModal = () => {
               </View>
               <View style={{ flex: 1 }}>
                 <Typo size={14} fontWeight="600" color={colors.white}>Reset usine (zéro)</Typo>
-                <Typo size={11} color={colors.neutral400}>Supprime TOUS les comptes locaux + verrou — revois la logique</Typo>
+                <Typo size={11} color={colors.neutral400}>Supprime TOUS les comptes locaux et le verrou, pour revoir la logique</Typo>
               </View>
               <Icons.CaretRight size={16} color={colors.neutral500} weight="bold" />
             </TouchableOpacity>

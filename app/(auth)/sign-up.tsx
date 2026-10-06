@@ -15,7 +15,7 @@ import { z, ZodError } from "zod"
 
 const SignUp = () => {
   const router = useRouter()
-  const { signUp } = useAuth()
+  const { signUp, resendConfirmation } = useAuth()
   const { t } = useLocale()
   const { showToast } = useToast()
 
@@ -29,6 +29,16 @@ const SignUp = () => {
   const [name, setName] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
+  const [resending, setResending] = useState(false)
+
+  const handleResend = async () => {
+    if (!pendingEmail) return
+    setResending(true)
+    const res = await resendConfirmation(pendingEmail)
+    showToast(res.success ? "success" : "error", t("emailResent"), res.msg || "")
+    setResending(false)
+  }
 
   const handleSubmit = async () => {
     try {
@@ -42,8 +52,12 @@ const SignUp = () => {
       )
 
       if (!res.success) {
-        showToast("error", t("error"), res.msg || t("somethingWentWrong"))
-        Alert.alert(t("error"), res.msg || t("somethingWentWrong"))
+        if ((res as any).needsVerification) {
+          setPendingEmail(parsed.email.trim())
+        } else {
+          showToast("error", t("error"), res.msg || t("somethingWentWrong"))
+          Alert.alert(t("error"), res.msg || t("somethingWentWrong"))
+        }
       } else {
         showToast("success", `Bienvenue ${parsed.name} 🎉`, "Compte créé avec succès")
         router.replace("/(tabs)" as any)
@@ -63,6 +77,35 @@ const SignUp = () => {
 
   return (
     <ScreenWrapper>
+      {pendingEmail ? (
+        <View style={styles.container}>
+          <View style={styles.logoContainer}>
+            <Icons.EnvelopeSimple
+              size={verticalScale(72)}
+              color={colors.primary}
+              weight="fill"
+            />
+            <Typo size={26} fontWeight={"800"} style={{ textAlign: "center" }}>
+              {t("verifyEmailTitle")}
+            </Typo>
+            <Typo size={15} color={colors.neutral400} style={{ textAlign: "center", marginTop: 8 }}>
+              {pendingEmail}{"\n"}{t("verifyEmailMsg")}
+            </Typo>
+          </View>
+          <View style={styles.form}>
+            <Button onPress={handleResend} loading={resending}>
+              <Typo fontWeight={"700"} color={colors.white} size={18}>
+                {t("resendEmail")}
+              </Typo>
+            </Button>
+            <Pressable onPress={() => router.replace("/(auth)/login")}>
+              <Typo size={15} color={colors.primary} fontWeight={"700"} style={{ textAlign: "center" }}>
+                {t("goToLogin")}
+              </Typo>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
       <View style={styles.container}>
         <View style={styles.logoContainer}>
           <Image
@@ -149,6 +192,7 @@ const SignUp = () => {
           </Pressable>
         </View> */}
       </View>
+      )}
     </ScreenWrapper>
   )
 }

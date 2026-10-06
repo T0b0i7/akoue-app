@@ -60,9 +60,14 @@
 
 **Akouè** — Reprends le contrôle de tes finances. Fork open source de **Finote** (par [Aayush Bharti](https://github.com/aayushbharti/finote-app)), rebaptisé **Akouè App** et maintenu par [T0b0i7](https://github.com/T0b0i7).
 
-Gère plusieurs portefeuilles (Salaire, Freelance, Espèces), suis tes revenus/dépenses au quotidien et visualise tes habitudes avec des statistiques animées en temps réel. Stack moderne : **Expo 54 + React Native 0.81 + Supabase + Firebase**.
+Gère plusieurs portefeuilles (Salaire, Freelance, Espèces), suis tes revenus/dépenses au quotidien et visualise tes habitudes avec des statistiques animées en temps réel. Stack moderne : **Expo 54 + React Native 0.81 + Supabase**.
 
 > **Open source** sous licence **MIT** — contributions bienvenues !
+
+## 📥 Télécharger
+
+Dernier APK Android (preview) : **[akoue-app preview (.apk)](https://expo.dev/artifacts/eas/izERwe5ZsIhZ8Es70U5HxUJwU5lSjJrmKoo8PLHOUIU.apk)**
+Installe-le direct sur ton téléphone pour tester (autorise l'installation depuis cette source).
 
 ## 📷 Screenshots
 
@@ -81,14 +86,26 @@ Gère plusieurs portefeuilles (Salaire, Freelance, Espèces), suis tes revenus/d
 - **📝 Smart Transaction Tracking**
   Ajoute revenus/dépenses avec catégories, dates et notes.
 
-- **🧾 Receipt Uploads**
-  Attache tes reçus (Cloudinary) — ne perds plus une facture.
+- **🧾 Reçus et justificatifs**
+  Attache tes reçus (stockage Supabase privé) — ne perds plus une facture.
 
-- **🔍 Advanced Search**
+- **🔍 Recherche avancée**
   Recherche par mot-clé, catégorie ou type de transaction.
 
-- **🔐 Secure Authentication**
-  Auth Supabase + Firebase.
+- **🔐 Verrouillage de l'app**
+  Biométrie (visage/empreinte), PIN, mot de passe ou schéma glissé au doigt. Anti force brute (pause 30s après 5 échecs), code oublié réinitialisable via ton mot de passe compte.
+
+- **📴 Offline first**
+  Tout marche sans connexion (cache local + file de synchro), les données remontent quand le réseau revient.
+
+- **💱 Multi-devises**
+  XOF, EUR, USD… solde total converti en temps réel dans ta devise d'affichage.
+
+- **🔄 Mises à jour intégrées**
+  OTA silencieux + téléchargement direct des nouvelles versions dans l'app, annonces ciblées par version.
+
+- **👤 Auth Supabase**
+  Inscription/connexion avec vérification email (écran dédié + renvoi), mot de passe oublié, mode hors ligne.
 
 - **🎨 Smooth UI/UX**
   Tab bar custom, animations Reanimated, design responsive.
@@ -139,7 +156,18 @@ Gère plusieurs portefeuilles (Salaire, Freelance, Espèces), suis tes revenus/d
     pnpm android        # ou pnpm ios / pnpm web
     ```
 
- > **Note Windows HDD :** Mets le projet + le store pnpm (`C:\pnpm-store`) sur SSD. Sur HDD, `pnpm install` prend 20-30min. Config : `pnpm config set store-dir C:\pnpm-store`.
+  > **Note Windows HDD :** Mets le projet + le store pnpm (`C:\pnpm-store`) sur SSD. Sur HDD, `pnpm install` prend 20-30min. Config : `pnpm config set store-dir C:\pnpm-store`.
+ 6. Base de données — dans le SQL Editor Supabase, exécute [`supabase/schema.sql`](./supabase/schema.sql) (tables, RLS, storage privé `receipts`).
+ 7. (Optionnel) Builds :
+     ```bash
+     eas build -p android --profile preview     # APK test direct
+     eas build -p android --profile production  # AAB pour le Play Store
+     eas update --channel preview               # OTA (JS uniquement, sans réinstaller)
+     ```
+ 8. (Optionnel) Compte démo avec données fictives (captures, bannière) :
+     ```bash
+     node scripts/seed-eucher.js
+     ```
 
 ## 🔧 Contributing
 
