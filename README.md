@@ -69,6 +69,8 @@ Gère plusieurs portefeuilles (Salaire, Freelance, Espèces), suis tes revenus/d
 Dernier APK Android (preview) : **[akoue-app preview (.apk)](https://expo.dev/artifacts/eas/izERwe5ZsIhZ8Es70U5HxUJwU5lSjJrmKoo8PLHOUIU.apk)**
 Installe-le direct sur ton téléphone pour tester (autorise l'installation depuis cette source).
 
+Version web installable (PWA) : **[akoue-app sur le web](https://akoue-app--vtjbp6hmzm.expo.app)** — ouvrable dans Chrome Android puis "Ajouter à l'écran d'accueil" pour l'installer comme une app, utilisable hors ligne.
+
 ## 📷 Screenshots
 
 <img src="public/images/Akouè _ maîtrise ton argent.png" alt="Akouè, maîtrise ton argent" />
