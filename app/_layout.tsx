@@ -7,7 +7,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 // @ts-ignore expo-asset déjà présent via expo mais types pnpm non résolus
 import { Asset } from "expo-asset";
 import { colors } from "@/constants/theme";
-import { AuthProvider } from "@/context/auth-context";
+import { AuthProvider, useAuth } from "@/context/auth-context";
 import { LocaleProvider } from "@/context/locale-context";
 import { ToastProvider } from "@/context/toast-context";
 import { ThemeProvider } from "@/context/theme-context";
@@ -59,14 +59,61 @@ function LockSetupRedirect({ showEnroll, locked, checking }: { showEnroll: boole
   return null;
 }
 
-export default function RootLayout() {
-  const [ready, setReady] = useState(false);
+// Coquille interne (sous les providers) : recharge le verrou à chaque
+// changement de compte — sinon on garde le code de l'ancien compte.
+function AppShell() {
   const lock = useAppLock();
+  const { user } = useAuth();
   const pathname = usePathname();
+  const uid = (user as any)?.uid ?? null;
   // Retour de la page de configuration → resync sans toucher au verrou
   useEffect(() => {
     lock.syncEnroll();
   }, [pathname]);
+  // Changement de compte → verrou du nouveau compte (ou déverrouillé si aucun)
+  useEffect(() => {
+    lock.refresh();
+  }, [uid]);
+  return (
+    <>
+      <OTAWatcher />
+      <BroadcastWatcher />
+      <LockSetupRedirect showEnroll={lock.showEnroll} locked={lock.locked} checking={lock.checking} />
+      <AppToast />
+      <AppLockGate
+        locked={lock.locked}
+        method={lock.method}
+        lockoutSecs={lock.lockoutSecs}
+        onUnlockBiometric={lock.unlockBiometric}
+        onUnlockSecret={lock.unlockSecret}
+        onReset={lock.resetLock}
+      />
+      <View style={styles.appBackground}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          <Stack.Screen name="(modals)/update-profile-modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="(modals)/change-password-modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="(modals)/setting-modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="(modals)/search-modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="(modals)/transaction-modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="(modals)/wallet-modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="(modals)/profile-modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="(modals)/exchange-rate-modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="(modals)/notifications-modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="(modals)/loan-calculator-modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="(modals)/split-bill-modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="(modals)/export-data-modal" options={{ presentation: "modal" }} />
+        </Stack>
+      </View>
+    </>
+  );
+}
+
+export default function RootLayout() {
+  const [ready, setReady] = useState(false);
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -96,104 +143,7 @@ export default function RootLayout() {
 			<ThemeProvider>
 				<AuthProvider>
 					<LocaleProvider>
-						<OTAWatcher />
-						<BroadcastWatcher />
-						<LockSetupRedirect showEnroll={lock.showEnroll} locked={lock.locked} checking={lock.checking} />
-						<AppToast />
-						<AppLockGate
-							locked={lock.locked}
-							method={lock.method}
-							lockoutSecs={lock.lockoutSecs}
-							onUnlockBiometric={lock.unlockBiometric}
-							onUnlockSecret={lock.unlockSecret}
-							onReset={lock.resetLock}
-						/>
-						<View style={styles.appBackground}>
-				<Stack
-					screenOptions={{
-						headerShown: false,
-						// animation: "slide_from_bottom",
-						// animationDuration: 100,
-					}}
-				>
-					<Stack.Screen
-						name="(modals)/update-profile-modal"
-						options={{
-							presentation: "modal",
-						}}
-					/>
-					<Stack.Screen
-						name="(modals)/change-password-modal"
-						options={{
-							presentation: "modal",
-						}}
-					/>
-					<Stack.Screen
-						name="(modals)/setting-modal"
-						options={{
-							presentation: "modal",
-						}}
-					/>
-
-					<Stack.Screen
-						name="(modals)/search-modal"
-						options={{
-							presentation: "modal",
-						}}
-					/>
-
-					<Stack.Screen
-						name="(modals)/transaction-modal"
-						options={{
-							presentation: "modal",
-						}}
-					/>
-
-					<Stack.Screen
-						name="(modals)/wallet-modal"
-						options={{
-							presentation: "modal",
-						}}
-					/>
-
-					<Stack.Screen
-						name="(modals)/profile-modal"
-						options={{
-							presentation: "modal",
-						}}
-					/>
-					<Stack.Screen
-						name="(modals)/exchange-rate-modal"
-						options={{
-							presentation: "modal",
-						}}
-					/>
-					<Stack.Screen
-						name="(modals)/notifications-modal"
-						options={{
-							presentation: "modal",
-						}}
-					/>
-					<Stack.Screen
-						name="(modals)/loan-calculator-modal"
-						options={{
-							presentation: "modal",
-						}}
-					/>
-					<Stack.Screen
-						name="(modals)/split-bill-modal"
-						options={{
-							presentation: "modal",
-						}}
-					/>
-					<Stack.Screen
-						name="(modals)/export-data-modal"
-						options={{
-							presentation: "modal",
-						}}
-					/>
-				</Stack>
-						</View>
+						<AppShell />
 					</LocaleProvider>
 				</AuthProvider>
 			</ThemeProvider>

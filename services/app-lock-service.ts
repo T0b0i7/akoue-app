@@ -146,7 +146,9 @@ export async function pullLockFromCloud(): Promise<void> {
     const { data } = await supabase.from("profiles").select("lock_method,lock_hash").eq("id", user.id).single();
     if (data) {
       await AsyncStorage.setItem(METHOD_KEY, (data as any).lock_method || "none");
+      // Nettoie le hash périmé : sinon l'ancien code de l'autre compte reste testé
       if ((data as any).lock_hash) await AsyncStorage.setItem(HASH_KEY, (data as any).lock_hash);
+      else await AsyncStorage.removeItem(HASH_KEY);
     }
   } catch {}
 }
