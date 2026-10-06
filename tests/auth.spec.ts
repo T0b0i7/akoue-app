@@ -14,7 +14,7 @@ async function clearStorage(page: Page) {
   });
 }
 
-test.describe('Finote - Auth flows (mock mode)', () => {
+test.describe('Akouè - Auth flows (mock mode)', () => {
   test.beforeEach(async ({ page }: { page: Page }) => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
