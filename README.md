@@ -71,6 +71,18 @@ Installe-le direct sur ton téléphone pour tester (autorise l'installation depu
 
 ## 📷 Screenshots
 
+<img src="public/images/Akouè _ maîtrise ton argent.png" alt="Akouè, maîtrise ton argent" />
+
+<img src="public/images/Akouè _ tes finances, autrement.png" alt="Akouè, tes finances autrement" />
+
+<img src="public/images/Akouè Akouè _ gestion financière moderne.png" alt="Akouè, gestion financière moderne" />
+
+<img src="public/images/akoue-mockup.png" alt="Mockup Akouè" />
+
+| | | | |
+|---|---|---|---|
+| <img src="public/images/iPhone-14-PRO-localhost.png" width="220" alt="Accueil Akouè" /> | <img src="public/images/iPhone-14-PRO-localhost (1).png" width="220" alt="Portefeuilles Akouè" /> | <img src="public/images/iPhone-14-PRO-localhost (2).png" width="220" alt="Statistiques Akouè" /> | <img src="public/images/iPhone-14-PRO-localhost (3).png" width="220" alt="Transactions Akouè" /> |
+
 ![Modern UI/UX Hero](/.github/images/img1.jpeg "Modern UI/UX Hero")
 
 ![Animated Bento grid](/.github/images/img2.jpeg "Animated Bento grid")
