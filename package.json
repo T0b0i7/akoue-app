@@ -43,7 +43,7 @@
     "expo-notifications": "~0.32.17",
     "expo-router": "~6.0.10",
     "expo-sharing": "~14.0.8",
-    "expo-splash-screen": "~31.0.10",
+    "expo-splash-screen": "~57.0.9",
     "expo-updates": "~29.0.20",
     "phosphor-react-native": "^3.0.0",
     "react": "19.1.0",
