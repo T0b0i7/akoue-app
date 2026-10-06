@@ -47,8 +47,7 @@
 - ESLint : 0 erreur, 2 warnings React (exhaustive-deps, pré-existants)
 
 ## Push GitHub
-- Repo : `https://github.com/T0b0i7/akoue-app`
-- Upstream open-source : `https://github.com/AayushBharti/finote-app`
+- Repo : `https://github.com/T0b0i7/akoue-app` (indépendant, plus de remote upstream)
 - Commits session : `567d718`, `007d695`, `1798b43`, `847efec`, `31b0695`
 
 ## OTA Updates publiés

@@ -1,13 +1,13 @@
 <a name="readme-top"></a>
 
-![Akouè - Maîtrise ton argent. Note. Contrôle.](/.github/images/img_main.png "Akouè - Maîtrise ton argent. Note. Contrôle.")
+<img src="public/images/Akouè _ maîtrise ton argent.png" alt="Akouè - Maîtrise ton argent. Note. Contrôle." />
 
 <p align="center">
   <h3 align="center">Akouè App</h3>
   <p align="center">
     Maîtrise ton argent. Note. Contrôle.
     <br />
-    App open source de gestion financière personnelle — fork de Finote par Aayush Bharti
+    App open source de gestion financière personnelle
     <br />
     <br />
     <a href="https://github.com/T0b0i7/akoue-app"><strong>Code »</strong></a>
@@ -58,7 +58,7 @@
 
 ## About the Project
 
-**Akouè** — Reprends le contrôle de tes finances. Fork open source de **Finote** (par [Aayush Bharti](https://github.com/aayushbharti/finote-app)), rebaptisé **Akouè App** et maintenu par [T0b0i7](https://github.com/T0b0i7).
+**Akouè** — Reprends le contrôle de tes finances. Conçue et maintenue par [Eucher O. ABATTI](https://github.com/T0b0i7).
 
 Gère plusieurs portefeuilles (Salaire, Freelance, Espèces), suis tes revenus/dépenses au quotidien et visualise tes habitudes avec des statistiques animées en temps réel. Stack moderne : **Expo 54 + React Native 0.81 + Supabase**.
 
@@ -195,12 +195,11 @@ Merci de lire `CONTRIBUTING.md` si présent et de respecter le code de conduite.
 
 Distribué sous licence **MIT**. Voir [`LICENSE`](./LICENSE) pour plus d'infos.
 
-Copyright (c) 2026 Akouè App — Basé sur [Finote par Aayush Bharti](https://github.com/aayushbharti/finote-app).
+Copyright (c) 2026 Akouè App — Eucher O. ABATTI.
 
 ## 💎 Acknowledgements
 
-- [Aayush Bharti — projet Finote original](https://github.com/aayushbharti/finote-app)
-- [Expo](https://expo.dev/) • [React Native](https://reactnative.dev/) • [Supabase](https://supabase.com/) • [Firebase](https://firebase.google.com/)
+- [Expo](https://expo.dev/) • [React Native](https://reactnative.dev/) • [Supabase](https://supabase.com/)
 - [Expo Router](https://docs.expo.dev/router/introduction/) • [Reanimated](https://docs.swmansion.com/react-native-reanimated/) • [Gifted Charts](https://github.com/Abhinandan-Kushwaha/react-native-gifted-charts) • [Phosphor Icons](https://phosphoricons.com/) • [Flash List](https://shopify.github.io/flash-list/) • [Zod](https://zod.dev/)
 
 ## ⭐ Give A Star

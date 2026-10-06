@@ -1,6 +1,6 @@
 # Akouè App — Mémoire Agent
 
-> Expo 54 + React Native 0.81 + Expo Router + Supabase + Firebase. App finance perso (wallets, transactions, stats). Anciennement nommé Finote App.
+> Expo 54 + React Native 0.81 + Expo Router + Supabase + Firebase. App finance perso (wallets, transactions, stats).
 
 ## Stack
 - Expo Router (tabs: index, wallet, statistics, more) + modals (wallet-modal, transaction-modal, etc.)

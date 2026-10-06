@@ -1,7 +1,7 @@
 # Conversation — Tests E2E et Build APK Akouè
 
 **Date :** 18 septembre 2026
-**Projet :** finote-app → Akouè (Expo 54 + React Native + Supabase)
+**Projet :** akoue-app → Akouè (Expo 54 + React Native + Supabase)
 **Participants :** Eucher O. ABATTI / Muse Spark
 
 ---
@@ -11,7 +11,7 @@
 **Utilisateur :**
 > fais moi le poitn sur la ou on en est
 
-**Assistant :** 33 fichiers modifiés non stagés + 8 untrackés. Migration Firebase → Supabase (config/supabase.ts, auth-context, services, supabase/schema.sql avec RLS), i18n FR/EN (locale-context.tsx), rebranding Finote → Akouè (app.json, package). Playwright ajouté mais 12/12 FAIL faute de serveur web (ERR_CONNECTION_REFUSED 8081), tsc 3 erreurs.
+**Assistant :** 33 fichiers modifiés non stagés + 8 untrackés. Migration Firebase → Supabase (config/supabase.ts, auth-context, services, supabase/schema.sql avec RLS), i18n FR/EN (locale-context.tsx), branding Akouè (app.json, package). Playwright ajouté mais 12/12 FAIL faute de serveur web (ERR_CONNECTION_REFUSED 8081), tsc 3 erreurs.
 
 ---
 

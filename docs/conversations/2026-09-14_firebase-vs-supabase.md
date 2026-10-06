@@ -1,7 +1,7 @@
-# Conversation — Firebase vs Supabase pour Finote
+# Conversation — Firebase vs Supabase pour Akouè
 
 **Date :** 14 septembre 2026
-**Projet :** finote-app (Expo 54 + React Native + Firebase)
+**Projet :** akoue-app (Expo 54 + React Native + Firebase)
 **Participants :** Eucher O. ABATTI / Muse Spark
 
 ---
@@ -12,14 +12,14 @@
 > a defaut d'utiliser firebase ont peut utiliser superbase ?
 
 **Assistant :**
-Oui, et pour Finote c'est même plus adapté que Firebase.
+Oui, et pour Akouè c'est même plus adapté que Firebase.
 
 Supabase (correction : pas Superbase) remplace Firebase 1:1 :
 
 | Firebase | Supabase | Note |
 |---|---|---|
 | Auth | `supabase.auth` | Email/Google/Apple identique, persistence AsyncStorage |
-| Firestore (NoSQL) | Postgres + Realtime | Avantage pour Finote : requêtes SQL, jointures, agrégations `SUM()` |
+| Firestore (NoSQL) | Postgres + Realtime | Avantage pour Akouè : requêtes SQL, jointures, agrégations `SUM()` |
 | Storage | Storage | S3 compatible |
 | Cloud Functions | Edge Functions (Deno) | |
 
@@ -45,7 +45,7 @@ pnpm remove firebase
 ```
 
 **Quand choisir :**
-- Supabase si app finance/compta (comme Finote) = données relationnelles, besoin SQL, RLS
+- Supabase si app finance/compta (comme Akouè) = données relationnelles, besoin SQL, RLS
 - Firebase si besoin offline-first très poussé ou écosystème Google
 
 ---
@@ -56,7 +56,7 @@ pnpm remove firebase
 > ou tu me propose quoi ?
 
 **Assistant :**
-Proposition classée pour Finote :
+Proposition classée pour Akouè :
 
 **1. Supabase (recommandé) — remplace Firebase + Cloudinary d'un coup**
 - `transaction-service.ts` fait `getDocs()` + agrégation côté client pour stats. Lent et coûteux. Postgres fait `SELECT sum(amount) GROUP BY month` en 10ms.
