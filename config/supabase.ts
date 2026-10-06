@@ -8,7 +8,7 @@ const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 const isSupabaseConfigured = !!supabaseUrl && !!supabaseAnonKey;
 
-if (!isSupabaseConfigured) {
+if (!isSupabaseConfigured && __DEV__) {
   console.warn(
     "[supabase] EXPO_PUBLIC_SUPABASE_URL / ANON_KEY manquantes — mode MOCK actif. Configure .env avec les clés Supabase (Project Settings > API)."
   );

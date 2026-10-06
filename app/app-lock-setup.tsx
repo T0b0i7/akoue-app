@@ -82,7 +82,7 @@ export default function AppLockSetup() {
               <Typo size={20} fontWeight="800" style={{ textAlign: "center" }}>Choisis ton verrou</Typo>
               <Typo size={13} color={colors.neutral400} style={{ textAlign: "center", marginTop: 8, lineHeight: 19 }}>
                 Obligatoire pour protéger ton argent : choisis une manière de verrouiller.{"\n"}
-                Elle restera active — changeable dans Paramètres › Verrouillage.
+                Elle restera active, changeable dans Paramètres › Verrouillage.
               </Typo>
             </View>
 

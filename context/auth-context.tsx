@@ -8,6 +8,9 @@ import * as bcrypt from "bcryptjs";
 const OFFLINE_USER_KEY = "offline_user";
 const OFFLINE_USERS_KEY = "offline_users"; // [{email,passwordHash,uid,name}]
 const isOfflineError = (msg: string) => /fetch|network|offline|Failed to fetch|Network request failed/i.test(msg || "");
+// Compte créé mais email jamais confirmé (Supabase "Confirm email" actif)
+const isNotConfirmed = (msg: string) => /confirm|not confirmed|email not confirmed/i.test(msg || "");
+const NOT_CONFIRMED_MSG = "Compte non confirmé. Vérifie ta boîte mail (pense aux spams), clique le lien, puis reconnecte-toi.";
 
 // rate limiting login
 const RATE_KEY = "login_rate";
@@ -174,6 +177,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           await resetRateLimit();
           return { success: true };
         }
+        if (isNotConfirmed(error.message)) {
+          return { success: false, needsVerification: true, msg: NOT_CONFIRMED_MSG };
+        }
         if (!isOfflineError(error.message)) {
           await incRateLimit();
           let msg = error.message;
@@ -235,6 +241,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           options: { data: { name } },
         });
         if (!error) {
+          // Pas de session = email de confirmation en attente : ne pas faire croire que c'est connecté
+          if (!data.session) {
+            return { success: false, needsVerification: true, msg: "Compte créé ! Vérifie ta boîte mail (pense aux spams), clique le lien de confirmation, puis connecte-toi." };
+          }
           if (data.user) {
             try { await supabase.from("profiles").insert({ id: data.user.id, name, image: null }); } catch {}
             const u: UserType = { uid: data.user.id, email: data.user.email ?? email, name, image: null };
@@ -282,8 +292,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const forgotPassword = async (email: string) => {
+  const resendConfirmation = async (email: string) => {
     if (!isSupabaseConfigured) return { success: false, msg: "Supabase non configuré" };
+    const rateMsg = await checkRateLimit();
+    if (rateMsg) return { success: false, msg: rateMsg };
+    if (!email?.includes("@")) return { success: false, msg: "Email invalide" };
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email });
+      if (error) {
+        await incRateLimit();
+        return { success: false, msg: error.message };
+      }
+      return { success: true, msg: "Email de confirmation renvoyé. Vérifie ta boîte mail (pense aux spams)." };
+    } catch (error: any) {
+      await incRateLimit();
+      return { success: false, msg: error.message };
+    }
+  };
+
+  const forgotPassword = async (email: string) => {    if (!isSupabaseConfigured) return { success: false, msg: "Supabase non configuré" };
     const rateMsg = await checkRateLimit();
     if (rateMsg) return { success: false, msg: rateMsg };
     if (!email?.includes("@")) return { success: false, msg: "Email invalide" };
@@ -309,8 +336,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (data) {
         setUser((prev) => prev ? { ...prev, name: data.name ?? prev.name, image: data.image ?? prev.image } : prev);
       }
-    } catch (error) {
-      console.error("Error fetching profile:", error);
+    } catch {
+      // Profil distant illisible (offline) : on garde la session locale
     }
   };
 
@@ -358,6 +385,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setUser,
     login,
     signUp,
+    resendConfirmation,
     updateUserData,
     forgotPassword,
     logout,

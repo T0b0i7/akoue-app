@@ -71,7 +71,6 @@ export const uploadFileToSupabase = async (
     }
     return { success: true, data: null };
   } catch (error: any) {
-    console.log("upload error:", error);
     return { success: false, msg: error.message || "Could not upload file." };
   }
 };
