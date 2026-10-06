@@ -110,11 +110,11 @@ const More = () => {
     try {
       setChecking(true)
       const hasUpdate = await checkAndNotify()
-      if (!hasUpdate) {
-        // checkAndNotify a déjà alerté si update dispo, sinon on confirme "à jour"
-        // On revérifie silencieusement pour éviter double alerte
-        const check = await Updates.checkForUpdateAsync()
-        if (!check.isAvailable) Alert.alert(t("upToDateTitle"), t("upToDateMsg"))
+      if (hasUpdate) {
+        // OTA silencieuse : téléchargée, s'applique au prochain démarrage
+        Alert.alert(t("upToDateTitle"), "Mise à jour téléchargée, elle s'appliquera au prochain démarrage.")
+      } else {
+        Alert.alert(t("upToDateTitle"), t("upToDateMsg"))
       }
     } catch (e: any) {
       Alert.alert(t("updateFailedTitle"), e?.message ?? t("updateFailedMsg"))
