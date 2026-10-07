@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Akouè Admin — Notifications</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<nav><span class="brand">Akouè Admin</span><a href="index.html">Dashboard</a><a href="users.html">Utilisateurs</a><a href="notifications.html">Notifications</a><button id="logout">Déconnexion</button></nav>
+<main>
+  <h1>Notifications → tous les utilisateurs</h1>
+  <p class="muted">Publié ici = affiché dans l'app mobile (table <code>broadcasts</code> avec <code>active = true</code>).<br>
+  <b>info</b> : annonce simple &nbsp;•&nbsp; <b>update</b> : mise à jour avec bouton + version ciblée.</p>
+
+  <div class="panel">
+    <h3>Nouvelle notification</h3>
+    <input id="f_title" placeholder="Titre (ex : Akouè 1.2 disponible)">
+    <textarea id="f_body" rows="3" placeholder="Message…"></textarea>
+    <div class="row">
+      <select id="f_kind"><option value="info">info</option><option value="update">update (mise à jour)</option></select>
+      <input id="f_version" placeholder="Version ciblée (ex : 1.2.0)">
+      <input id="f_url" placeholder="Lien mise à jour (store)">
+    </div>
+    <textarea id="f_details" rows="2" placeholder="Détails vulgarisés (optionnel)"></textarea>
+    <button class="primary" onclick="publish()">Publier pour tous</button>
+  </div>
+
+  <h3>Historique</h3>
+  <div id="list"></div>
+</main>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+async function load() {
+  if (!await guard()) return;
+  const { data } = await sb.from("broadcasts").select("*").order("created_at", { ascending: false }).limit(100);
+  document.getElementById("list").innerHTML = (data || []).map(r => `
+    <div class="panel" style="opacity:${r.active ? 1 : .55}">
+      <span class="badge ${r.kind === "update" ? "update" : ""} ${r.active ? "" : "off"}">${r.kind}${r.active ? "" : " — désactivé"}</span>
+      <b> ${r.title}</b> ${r.version ? `<span class="muted">→ v${r.version}</span>` : ""}
+      <p>${r.body}</p>
+      <button class="ghost" onclick="toggle('${r.id}', ${!r.active})">${r.active ? "Désactiver" : "Réactiver"}</button>
+      <button class="ghost" onclick="removeOne('${r.id}')">Supprimer</button>
+    </div>`).join("");
+}
+async function publish() {
+  const title = document.getElementById("f_title").value.trim();
+  const body = document.getElementById("f_body").value.trim();
+  if (!title || !body) { alert("Titre + message requis"); return; }
+  const { error } = await sb.from("broadcasts").insert({
+    title, body,
+    kind: document.getElementById("f_kind").value,
+    version: document.getElementById("f_version").value || null,
+    details: document.getElementById("f_details").value || null,
+    action_url: document.getElementById("f_url").value || null,
+    active: true,
+  });
+  if (error) { alert("Erreur : " + error.message); return; }
+  ["f_title","f_body","f_version","f_details","f_url"].forEach(id => document.getElementById(id).value = "");
+  load();
+}
+async function toggle(id, active) {
+  await sb.from("broadcasts").update({ active }).eq("id", id);
+  load();
+}
+async function removeOne(id) {
+  if (!confirm("Supprimer ?")) return;
+  await sb.from("broadcasts").delete().eq("id", id);
+  load();
+}
+load();
+</script>
+</body>
+</html>

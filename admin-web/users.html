@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Akouè Admin — Utilisateurs</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<nav><span class="brand">Akouè Admin</span><a href="index.html">Dashboard</a><a href="users.html">Utilisateurs</a><a href="notifications.html">Notifications</a><button id="logout">Déconnexion</button></nav>
+<main>
+  <h1>Utilisateurs inscrits <span id="total" class="muted"></span></h1>
+  <div class="toolbar">
+    <input id="search" placeholder="Rechercher email / nom…" oninput="render()">
+    <button class="ghost" onclick="exportCSV()">Exporter CSV</button>
+  </div>
+  <table>
+    <thead><tr><th>Nom</th><th>Email</th><th>Inscription</th><th>Wallets</th><th>Tx</th><th>Dernière activité</th><th>Verrou</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</main>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+let ALL = [];
+async function load() {
+  if (!await guard()) return;
+  const [{ data: profs }, { data: wallets }, { data: txs }] = await Promise.all([
+    sb.from("profiles").select("id,name,email,created_at,lock_method").order("created_at", { ascending: false }).limit(500),
+    sb.from("wallets").select("uid"),
+    sb.from("transactions").select("uid,date"),
+  ]);
+  const wc = {}, tc = {}, last = {};
+  (wallets || []).forEach(w => wc[w.uid] = (wc[w.uid] || 0) + 1);
+  (txs || []).forEach(t => {
+    tc[t.uid] = (tc[t.uid] || 0) + 1;
+    if (!last[t.uid] || t.date > last[t.uid]) last[t.uid] = t.date;
+  });
+  ALL = (profs || []).map(p => ({ ...p, wallets: wc[p.id] || 0, tx: tc[p.id] || 0, last: last[p.id] || null }));
+  document.getElementById("total").textContent = `(${ALL.length})`;
+  render();
+}
+function render() {
+  const q = document.getElementById("search").value.toLowerCase();
+  const rows = ALL.filter(r => !q || (r.email || "").toLowerCase().includes(q) || (r.name || "").toLowerCase().includes(q));
+  document.getElementById("rows").innerHTML = rows.map(r => `<tr>
+    <td>${r.name || "—"}</td><td>${r.email || "—"}</td><td>${fmtDate(r.created_at)}</td>
+    <td>${r.wallets}</td><td>${r.tx}</td><td>${fmtDate(r.last)}</td><td>${r.lock_method || "none"}</td>
+  </tr>`).join("");
+}
+function exportCSV() {
+  const csv = "nom;email;inscription;wallets;transactions\n" + ALL.map(r =>
+    [r.name || "", r.email || "", r.created_at || "", r.wallets, r.tx].join(";")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  a.download = "akoue-utilisateurs.csv"; a.click();
+}
+load();
+</script>
+</body>
+</html>
