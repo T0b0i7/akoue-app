@@ -246,7 +246,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             return { success: false, needsVerification: true, msg: "Compte créé ! Vérifie ta boîte mail (pense aux spams), clique le lien de confirmation, puis connecte-toi." };
           }
           if (data.user) {
-            try { await supabase.from("profiles").insert({ id: data.user.id, name, image: null }); } catch {}
+            try { await supabase.from("profiles").insert({ id: data.user.id, name, email, image: null }); } catch {}
             const u: UserType = { uid: data.user.id, email: data.user.email ?? email, name, image: null };
             await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u));
             await saveOfflineUser(u, password);

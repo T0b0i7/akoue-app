@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Akouè Admin — Dashboard</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<nav><span class="brand">Akouè Admin</span><a href="index.html">Dashboard</a><a href="users.html">Utilisateurs</a><a href="notifications.html">Notifications</a><button id="logout">Déconnexion</button></nav>
+<main>
+  <div id="login" class="panel login" style="display:none">
+    <h2>Connexion admin</h2>
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Mot de passe">
+    <p id="loginErr" class="err"></p>
+    <button class="primary" onclick="doLogin()">Se connecter</button>
+    <button class="ghost" id="resendBtn" style="display:none" onclick="resendLink()">Renvoyer le lien de confirmation</button>
+    <p class="muted">Ton email doit être dans la table admin_users.</p>
+  </div>
+  <div id="dash" style="display:none">
+    <h1>Vue d'ensemble</h1>
+    <div class="cards" id="cards"></div>
+  </div>
+</main>
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+async function doLogin() {
+  document.getElementById("resendBtn").style.display = "none";
+  const email = document.getElementById("email").value.trim();
+  const { error } = await sb.auth.signInWithPassword({
+    email,
+    password: document.getElementById("password").value,
+  });
+  if (error) {
+    const msg = error.message || "";
+    if (/not confirmed|confirm/i.test(msg)) {
+      document.getElementById("loginErr").textContent =
+        "Compte créé mais email jamais confirmé. Clique le lien reçu par mail (vérifie les spams), ou renvoie-le ci-dessous.";
+      document.getElementById("resendBtn").style.display = "block";
+      window._pendingEmail = email;
+    } else {
+      document.getElementById("loginErr").textContent =
+        "Email ou mot de passe incorrect. Mot de passe oublié ? Réinitialise-le depuis l'app mobile (Mot de passe oublié).";
+    }
+    return;
+  }
+  location.reload();
+}
+
+async function resendLink() {
+  const { error } = await sb.auth.resend({ type: "signup", email: window._pendingEmail });
+  document.getElementById("loginErr").textContent = error
+    ? "Erreur : " + error.message
+    : "Lien renvoyé ! Vérifie ta boîte mail puis reconnecte-toi.";
+}
+
+(async () => {
+  const session = await currentAdmin();
+  if (!session) {
+    const { data: { session: s } } = await sb.auth.getSession();
+    document.getElementById("login").style.display = "block";
+    if (s?.user?.email) document.getElementById("loginErr").textContent = "Ce compte n'est pas admin.";
+    return;
+  }
+  document.getElementById("logout").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+  document.getElementById("dash").style.display = "block";
+
+  const [u, w, tx] = await Promise.all([
+    sb.from("profiles").select("id", { count: "exact", head: true }),
+    sb.from("wallets").select("id", { count: "exact", head: true }),
+    sb.from("transactions").select("amount,type"),
+  ]);
+  const rows = tx.data || [];
+  const income = rows.filter(t => t.type === "income").reduce((s, t) => s + Number(t.amount), 0);
+  const expense = rows.filter(t => t.type === "expense").reduce((s, t) => s + Number(t.amount), 0);
+  const week = new Date(Date.now() - 7 * 864e5).toISOString();
+  const { count: new7d } = await sb.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", week);
+
+  const cards = [
+    ["Inscrits", fmtNum(u.count)],
+    ["Nouveaux (7j)", fmtNum(new7d)],
+    ["Wallets", fmtNum(w.count)],
+    ["Transactions", fmtNum(rows.length)],
+    ["Revenus", fmtNum(income) + " XOF"],
+    ["Dépenses", fmtNum(expense) + " XOF"],
+  ];
+  document.getElementById("cards").innerHTML = cards.map(([k, v]) =>
+    `<div class="card"><small>${k}</small><b>${v}</b></div>`).join("");
+})();
+</script>
+</body>
+</html>

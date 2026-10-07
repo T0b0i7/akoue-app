@@ -57,6 +57,7 @@ export default function AppLockSetup() {
     setSecret("");
     setPwd("");
     if (m === "biometric") enrollBiometric();
+    else if (m === "none") enrollSecret("none", "");
   };
 
   return (
@@ -89,7 +90,7 @@ export default function AppLockSetup() {
             {err && <Typo size={13} color={colors.rose} style={{ textAlign: "center", marginVertical: 8 }}>{err}</Typo>}
 
             <LockMethodCards
-              methods={["biometric", "pin", "password", "pattern"]}
+              methods={["none", "biometric", "pin", "password", "pattern"]}
               selected={picked}
               onPick={pick}
             />
@@ -113,12 +114,18 @@ export default function AppLockSetup() {
           </>
         ) : (
           <View style={styles.hero}>
-            <View style={[styles.avatar, { backgroundColor: "#10b981" }]}>
-              <Icons.CheckCircle size={30} color="#fff" weight="fill" />
+            <View style={[styles.avatar, { backgroundColor: picked === "none" ? "#525252" : "#10b981" }]}>
+              {picked === "none"
+                ? <Icons.LockOpen size={30} color="#fff" weight="fill" />
+                : <Icons.CheckCircle size={30} color="#fff" weight="fill" />}
             </View>
-            <Typo size={20} fontWeight="800" style={{ textAlign: "center" }}>Verrou appliqué ✓</Typo>
+            <Typo size={20} fontWeight="800" style={{ textAlign: "center" }}>
+              {picked === "none" ? "Aucun verrou" : "Verrou appliqué ✓"}
+            </Typo>
             <Typo size={13} color={colors.neutral400} style={{ textAlign: "center", marginTop: 8 }}>
-              Ton argent est protégé. Ce verrou s'appliquera à chaque ouverture.
+              {picked === "none"
+                ? "Ouverture directe activée. Tu pourras ajouter un verrou plus tard dans Paramètres › Verrouillage."
+                : "Ton argent est protégé. Ce verrou s'appliquera à chaque ouverture."}
             </Typo>
             <TouchableOpacity style={styles.btn} onPress={() => router.replace("/" as any)} activeOpacity={0.85}>
               <Typo size={15} fontWeight="700" color={colors.white}>Continuer</Typo>
