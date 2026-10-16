@@ -1,4 +1,4 @@
-import BackButton from "@/components/back-button"
+﻿import BackButton from "@/components/back-button"
 import Button from "@/components/button"
 import Header from "@/components/header"
 import Input from "@/components/input"
@@ -45,7 +45,7 @@ const EditProfileModal = () => {
   }, [user])
 
   const handleImagePicker = async () => {
-    // Remplacé par sélection Homme/Femme — plus fiable que l'upload
+    // Remplacé par sélection Homme/Femme  :  plus fiable que l'upload
   }
 
   const handleSubmit = async () => {

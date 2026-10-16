@@ -3,14 +3,14 @@ import React, { createContext, useContext, useEffect, useState } from "react"
 import { Appearance } from "react-native"
 import { colors } from "@/constants/theme"
 
-// Snapshot du thème sombre d'origine — ne mute jamais
+// Snapshot du theme sombre d'origine : ne mute jamais
 const darkColors = { ...colors } as typeof colors
 
 const lightColors = {
   ...darkColors,
-  // Soft Structuralism — airy, floating, diffused
-  neutral900: "#f8fafc", // page bg — très clair
-  neutral800: "#ffffff", // card — blanc pur
+  // Soft Structuralism : airy, floating, diffused
+  neutral900: "#f8fafc", // page bg : tres clair
+  neutral800: "#ffffff", // card : blanc pur
   neutral700: "#e2e8f0", // border hairline
   neutral600: "#cbd5e1",
   neutral500: "#94a3b8",
@@ -39,7 +39,7 @@ const ThemeContext = createContext<ThemeContextType | null>(null)
 const STORAGE_KEY = "app_theme"
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Mode sombre uniquement pour l'instant — light désactivé sur demande
+  // Mode sombre uniquement pour l'instant : light desactive sur demande
   const theme: ThemeType = "dark"
   const colorsTheme = darkColors
 

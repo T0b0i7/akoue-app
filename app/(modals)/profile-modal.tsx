@@ -1,4 +1,4 @@
-import BackButton from "@/components/back-button"
+﻿import BackButton from "@/components/back-button"
 import Header from "@/components/header"
 import ModalWrapper from "@/components/modal-wrapper"
 import Typo from "@/components/typo"
@@ -49,7 +49,7 @@ const ProfileModal = () => {
     const res = await logout()
     if (res.success) {
       showToast("success", "Déconnexion réussie", name ? `À bientôt ${name} 👋` : "À bientôt 👋")
-      // laisse auth-context rediriger (évite double replace) — fallback web seulement si besoin
+      // laisse auth-context rediriger (évite double replace)  :  fallback web seulement si besoin
       if (Platform.OS === "web") {
         setTimeout(() => {
           if (window.location.pathname !== "/welcome" && !window.location.pathname.includes("welcome")) {

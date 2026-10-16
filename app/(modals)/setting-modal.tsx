@@ -1,4 +1,4 @@
-import BackButton from "@/components/back-button"
+﻿import BackButton from "@/components/back-button"
 import Header from "@/components/header"
 import ModalWrapper from "@/components/modal-wrapper"
 import Typo from "@/components/typo"
@@ -53,7 +53,7 @@ const SettingsModal = () => {
         try { await supabase.from("transactions").delete().eq("uid", uid) } catch {}
         try { await supabase.from("wallets").delete().eq("uid", uid) } catch {}
       }
-      // purge cache local sauf compte — prefs appareil (broadcasts, verrou) conservées
+      // purge cache local sauf compte  :  prefs appareil (broadcasts, verrou) conservées
       const keys = await AsyncStorage.getAllKeys()
       const keep = (k: string) =>
         k === "seen_broadcasts" || k === "notified_broadcasts" || k === "cached_broadcasts" ||

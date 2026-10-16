@@ -46,7 +46,7 @@ export default function LanguageSelect() {
           </Typo>
         </Animated.View>
 
-        {/* Cards — Double-Bezel */}
+        {/* Cards : Double-Bezel */}
         <View style={styles.cards}>
           {/* FR */}
           <Animated.View entering={FadeInDown.springify().damping(18).delay(220)} style={styles.outerShell}>

@@ -110,13 +110,13 @@ const ExportDataModal = () => {
               <Icons.Table size={20} color="#fff" weight="bold" />
               <Typo color="#fff" fontWeight="700"> Exporter en CSV</Typo>
             </ButtonComponent>
-            <Typo size={12} color={colors.neutral500} style={{ textAlign: "center" }}>Idéal pour Excel — colonnes : date, type, montant, catégorie, portefeuille</Typo>
+            <Typo size={12} color={colors.neutral500} style={{ textAlign: "center" }}>Ideal pour Excel : colonnes date, type, montant, categorie, portefeuille</Typo>
 
             <ButtonComponent onPress={handleJSON} loading={loading==="json"} style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: colors.neutral700 } as any}>
               <Icons.Code size={20} color="#fff" weight="bold" />
               <Typo color="#fff" fontWeight="700"> Exporter en JSON</Typo>
             </ButtonComponent>
-            <Typo size={12} color={colors.neutral500} style={{ textAlign: "center" }}>Sauvegarde complète — wallets + transactions</Typo>
+            <Typo size={12} color={colors.neutral500} style={{ textAlign: "center" }}>Sauvegarde complete : wallets + transactions</Typo>
           </View>
 
           <View style={styles.help}>

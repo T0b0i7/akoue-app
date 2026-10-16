@@ -1,6 +1,8 @@
 <a name="readme-top"></a>
 
-<img src="public/images/Akouè _ maîtrise ton argent.png" alt="Akouè - Maîtrise ton argent. Note. Contrôle." />
+<p align="center">
+  <img src="public/images/logo-akoue.png" alt="Akouè" width="120" />
+</p>
 
 <p align="center">
   <h3 align="center">Akouè App</h3>
@@ -73,13 +75,9 @@ Version web installable (PWA) : **[akoue-app sur le web](https://akoue-app--vtjb
 
 ## 📷 Screenshots
 
-<img src="public/images/Akouè _ maîtrise ton argent.png" alt="Akouè, maîtrise ton argent" />
-
-<img src="public/images/Akouè _ tes finances, autrement.png" alt="Akouè, tes finances autrement" />
-
-<img src="public/images/Akouè Akouè _ gestion financière moderne.png" alt="Akouè, gestion financière moderne" />
-
-<img src="public/images/akoue-mockup.png" alt="Mockup Akouè" />
+<p align="center">
+  <img src="public/images/logo-akoue.png" alt="Logo Akoue" width="120" />
+</p>
 
 | | | | |
 |---|---|---|---|

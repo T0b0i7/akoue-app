@@ -94,7 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     if (initializing) return;
-    // ne pas rediriger pendant le splash/index, language ou choix du verrou — laissés à leurs écrans
+    // ne pas rediriger pendant le splash/index, language ou choix du verrou : laisses a leurs ecrans
     if (!pathname || pathname === "/" || pathname === "/language" || pathname === "/app-lock-setup") return;
     const inAuth = pathname?.startsWith("/welcome") || pathname?.startsWith("/login") || pathname?.startsWith("/sign-up") || pathname?.startsWith("/forgot") || pathname?.startsWith("/(auth)");
     if (user && inAuth) router.replace("/(tabs)" as any);
@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
 
-      // 2) Puis essayer Supabase — si offline, on garde la session offline
+      // 2) Puis essayer Supabase : si offline, on garde la session offline
       try {
         const { data: { session } }: any = await supabase.auth.getSession();
         if (!cancelled && session?.user) {
@@ -220,7 +220,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         }
         await incRateLimit();
-        return { success: false, msg: "Hors ligne — compte non trouvé" };
+        return { success: false, msg: "Hors ligne : compte non trouve" };
       }
       await incRateLimit();
       return { success: false, msg: error.message };
@@ -238,7 +238,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { name } },
+          options: { data: { name }, emailRedirectTo: "akoue://login" },
         });
         if (!error) {
           // Pas de session = email de confirmation en attente : ne pas faire croire que c'est connecté
@@ -298,7 +298,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (rateMsg) return { success: false, msg: rateMsg };
     if (!email?.includes("@")) return { success: false, msg: "Email invalide" };
     try {
-      const { error } = await supabase.auth.resend({ type: "signup", email });
+      const { error } = await supabase.auth.resend({ type: "signup", email, options: { emailRedirectTo: "akoue://login" } });
       if (error) {
         await incRateLimit();
         return { success: false, msg: error.message };
@@ -310,12 +310,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const verifyCode = async (email: string, code: string) => {
+    if (!isSupabaseConfigured) return { success: false, msg: "Supabase non configuré" };
+    const clean = code.trim().replace(/\s/g, "");
+    if (!email?.includes("@") || clean.length < 6) return { success: false, msg: "Code invalide" };
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({ email, token: clean, type: "signup" });
+      if (error) {
+        if (error.message.toLowerCase().includes("expired")) return { success: false, msg: "Code expiré. Demande un nouveau code." };
+        if (error.message.toLowerCase().includes("invalid")) return { success: false, msg: "Code incorrect. Réessaie." };
+        return { success: false, msg: error.message };
+      }
+      if (data.user) {
+        try {
+          const metaName = (data.user.user_metadata?.name as string) ?? data.user.email?.split("@")[0] ?? null;
+          await supabase.from("profiles").upsert({ id: data.user.id, name: metaName, email: data.user.email ?? email, image: null });
+        } catch {}
+        const u: UserType = { uid: data.user.id, email: data.user.email ?? email, name: (data.user.user_metadata?.name as string) ?? null, image: null };
+        try { await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u)); } catch {}
+        await resetRateLimit();
+        return { success: true, msg: "Compte confirmé !" };
+      }
+      return { success: false, msg: "Code invalide" };
+    } catch (error: any) {
+      return { success: false, msg: error.message };
+    }
+  };
+
   const forgotPassword = async (email: string) => {    if (!isSupabaseConfigured) return { success: false, msg: "Supabase non configuré" };
     const rateMsg = await checkRateLimit();
     if (rateMsg) return { success: false, msg: rateMsg };
     if (!email?.includes("@")) return { success: false, msg: "Email invalide" };
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: "akoue://login" });
       if (error) {
         await incRateLimit();
         return { success: false, msg: error.message };
@@ -386,6 +413,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     login,
     signUp,
     resendConfirmation,
+    verifyCode,
     updateUserData,
     forgotPassword,
     logout,

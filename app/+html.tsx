@@ -19,13 +19,13 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="apple-mobile-web-app-title" content="Akouè" />
         <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="apple-touch-icon" href="/images/icon-192.png" />
-        <link rel="preload" as="image" href="/images/splash-icon.png" />
+        <link rel="preload" as="image" href="/images/mono-akoue.png" />
         <script dangerouslySetInnerHTML={{ __html: `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})});}` }} />
         <style dangerouslySetInnerHTML={{ __html: `html,body{background:#171717;margin:0;padding:0;min-height:100%}body{overflow-x:hidden}#root{flex:1;display:flex;min-height:100vh;background:#171717}#splash{position:fixed;inset:0;background:#171717;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.4s ease}#splash.hidden{opacity:0;pointer-events:none}#splash-logo{width:140px;height:140px;border-radius:32px;background:#7A4DFF;display:flex;align-items:center;justify-content:center}#splash-logo img{width:96px;height:96px;border-radius:16px}#splash-title{margin-top:24px;color:#fff;font-size:32px;font-weight:800;letter-spacing:1px;font-family:system-ui,sans-serif}#splash-sub{margin-top:6px;color:#a3a3a3;font-size:13px;letter-spacing:2px;text-transform:uppercase;font-family:system-ui,sans-serif}` }} />
         <script dangerouslySetInnerHTML={{ __html: `window.hideSplash=function(){var s=document.getElementById('splash');if(s){s.classList.add('hidden');setTimeout(function(){s.style.display='none'},450);}};setTimeout(window.hideSplash,8000);` }} />
       </head>
       <body>
-        <div id="splash"><div id="splash-logo"><img src="/images/splash-icon.png" alt="Akouè" width="96" height="96" /></div><div id="splash-title">Akouè</div><div id="splash-sub">Maîtrise ton argent</div></div>
+        <div id="splash"><div id="splash-logo"><img src="/images/mono-akoue.png" alt="Akouè" width="96" height="96" /></div><div id="splash-title">Akouè</div><div id="splash-sub">Maîtrise ton argent</div></div>
         {children}
       </body>
     </html>

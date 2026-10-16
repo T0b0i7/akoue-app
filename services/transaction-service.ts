@@ -1,4 +1,4 @@
-import { supabase } from "@/config/supabase";
+﻿import { supabase } from "@/config/supabase";
 import { TransactionType, ResponseType, WalletType } from "@/types";
 import { uploadFileToSupabase } from "./images-service";
 import { createOrUpdateWallet, humanizeError, ensureValidSession } from "./wallet-service";
@@ -209,7 +209,7 @@ const revertAndUpdateWallets = async (
         return { success: false, msg: "The selected wallet don't have enough balance" };
       }
       if (Number(newWallet.amount) < newAmount && oldTransaction.walletId !== newWalletId) {
-        // Check after revert if same wallet balance was already accounted — re-fetch
+        // Check after revert if same wallet balance was already accounted  :  re-fetch
         const bal = oldTransaction.walletId === newWalletId ? revertedAmount : Number(newWallet.amount);
         if (bal < newAmount) return { success: false, msg: "The selected wallet don't have enough balance" };
       }

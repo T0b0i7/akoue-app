@@ -22,6 +22,30 @@ if (Platform.OS !== "web") {
   SplashScreen.preventAutoHideAsync().catch(() => {});
 }
 
+import * as Linking from "expo-linking";
+import { supabase } from "@/config/supabase";
+
+function AuthLinkHandler() {
+  const router = useRouter();
+  useEffect(() => {
+    const handle = async (url: string | null) => {
+      if (!url || !url.startsWith("akoue://")) return;
+      try {
+        const parsed = Linking.parse(url);
+        const code = (parsed.queryParams?.code as string) || new URL(url.replace("akoue://", "https://x/")).searchParams.get("code");
+        if (code) {
+          await supabase.auth.exchangeCodeForSession(code);
+          router.replace("/(auth)/login" as any);
+        }
+      } catch {}
+    };
+    Linking.getInitialURL().then((u) => handle(u)).catch(() => {});
+    const sub = Linking.addEventListener("url", (e) => handle(e.url));
+    return () => sub.remove();
+  }, []);
+  return null;
+}
+
 function OTAWatcher() {
   useOTAUpdate();
   return null;
@@ -60,7 +84,7 @@ function LockSetupRedirect({ showEnroll, locked, checking }: { showEnroll: boole
 }
 
 // Coquille interne (sous les providers) : recharge le verrou à chaque
-// changement de compte — sinon on garde le code de l'ancien compte.
+// changement de compte : sinon on garde le code de l'ancien compte.
 function AppShell() {
   const lock = useAppLock();
   const { user } = useAuth();
@@ -77,6 +101,7 @@ function AppShell() {
   return (
     <>
       <OTAWatcher />
+      <AuthLinkHandler />
       <BroadcastWatcher />
       <LockSetupRedirect showEnroll={lock.showEnroll} locked={lock.locked} checking={lock.checking} />
       <AppToast />
@@ -119,7 +144,7 @@ export default function RootLayout() {
     (async () => {
       try {
         if (Platform.OS !== "web") {
-          await Asset.fromModule(require("../public/images/splash-icon.png")).downloadAsync();
+          await Asset.fromModule(require("../public/images/mono-akoue.png")).downloadAsync();
         }
       } catch {}
       if (!cancelled) setReady(true);

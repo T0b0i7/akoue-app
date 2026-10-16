@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+﻿import { useCallback, useEffect, useState } from "react";
 import { AppState } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
@@ -89,7 +89,7 @@ export function useAppLock() {
   }, []);
 
   const refresh = useCallback(async () => {
-    // Sans compte, jamais de verrou — sinon bloqué sur "Akouè verrouillé" après reset usine
+    // Sans compte, jamais de verrou  :  sinon bloqué sur "Akouè verrouillé" après reset usine
     let hasAccount = false;
     try {
       const { data: { user } } = await supabase.auth.getUser();

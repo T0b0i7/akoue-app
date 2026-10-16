@@ -4,7 +4,7 @@
     "slug": "akoue-app",
     "version": "1.1.0",
     "orientation": "portrait",
-    "icon": "./public/images/favicon.png",
+    "icon": "./public/images/mono-akoue.png",
     "scheme": "akoue",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
@@ -19,7 +19,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./public/images/adaptive-icon.png",
+        "foregroundImage": "./public/images/mono-akoue.png",
         "backgroundColor": "#171717"
       },
       "edgeToEdgeEnabled": true,
@@ -34,7 +34,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./public/images/favicon.png"
+      "favicon": "./public/images/mono-akoue.png"
     },
     "plugins": [
       "expo-router",
@@ -53,7 +53,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./public/images/splash-icon.png",
+          "image": "./public/images/mono-akoue.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#171717"

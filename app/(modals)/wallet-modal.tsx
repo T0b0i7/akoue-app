@@ -1,4 +1,4 @@
-import BackButton from "@/components/back-button"
+﻿import BackButton from "@/components/back-button"
 import ButtonComponent from "@/components/button"
 import HeaderComponent from "@/components/header"
 import ImageUpload from "@/components/image-upload"
@@ -136,7 +136,7 @@ const WalletModal = () => {
   }
 
   function closeModal() {
-    // dismiss suffit — il revient déjà à l'écran précédent
+    // dismiss suffit  :  il revient déjà à l'écran précédent
     try {
       (router as any).dismiss?.();
     } catch {}
@@ -158,7 +158,7 @@ const WalletModal = () => {
     setLoading(false)
     if (result.success) {
       setFeedback({ type: "success", msg: t("walletDeleted") })
-      showToast("success", "Portefeuille supprimé", `${wallet.name || oldWallet?.name || "Portefeuille"} supprimé 🗑️`)
+      showToast("success", "Portefeuille supprimé", `${wallet.name || oldWallet?.name || "Portefeuille"} supprimé � : �️`)
       setTimeout(() => closeModal(), 600)
     } else {
       const msg = result.msg || "Erreur"

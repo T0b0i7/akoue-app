@@ -104,7 +104,7 @@ const More = () => {
   const handleCheckUpdate = async () => {
     if (isChecking) return
     if (!Updates.isEnabled) {
-      Alert.alert(t("upToDateTitle"), "OTA désactivé en dev — fais un build preview/production pour tester.")
+      Alert.alert(t("upToDateTitle"), "OTA desactive en dev : fais un build preview/production pour tester.")
       return
     }
     try {

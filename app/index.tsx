@@ -37,7 +37,7 @@ const Index = () => {
       <View style={styles.logoWrap}>
         <Image
           style={styles.logo}
-          source={require("../public/images/splash-icon.png")}
+          source={require("../public/images/mono-akoue.png")}
           resizeMode="contain"
           fadeDuration={0}
           onLoadEnd={() => setLogoReady(true)}

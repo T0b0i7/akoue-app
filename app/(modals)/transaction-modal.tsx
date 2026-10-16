@@ -167,7 +167,7 @@ const TransactionModal = () => {
     setLoading(false)
     if (result!.success) {
       setFeedback({ type: "success", msg: t("walletDeleted") })
-      showToast("success", "Transaction supprimée", "Transaction supprimée 🗑️")
+      showToast("success", "Transaction supprimée", "Transaction supprimée � : �️")
       setTimeout(() => closeModal(), 600)
     } else {
       const msg = result!.msg || "Erreur"
