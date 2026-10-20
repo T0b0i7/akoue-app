@@ -22,7 +22,6 @@ const Home = () => {
 
   const {
     data: recentTransactions,
-    error,
     loading: recentTransactionsLoading,
     hasMore,
     loadMore,

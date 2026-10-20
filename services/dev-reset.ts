@@ -1,4 +1,4 @@
-﻿import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "@/config/supabase";
 
 // Reset usine local : supprime TOUS les comptes locaux + caches

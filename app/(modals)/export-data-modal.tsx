@@ -103,7 +103,7 @@ const ExportDataModal = () => {
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.card}>
             <View style={styles.iconBox}><IconFileArrowUp size={26} color="#fff" weight="fill" /></View>
-            <Typo size={16} fontWeight="600">Tes données t'appartiennent</Typo>
+            <Typo size={16} fontWeight="600">Tes données t’appartiennent</Typo>
             <Typo size={13} color={colors.neutral400} style={{ textAlign: "center", lineHeight: 18 }}>Exporte tous tes portefeuilles et transactions. Fichier compatible Excel / Google Sheets. Fonctionne même hors ligne.</Typo>
           </View>
 

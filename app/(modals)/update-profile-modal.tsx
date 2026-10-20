@@ -1,4 +1,4 @@
-﻿import BackButton from "@/components/back-button"
+import BackButton from "@/components/back-button"
 import Button from "@/components/button"
 import Header from "@/components/header"
 import Input from "@/components/input"
@@ -13,7 +13,6 @@ import { updateUser } from "@/services/user-service"
 import { UserDataType } from "@/types"
 import { scale, verticalScale } from "@/utils/styling"
 import { Image } from "expo-image"
-import * as ImagePicker from "expo-image-picker"
 import { GenderFemaleIcon as IconGenderFemale } from "phosphor-react-native/src/icons/GenderFemale";
 import { GenderMaleIcon as IconGenderMale } from "phosphor-react-native/src/icons/GenderMale";
 import { useRouter } from "expo-router"
@@ -44,10 +43,6 @@ const EditProfileModal = () => {
       image: user?.image || null,
     })
   }, [user])
-
-  const handleImagePicker = async () => {
-    // Remplacé par sélection Homme/Femme  :  plus fiable que l'upload
-  }
 
   const handleSubmit = async () => {
     if (loading) return;

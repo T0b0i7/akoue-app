@@ -1,4 +1,4 @@
-﻿import ButtonComponent from "@/components/button"
+import ButtonComponent from "@/components/button"
 import ScreenWrapper from "@/components/screen-wrapper"
 import Typo from "@/components/typo"
 import { colors, spacingX, spacingY } from "@/constants/theme"

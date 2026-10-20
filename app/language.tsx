@@ -1,4 +1,4 @@
-﻿import { colors, radius, spacingX, spacingY } from "@/constants/theme"
+import { colors, radius, spacingX, spacingY } from "@/constants/theme"
 import { useLocale } from "@/context/locale-context"
 import { verticalScale } from "@/utils/styling"
 import { useRouter } from "expo-router"

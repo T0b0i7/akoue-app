@@ -1,30 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import React, { createContext, useContext, useEffect, useState } from "react"
-import { Appearance } from "react-native"
+import React, { createContext, useContext, useEffect } from "react"
 import { colors } from "@/constants/theme"
 
 // Snapshot du theme sombre d'origine : ne mute jamais
 const darkColors = { ...colors } as typeof colors
-
-const lightColors = {
-  ...darkColors,
-  // Soft Structuralism : airy, floating, diffused
-  neutral900: "#f8fafc", // page bg : tres clair
-  neutral800: "#ffffff", // card : blanc pur
-  neutral700: "#e2e8f0", // border hairline
-  neutral600: "#cbd5e1",
-  neutral500: "#94a3b8",
-  neutral400: "#64748b",
-  neutral350: "#475569",
-  neutral100: "#0f172a", // texte principal sombre
-  neutral50: "#f1f5f9",
-  // On garde white/black pour les CTA (texte blanc sur primaire reste blanc)
-  black: "#000000",
-  white: "#FFFFFF",
-  text: "#0f172a",
-  textLight: "#334155",
-  textLighter: "#64748b",
-}
 
 type ThemeType = "light" | "dark"
 type ThemeContextType = {

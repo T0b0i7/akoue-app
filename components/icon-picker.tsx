@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, TouchableOpacity, View, Pressable } from "react-native";
+import { StyleSheet, View, Pressable } from "react-native";
 import Typo from "./typo";
 import { colors, radius } from "@/constants/theme";
 import { verticalScale, scale } from "@/utils/styling";

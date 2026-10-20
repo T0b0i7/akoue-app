@@ -85,7 +85,7 @@ const LoanCalculatorModal = () => {
                 </View>
               </View>
               <View style={styles.formulaBox}>
-                <Typo size={13} fontWeight="600" color={colors.neutral200}>Comment c'est calculé ?</Typo>
+                <Typo size={13} fontWeight="600" color={colors.neutral200}>Comment c’est calculé ?</Typo>
                 <Typo size={12} color={colors.neutral400} style={{ marginTop: 6, lineHeight: 18 }}>
                   On divise le taux annuel par 12 pour avoir le taux mensuel. Chaque mois tu payes une part du capital + les intérêts sur ce qu'il reste. Le total des mensualités donne le coût réel du prêt.
                 </Typo>

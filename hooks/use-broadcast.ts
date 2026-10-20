@@ -3,10 +3,19 @@ import { Alert, AppState, Linking, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase, isSupabaseConfigured } from "@/config/supabase";
 import { useToast } from "@/context/toast-context";
-import * as Notifications from "expo-notifications";
 import * as Application from "expo-application";
 import { downloadAndInstallApk } from "@/services/app-update-service";
 import type { PendingUpdate } from "@/components/update-modal";
+
+// expo-notifications est chargé paresseusement : son module interne
+// (DevicePushTokenAutoRegistration) enregistre un listener push token au
+// top-level, ce qui émet un warning à chaque import sur web. En natif seulemnt.
+type NotificationsModule = typeof import("expo-notifications");
+let Notifications: NotificationsModule | null = null;
+if (Platform.OS !== "web") {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Notifications = require("expo-notifications") as NotificationsModule;
+}
 
 const CACHE_KEY = "cached_broadcasts";
 const SEEN_KEY = "seen_broadcasts"; // ids définitivement traités
@@ -55,7 +64,9 @@ function isNewer(a: string | null, b: string | null): boolean {
 async function setupUpdateCategory() {
   try {
     if (Platform.OS === "web") return;
-    await Notifications.setNotificationCategoryAsync("app-update", [
+    const Notif = Notifications as NotificationsModule | null;
+    if (!Notif) return;
+    await Notif.setNotificationCategoryAsync("app-update", [
       {
         identifier: "update-now",
         buttonTitle: "Mettre à jour",
@@ -132,23 +143,26 @@ export function useBroadcast() {
       // Notif système UNE SEULE FOIS par broadcast (fini le spam toutes les 60s)
       try {
         if (Platform.OS !== "web") {
-          const notified = await getIds(NOTIFIED_KEY);
-          if (!notified.includes(latest.id)) {
-            const perms = await Notifications.getPermissionsAsync();
-            if (perms.status === "granted") {
-              const isUpdate = latest.kind === "update" && latest.action_url;
-              await Notifications.scheduleNotificationAsync({
-                content: {
-                  title: latest.title,
-                  body: latest.body,
-                  sound: true,
-                  ...(isUpdate
-                    ? { categoryIdentifier: "app-update", data: { broadcastId: latest.id, actionUrl: latest.action_url } }
-                    : { data: { broadcastId: latest.id } }),
-                },
-                trigger: null,
-              });
-              await addId(NOTIFIED_KEY, latest.id);
+          const Notif = Notifications as NotificationsModule | null;
+          if (Notif) {
+            const notified = await getIds(NOTIFIED_KEY);
+            if (!notified.includes(latest.id)) {
+              const perms = await Notif.getPermissionsAsync();
+              if (perms.status === "granted") {
+                const isUpdate = latest.kind === "update" && latest.action_url;
+                await Notif.scheduleNotificationAsync({
+                  content: {
+                    title: latest.title,
+                    body: latest.body,
+                    sound: true,
+                    ...(isUpdate
+                      ? { categoryIdentifier: "app-update", data: { broadcastId: latest.id, actionUrl: latest.action_url } }
+                      : { data: { broadcastId: latest.id } }),
+                  },
+                  trigger: null,
+                });
+                await addId(NOTIFIED_KEY, latest.id);
+              }
             }
           }
         }
@@ -261,7 +275,9 @@ export function useBroadcast() {
   // Clic notif système ou bouton "Mettre à jour" de la notif
   useEffect(() => {
     if (Platform.OS === "web") return;
-    const sub = Notifications.addNotificationResponseReceivedListener(async (resp) => {
+    const Notif = Notifications as NotificationsModule | null;
+    if (!Notif) return;
+    const sub = Notif.addNotificationResponseReceivedListener(async (resp) => {
       const data = resp.notification.request.content.data as any;
       if (data?.actionUrl) {
         try { await Linking.openURL(data.actionUrl); } catch {}

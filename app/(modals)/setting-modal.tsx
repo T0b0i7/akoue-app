@@ -1,4 +1,4 @@
-﻿import BackButton from "@/components/back-button"
+import BackButton from "@/components/back-button"
 import Header from "@/components/header"
 import ModalWrapper from "@/components/modal-wrapper"
 import Typo from "@/components/typo"
@@ -41,7 +41,6 @@ const SettingsModal = () => {
   const { showToast } = useToast()
   const isFR = language === "fr"
   const [confirm, setConfirm] = useState<"data" | "account" | "factory" | null>(null)
-  const [loading, setLoading] = useState(false)
   const [displayCurrency, setDisplayCurrency] = useState("XOF")
   const lock = useAppLock()
   useEffect(() => { AsyncStorage.getItem("display_currency").then(v => { if (v) setDisplayCurrency(v); }); }, [])
@@ -238,7 +237,7 @@ const SettingsModal = () => {
                 <View style={[styles.listIcon, { backgroundColor: "#0ea5e9", width: 36, height: 36 }]}>
                   <IconCurrencyDollar size={18} color="#fff" weight="fill" />
                 </View>
-                <Typo size={14} fontWeight="600" color={colors.white}>Devise d'affichage</Typo>
+                <Typo size={14} fontWeight="600" color={colors.white}>Devise d’affichage</Typo>
               </View>
               <Dropdown
                 style={{ minWidth: 110, height: 36, backgroundColor: colors.neutral700, borderRadius: 10, paddingHorizontal: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }}

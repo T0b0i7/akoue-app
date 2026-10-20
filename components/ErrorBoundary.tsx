@@ -1,5 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from "react";
-import { Text, View, Button, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
 import Typo from "@/components/typo";
 import { colors, spacingX, spacingY } from "@/constants/theme";
 import ButtonComponent from "@/components/button";
@@ -32,7 +32,7 @@ export class ErrorBoundary extends Component<Props, State> {
             Une erreur est survenue
           </Typo>
           <Typo size={14} color={colors.neutral400} style={{ marginTop: spacingY._10, textAlign: "center" }}>
-            Une partie de l'application ne fonctionne pas correctement.
+            Une partie de l’application ne fonctionne pas correctement.
           </Typo>
           <ButtonComponent
             onPress={() => this.setState({ hasError: false })}

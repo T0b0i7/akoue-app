@@ -27,7 +27,6 @@ type NotifItem = {
 };
 
 export default function NotificationsModal() {
-  const { t } = useLocale();
   const [items, setItems] = useState<NotifItem[]>([]);
   const [confirmId, setConfirmId] = useState<string | null>(null);
 

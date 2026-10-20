@@ -9,7 +9,7 @@ import { KeyIcon as IconKey } from "phosphor-react-native/src/icons/Key";
 import { LockOpenIcon as IconLockOpen } from "phosphor-react-native/src/icons/LockOpen";
 import Svg, { Circle, Polyline } from "react-native-svg";
 import Typo from "@/components/typo";
-import { colors, radius } from "@/constants/theme";
+import { colors } from "@/constants/theme";
 import type { LockMethod } from "@/services/app-lock-service";
 
 // ---------- Cartes de choix (joli design accompagné) ----------

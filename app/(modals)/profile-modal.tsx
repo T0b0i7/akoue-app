@@ -1,4 +1,4 @@
-﻿import BackButton from "@/components/back-button"
+import BackButton from "@/components/back-button"
 import Header from "@/components/header"
 import ModalWrapper from "@/components/modal-wrapper"
 import Typo from "@/components/typo"

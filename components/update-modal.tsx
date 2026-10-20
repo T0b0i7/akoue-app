@@ -91,11 +91,11 @@ export default function UpdateModal({ update, downloading, busy, progress, onUpd
               <View style={styles.steps}>
                 <Typo size={12} color={colors.neutral100}>1. Télécharge ✓</Typo>
                 <Typo size={12} color={colors.neutral100}>2. Ouvre le fichier APK</Typo>
-                <Typo size={12} color={colors.neutral100}>3. Installe par-dessus l'ancienne version</Typo>
+                <Typo size={12} color={colors.neutral100}>3. Installe par-dessus l’ancienne version</Typo>
               </View>
               <TouchableOpacity style={styles.btn} onPress={onDone} activeOpacity={0.85}>
                 <IconCheckCircle size={18} color="#fff" weight="fill" />
-                <Typo size={15} fontWeight="700" color={colors.white}>J'ai installé la MAJ</Typo>
+                <Typo size={15} fontWeight="700" color={colors.white}>J’ai installé la MAJ</Typo>
               </TouchableOpacity>
               <TouchableOpacity onPress={onDone} style={styles.later} activeOpacity={0.7}>
                 <Typo size={13} color={colors.neutral400}>Fermer</Typo>

@@ -1,4 +1,4 @@
-﻿import { Platform } from "react-native";
+import { Platform } from "react-native";
 // API legacy (avec progression)  :  la nouvelle API File/Paths n'expose pas de callback.
 import {
   createDownloadResumable,

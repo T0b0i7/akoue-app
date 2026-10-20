@@ -87,7 +87,7 @@ export async function ensureValidSession(): Promise<{ uid: string | null; error?
     if (session?.user?.id) return { uid: session.user.id };
 
     // 2) Tentative de refresh (token expiré)
-    const { data: { session: refreshed }, error: refreshErr } = await supabase.auth.refreshSession();
+    const { data: { session: refreshed } } = await supabase.auth.refreshSession();
     if (refreshed?.user?.id) return { uid: refreshed.user.id };
 
     // 3) getUser (parfois valide même si getSession échoue)

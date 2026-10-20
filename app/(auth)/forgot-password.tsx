@@ -1,4 +1,4 @@
-﻿import { Alert, Pressable, StyleSheet, View } from "react-native";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 import React, { useState } from "react";
 import ScreenWrapper from "@/components/screen-wrapper";
 import Typo from "@/components/typo";

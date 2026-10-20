@@ -66,8 +66,6 @@ const TransactionModal = () => {
 
   const {
     data: wallets,
-    loading: walletLoading,
-    error: walletError,
   } = useSupabaseWallets(user?.uid)
 
   //retrieve data from wallte to update

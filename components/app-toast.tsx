@@ -1,4 +1,4 @@
-﻿import { colors, radius } from "@/constants/theme"
+import { radius } from "@/constants/theme"
 import { useToast } from "@/context/toast-context"
 import * as Haptics from "expo-haptics"
 import { BlurView } from "expo-blur"

@@ -1,4 +1,4 @@
-﻿import BackButton from "@/components/back-button"
+import BackButton from "@/components/back-button"
 import ButtonComponent from "@/components/button"
 import HeaderComponent from "@/components/header"
 import ImageUpload from "@/components/image-upload"

@@ -28,7 +28,6 @@ const HomeCard = () => {
 
   const {
     data: wallets,
-    error,
     loading: walletLoading,
     refetch: refetchWallets,
   } = useSupabaseWallets(user?.uid)

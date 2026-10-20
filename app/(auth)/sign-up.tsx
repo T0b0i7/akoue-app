@@ -1,4 +1,4 @@
-﻿import { Alert, Pressable, StyleSheet, View } from "react-native"
+import { Alert, Pressable, StyleSheet, View } from "react-native"
 import React, { useEffect, useState } from "react"
 import ScreenWrapper from "@/components/screen-wrapper"
 import Typo from "@/components/typo"
@@ -243,7 +243,7 @@ const SignUp = () => {
                   </Typo>
                 )}
                 <Typo size={12} color={colors.neutral500} style={{ textAlign: "center", lineHeight: 17 }}>
-                  Pas de mail apres 5 min ? Verifie les spams et l'onglet Promotions de Gmail.
+                  Pas de mail apres 5 min ? Verifie les spams et l’onglet Promotions de Gmail.
                 </Typo>
                 <Pressable onPress={() => router.replace("/(auth)/login")}>
                   <Typo size={14} color={colors.neutral400} fontWeight="600" style={{ textAlign: "center" }}>

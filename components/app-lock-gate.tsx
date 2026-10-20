@@ -102,7 +102,7 @@ export default function AppLockGate(p: Props) {
         {p.lockoutSecs > 0 && (
           <View style={styles.lockout}>
             <IconTimer size={18} color={colors.rose} weight="fill" />
-            <Typo size={14} fontWeight="700" color={colors.rose}>Pause {p.lockoutSecs}s. Trop d'essais</Typo>
+            <Typo size={14} fontWeight="700" color={colors.rose}>Pause {p.lockoutSecs}s. Trop d’essais</Typo>
           </View>
         )}
         <View style={{ marginTop: 18, width: "100%", alignItems: "center" }}>
