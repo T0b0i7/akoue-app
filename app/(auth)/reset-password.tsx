@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import ScreenWrapper from "@/components/screen-wrapper";
 import Typo from "@/components/typo";
 import BrandHeader from "@/components/brand-header";
+import { AuthHeader } from "@/components/auth-header";
 import AnimatedOrbs from "@/components/animated-orbs";
 import { colors, spacingX, spacingY } from "@/constants/theme";
 import { verticalScale } from "@/utils/styling";
@@ -66,6 +67,7 @@ const ResetPassword = () => {
     <ScreenWrapper>
       <View style={styles.root}>
         <AnimatedOrbs intensity={0.85} />
+        <AuthHeader backTo="/(auth)/login" />
 
         <Animated.View entering={FadeInDown.duration(600)} style={styles.container}>
           <BrandHeader />

@@ -14,6 +14,7 @@ import { ThemeProvider } from "@/context/theme-context";
 import { AppToast } from "@/components/app-toast";
 import AppLockGate from "@/components/app-lock-gate";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AudioProvider } from "@/context/audio-context";
 import { useAppLock } from "@/hooks/use-app-lock";
 import { useOTAUpdate } from "@/hooks/use-ota-update";
 import { useBroadcast } from "@/hooks/use-broadcast";
@@ -175,9 +176,11 @@ export default function RootLayout() {
 			<ThemeProvider>
 				<AuthProvider>
 					<LocaleProvider>
-						<ErrorBoundary>
-							<AppShell />
-						</ErrorBoundary>
+						<AudioProvider>
+							<ErrorBoundary>
+								<AppShell />
+							</ErrorBoundary>
+						</AudioProvider>
 					</LocaleProvider>
 				</AuthProvider>
 			</ThemeProvider>

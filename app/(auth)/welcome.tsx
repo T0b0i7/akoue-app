@@ -3,7 +3,7 @@ import ScreenWrapper from "@/components/screen-wrapper"
 import Typo from "@/components/typo"
 import { colors, spacingX, spacingY } from "@/constants/theme"
 import { verticalScale } from "@/utils/styling"
-import { Image, Platform, Pressable, StyleSheet, View } from "react-native"
+import { Image, Pressable, StyleSheet, View } from "react-native"
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated"
 import AnimatedOrbs from "@/components/animated-orbs"
 import { ArrowRightIcon as IconArrowRight } from "phosphor-react-native/src/icons/ArrowRight";
@@ -12,8 +12,7 @@ import { SpeakerHighIcon as IconSpeakerHigh } from "phosphor-react-native/src/ic
 import { SpeakerXIcon as IconSpeakerX } from "phosphor-react-native/src/icons/SpeakerX";
 import { WalletIcon as IconWallet } from "phosphor-react-native/src/icons/Wallet";
 import { WifiSlashIcon as IconWifiSlash } from "phosphor-react-native/src/icons/WifiSlash";
-import { useAudioPlayer } from "expo-audio"
-import { useEffect, useRef, useState } from "react"
+import { useAudio } from "@/context/audio-context"
 
 import { useRouter } from "expo-router"
 import { useLocale } from "@/context/locale-context"
@@ -21,55 +20,7 @@ import { useLocale } from "@/context/locale-context"
 const Welcome = () => {
   const router = useRouter()
   const { t } = useLocale()
-  const [muted, setMuted] = useState(false)
-  const player = useAudioPlayer(require("@/public/sounds/money-theme.wav"))
-  const played = useRef(false)
-
-  useEffect(() => {
-    if (played.current || muted) return
-    played.current = true
-    try {
-      player.loop = true
-      player.volume = 0.35
-    } catch {}
-    const start = () => {
-      try {
-        player.play()
-      } catch {}
-    }
-    const id = setTimeout(start, 450)
-    // Web : les navigateurs bloquent l'autoplay -> on demarre au 1er geste.
-    let unlock: (() => void) | null = null
-    if (Platform.OS === "web" && typeof document !== "undefined") {
-      unlock = () => {
-        start()
-        document.removeEventListener("pointerdown", unlock!)
-        document.removeEventListener("keydown", unlock!)
-      }
-      document.addEventListener("pointerdown", unlock)
-      document.addEventListener("keydown", unlock)
-    }
-    return () => {
-      clearTimeout(id)
-      if (unlock) {
-        document.removeEventListener("pointerdown", unlock)
-        document.removeEventListener("keydown", unlock)
-      }
-    }
-  }, [muted])
-
-  // Fond "blobs" ondulants : voir components/animated-orbs.tsx
-  const toggleSound = () => {
-    const next = !muted
-    setMuted(next)
-    try {
-      if (next) player.pause()
-      else {
-        player.loop = true
-        player.play()
-      }
-    } catch {}
-  }
+  const { muted, toggleSound } = useAudio()
 
   return (
     <ScreenWrapper>
