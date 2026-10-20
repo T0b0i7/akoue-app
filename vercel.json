@@ -1,6 +1,9 @@
 {
   "buildCommand": "npx expo export -p web",
   "outputDirectory": "dist",
-  "cleanUrls": true,
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/(.+)", "dest": "/$1.html", "check": true },
+    { "src": "/(.+)", "dest": "/index.html" }
+  ]
 }
