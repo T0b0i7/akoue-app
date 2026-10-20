@@ -1,7 +1,8 @@
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import React from "react";
 import { ImageUploadProps } from "@/types";
-import * as Icons from "phosphor-react-native";
+import { UploadSimpleIcon as IconUploadSimple } from "phosphor-react-native/src/icons/UploadSimple";
+import { XCircleIcon as IconXCircle } from "phosphor-react-native/src/icons/XCircle";
 import { colors, radius } from "@/constants/theme";
 import Typo from "./typo";
 import { scale, verticalScale } from "@/utils/styling";
@@ -37,7 +38,7 @@ const ImageUpload = ({
           onPress={pickImage}
           style={[styles.inputContainer, containerStyle && containerStyle]}
         >
-          <Icons.UploadSimple color={colors.neutral200} />
+          <IconUploadSimple color={colors.neutral200} />
           {placeholder && <Typo size={15}>{placeholder}</Typo>}
         </TouchableOpacity>
       ) : (
@@ -49,7 +50,7 @@ const ImageUpload = ({
             transition={100}
           />
           <TouchableOpacity style={styles.deleteIcon} onPress={onClear}>
-            <Icons.XCircle
+            <IconXCircle
               size={verticalScale(24)}
               weight="fill"
               color={colors.white}

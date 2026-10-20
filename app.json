@@ -78,7 +78,9 @@
             }
           }
         }
-      ]
+      ],
+      "expo-audio",
+      "expo-web-browser"
     ],
     "runtimeVersion": "1.0.0",
     "updates": {

@@ -1,12 +1,17 @@
-import { Alert, Pressable, StyleSheet, View } from "react-native"
+﻿import { Alert, Pressable, StyleSheet, View } from "react-native"
 import React, { useEffect, useState } from "react"
 import ScreenWrapper from "@/components/screen-wrapper"
 import Typo from "@/components/typo"
 import BrandHeader from "@/components/brand-header"
+import AnimatedOrbs from "@/components/animated-orbs"
 import { colors, spacingX, spacingY } from "@/constants/theme"
 import { verticalScale } from "@/utils/styling"
 import Input from "@/components/input"
-import * as Icons from "phosphor-react-native"
+import { ArrowClockwiseIcon as IconArrowClockwise } from "phosphor-react-native/src/icons/ArrowClockwise";
+import { ArrowRightIcon as IconArrowRight } from "phosphor-react-native/src/icons/ArrowRight";
+import { AtIcon as IconAt } from "phosphor-react-native/src/icons/At";
+import { GoogleLogoIcon as IconGoogleLogo } from "phosphor-react-native/src/icons/GoogleLogo";
+import { LockIcon as IconLock } from "phosphor-react-native/src/icons/Lock";
 import Button from "@/components/button"
 import { useRouter } from "expo-router"
 import { useAuth } from "@/context/auth-context"
@@ -17,22 +22,22 @@ import Animated, { FadeInDown } from "react-native-reanimated"
 
 const Login = () => {
   const router = useRouter()
-  const { login: loginUser, resendConfirmation, verifyCode } = useAuth()
+  const { login: loginUser, resendConfirmation, verifyCode, loginWithGoogle } = useAuth()
   const { t } = useLocale()
   const { showToast } = useToast()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [verifyEmail, setVerifyEmail] = useState<string | null>(null)
   const [resending, setResending] = useState(false)
-  const [code, setCode] = useState("")
   const [verifying, setVerifying] = useState(false)
-  const [countdown, setCountdown] = useState(20)
+  const [code, setCode] = useState("")
+  const [countdown, setCountdown] = useState(180)
 
   useEffect(() => {
     if (!verifyEmail) return
-    setCountdown(20)
-    setCode("")
+    setCountdown(180)
     const timer = setInterval(() => {
       setCountdown((c) => {
         if (c <= 1) {
@@ -49,34 +54,46 @@ const Login = () => {
     if (!verifyEmail) return
     setResending(true)
     const res = await resendConfirmation(verifyEmail)
-    if (res.success) setCountdown(20)
+    if (res.success) setCountdown(180)
     showToast(res.success ? "success" : "error", t("emailResent"), res.msg || "")
     setResending(false)
   }
 
   const handleVerify = async () => {
     if (!verifyEmail) return
-    if (countdown <= 0) {
-      showToast("error", t("error"), "Code expire. Demande un nouveau code.")
-      Alert.alert(t("error"), "Code expire. Demande un nouveau code.")
+    const clean = code.replace(/\D/g, "")
+    if (clean.length < 6) {
+      showToast("error", t("error"), "Entre le code a 6 chiffres recu par mail.")
       return
     }
     setVerifying(true)
-    const res = await verifyCode(verifyEmail, code)
+    const res = await verifyCode(verifyEmail, clean)
+    setVerifying(false)
     if (res.success) {
-      showToast("success", "Compte confirme", res.msg || "")
+      showToast("success", "Compte confirme", "Bienvenue !")
       router.replace("/(tabs)" as any)
     } else {
-      showToast("error", t("error"), res.msg || "")
-      Alert.alert(t("error"), res.msg || "")
+      showToast("error", t("error"), res.msg || "Code incorrect ou expire.")
     }
-    setVerifying(false)
   }
 
   const loginSchema = z.object({
     email: z.email({ message: t("pleaseEnterValidEmail") }),
     password: z.string().min(6, { message: t("passwordMin6") }),
   })
+
+  const handleGoogle = async () => {
+    setGoogleLoading(true)
+    const res = await loginWithGoogle()
+    setGoogleLoading(false)
+    if (res.redirecting) return // web : le navigateur part vers Google
+    if (res.success) {
+      showToast("success", "Connecté avec Google", "Bienvenue !")
+      router.replace("/(tabs)" as any)
+    } else if (res.msg !== "Connexion Google annulée") {
+      showToast("error", t("error"), res.msg || t("somethingWentWrong"))
+    }
+  }
 
   const handleSubmit = async () => {
     try {
@@ -108,8 +125,7 @@ const Login = () => {
   return (
     <ScreenWrapper>
       <View style={styles.root}>
-        <View style={styles.orbBlue} pointerEvents="none" />
-        <View style={styles.orbGreen} pointerEvents="none" />
+        <AnimatedOrbs intensity={0.85} />
 
         <Animated.View entering={FadeInDown.duration(600)} style={styles.container}>
           <BrandHeader email={verifyEmail} compact={!!verifyEmail} />
@@ -123,7 +139,7 @@ const Login = () => {
                     onChangeText={setEmail}
                     keyboardType="email-address"
                     autoCapitalize="none"
-                    icon={<Icons.At size={verticalScale(22)} color={colors.neutral400} />}
+                    icon={<IconAt size={verticalScale(22)} color={colors.neutral400} />}
                   />
                 </View>
               </Animated.View>
@@ -133,7 +149,7 @@ const Login = () => {
                     placeholder={t("enterPassword")}
                     type="password"
                     onChangeText={setPassword}
-                    icon={<Icons.Lock size={verticalScale(22)} color={colors.neutral400} />}
+                    icon={<IconLock size={verticalScale(22)} color={colors.neutral400} />}
                   />
                 </View>
               </Animated.View>
@@ -143,7 +159,7 @@ const Login = () => {
                     {t("login")}
                   </Typo>
                   <View style={styles.trailingIcon}>
-                    <Icons.ArrowRight size={18} color={colors.white} weight="bold" />
+                    <IconArrowRight size={18} color={colors.white} weight="bold" />
                   </View>
                 </Button>
               </Animated.View>
@@ -160,49 +176,53 @@ const Login = () => {
                   </Typo>
                 </Pressable>
               </View>
+
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Typo size={12} color={colors.neutral500}>ou</Typo>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <Pressable onPress={handleGoogle} disabled={googleLoading || loading} style={styles.googleBtn}>
+                <IconGoogleLogo size={20} color={colors.white} weight="bold" />
+                <Typo size={15} color={colors.white} fontWeight="700">
+                  {googleLoading ? "..." : "Continuer avec Google"}
+                </Typo>
+              </Pressable>
             </View>
           ) : (
             <View style={styles.otpShell}>
               <View style={styles.otpCore}>
-                <View style={styles.otpHead}>
-                  <Icons.Timer size={20} color={countdown > 0 ? colors.primary : colors.rose} />
-                  <Typo size={14} color={countdown > 0 ? colors.white : colors.rose} fontWeight="700">
-                    {countdown > 0 ? `Expire dans ${countdown}s` : "Code expire"}
-                  </Typo>
-                </View>
-                <View style={styles.progressTrack}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      {
-                        width: `${(countdown / 20) * 100}%`,
-                        backgroundColor: countdown > 5 ? colors.primary : colors.rose,
-                      },
-                    ]}
-                  />
-                </View>
                 <Typo size={13} color={colors.neutral400} style={{ textAlign: "center", lineHeight: 19 }}>
                   {t("verifyEmailMsg")}
                 </Typo>
-                <Input
-                  placeholder="123456"
-                  value={code}
-                  onChangeText={setCode}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                  inputStyle={styles.codeInput}
-                />
-                <Button onPress={handleVerify} loading={verifying} disabled={countdown <= 0}>
+                <Typo size={13} color={colors.white} fontWeight="700" style={{ textAlign: "center", lineHeight: 19 }}>
+                  Code a 6 chiffres envoye a {verifyEmail}. Saisis-le pour activer ton compte.
+                </Typo>
+                <View style={styles.fieldShell}>
+                  <Input
+                    placeholder="000000"
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    value={code}
+                    onChangeText={(v: string) => setCode(v.replace(/[^0-9]/g, ""))}
+                    inputStyle={styles.codeInput}
+                  />
+                </View>
+                <Button onPress={handleVerify} loading={verifying}>
                   <Typo fontWeight="700" color={colors.white} size={16}>
-                    Confirmer
+                    Confirmer mon compte
                   </Typo>
                 </Button>
-                <Pressable onPress={handleResend} disabled={resending} style={styles.resendBtn}>
-                  <Icons.ArrowClockwise size={16} color={colors.primary} />
-                  <Typo size={14} color={colors.primary} fontWeight="700">
-                    {resending ? "..." : t("resendEmail")}
+                <Pressable onPress={handleResend} disabled={resending || countdown > 0} style={styles.resendBtn}>
+                  <IconArrowClockwise size={16} color={countdown > 0 ? colors.neutral500 : colors.primary} />
+                  <Typo size={14} color={countdown > 0 ? colors.neutral500 : colors.primary} fontWeight="700">
+                    {resending ? "..." : countdown > 0 ? `Renvoyer dans ${countdown}s` : "Renvoyer le code"}
                   </Typo>
                 </Pressable>
+                <Typo size={12} color={colors.neutral500} style={{ textAlign: "center", lineHeight: 17 }}>
+                  Pas de mail apres 5 min ? Verifie les spams et l'onglet Promotions de Gmail.
+                </Typo>
                 {countdown <= 0 && (
                   <Typo size={13} color={colors.rose} style={{ textAlign: "center" }}>
                     Code expire. Demande un nouveau code.
@@ -225,24 +245,6 @@ const styles = StyleSheet.create({
     position: "relative",
     backgroundColor: "#05070F",
     justifyContent: "center",
-  },
-  orbBlue: {
-    position: "absolute",
-    top: -80,
-    right: -60,
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    backgroundColor: "rgba(10,92,255,0.22)",
-  },
-  orbGreen: {
-    position: "absolute",
-    bottom: -70,
-    left: -60,
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: "rgba(34,197,94,0.12)",
   },
   container: {
     flex: 1,
@@ -320,5 +322,27 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     paddingVertical: 6,
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 4,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.10)",
+  },
+  googleBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.14)",
+    paddingVertical: 14,
   },
 })

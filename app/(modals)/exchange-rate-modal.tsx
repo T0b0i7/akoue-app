@@ -13,7 +13,8 @@ import {
   getNumberInput,
 } from "@/utils/common"
 import { verticalScale } from "@/utils/styling"
-import * as Icons from "phosphor-react-native"
+import { ArrowsClockwiseIcon as IconArrowsClockwise } from "phosphor-react-native/src/icons/ArrowsClockwise";
+import { MagnifyingGlassIcon as IconMagnifyingGlass } from "phosphor-react-native/src/icons/MagnifyingGlass";
 import { useLocale } from "@/context/locale-context"
 import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { AppState, Platform, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native"
@@ -145,7 +146,7 @@ const ExchangeRateModal = () => {
               placeholder={t("searchCurrency")}
               type="normal"
               icon={
-                <Icons.MagnifyingGlass size={20} color={colors.neutral400} />
+                <IconMagnifyingGlass size={20} color={colors.neutral400} />
               }
             />
           </View>
@@ -167,7 +168,7 @@ const ExchangeRateModal = () => {
                 )}
               </View>
               <TouchableOpacity onPress={() => fetchData(false)} style={styles.refreshBtn} activeOpacity={0.7}>
-                <Icons.ArrowsClockwise size={16} color={colors.white} weight="bold" />
+                <IconArrowsClockwise size={16} color={colors.white} weight="bold" />
                 <Typo size={12} fontWeight="600" color={colors.white}>
                   Actualiser
                 </Typo>

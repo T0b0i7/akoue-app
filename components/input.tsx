@@ -4,7 +4,8 @@ import { verticalScale } from "@/utils/styling";
 import { colors, radius, spacingX } from "@/constants/theme";
 import { InputProps } from "@/types";
 import Typo from "./typo";
-import * as Icons from "phosphor-react-native";
+import { EyeIcon as IconEye } from "phosphor-react-native/src/icons/Eye";
+import { EyeSlashIcon as IconEyeSlash } from "phosphor-react-native/src/icons/EyeSlash";
 
 const Input = (props: InputProps) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -28,9 +29,9 @@ const Input = (props: InputProps) => {
       {props.type === "password" && (
         <Pressable onPress={() => setShowPassword(!showPassword)}>
           {showPassword ? (
-            <Icons.Eye size={20} color={colors.white} />
+            <IconEye size={20} color={colors.white} />
           ) : (
-            <Icons.EyeSlash size={20} color={colors.white} />
+            <IconEyeSlash size={20} color={colors.white} />
           )}
         </Pressable>
       )}

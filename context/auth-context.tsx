@@ -2,8 +2,13 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { AuthContextType, UserType } from "@/types";
 import { supabase, isSupabaseConfigured } from "@/config/supabase";
 import { useRouter, usePathname } from "expo-router";
+import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as bcrypt from "bcryptjs";
+import * as WebBrowser from "expo-web-browser";
+import { makeRedirectUri } from "expo-auth-session";
+
+WebBrowser.maybeCompleteAuthSession();
 
 const OFFLINE_USER_KEY = "offline_user";
 const OFFLINE_USERS_KEY = "offline_users"; // [{email,passwordHash,uid,name}]
@@ -62,17 +67,29 @@ async function verifyPassword(p: string, hash: string): Promise<boolean> {
     return await bcrypt.compare(p, hash);
   } catch { return p === hash; }
 }
-async function saveOfflineUser(user: NonNullable<UserType>, password: string) {
+async function saveOfflineUser(user: NonNullable<UserType>, password: string, verified = true) {
   try {
     const users = await getOfflineUsers();
     const idx = users.findIndex((u: any) => u.email.toLowerCase() === user.email?.toLowerCase());
     const passwordHash = await hashPassword(password);
-    const entry = { email: user.email, passwordHash, uid: user.uid, name: user.name };
+    const entry = { email: user.email, passwordHash, uid: user.uid, name: user.name, verified };
     // ne jamais stocker le mot de passe en clair
     if (idx >= 0) users[idx] = entry; else users.push(entry);
     await AsyncStorage.setItem(OFFLINE_USERS_KEY, JSON.stringify(users));
-    await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(user));
-    await AsyncStorage.setItem("mock_user", JSON.stringify(user));
+    if (verified) {
+      await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(user));
+      await AsyncStorage.setItem("mock_user", JSON.stringify(user));
+    }
+  } catch {}
+}
+async function markOfflineVerified(email: string) {
+  try {
+    const users = await getOfflineUsers();
+    const idx = users.findIndex((u: any) => u.email.toLowerCase() === email.toLowerCase());
+    if (idx >= 0) {
+      users[idx].verified = true;
+      await AsyncStorage.setItem(OFFLINE_USERS_KEY, JSON.stringify(users));
+    }
   } catch {}
 }
 async function getOfflineSession(): Promise<UserType | null> {
@@ -188,10 +205,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
         // offline → fallback ci-dessous (uniquement comptes déjà créés)
       }
-      // Fallback offline : seulement comptes créés localement avec vérif hash
+      // Fallback offline : seulement comptes verifies crees localement avec verif hash
       const users = await getOfflineUsers();
       const found = users.find((u: any) => u.email.toLowerCase() === email.toLowerCase());
       if (found) {
+        if (found.verified === false) {
+          await incRateLimit();
+          return { success: false, needsVerification: true, msg: "Compte non verifie. Reconnecte-toi en ligne pour valider le code OTP." };
+        }
         const hash = found.passwordHash || found.password;
         const ok = await verifyPassword(password, hash);
         if (ok) {
@@ -209,6 +230,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         const users = await getOfflineUsers();
         const found = users.find((u: any) => u.email.toLowerCase() === email.toLowerCase());
         if (found) {
+          if (found.verified === false) {
+            await incRateLimit();
+            return { success: false, needsVerification: true, msg: "Compte non verifie. Reconnecte-toi en ligne pour valider le code OTP." };
+          }
           const hash = found.passwordHash || found.password;
           const ok = await verifyPassword(password, hash);
           if (ok) {
@@ -243,37 +268,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         if (!error) {
           // Pas de session = email de confirmation en attente : ne pas faire croire que c'est connecté
           if (!data.session) {
-            return { success: false, needsVerification: true, msg: "Compte créé ! Vérifie ta boîte mail (pense aux spams), clique le lien de confirmation, puis connecte-toi." };
+            return { success: false, needsVerification: true, msg: "Compte créé ! Saisis le code à 6 chiffres reçu par mail (pense aux spams)." };
           }
           if (data.user) {
             try { await supabase.from("profiles").insert({ id: data.user.id, name, email, image: null }); } catch {}
             const u: UserType = { uid: data.user.id, email: data.user.email ?? email, name, image: null };
             await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u));
-            await saveOfflineUser(u, password);
+            await saveOfflineUser(u, password, true);
           }
           await resetRateLimit();
           return { success: true };
         }
         if (!isOfflineError(error.message)) {
           await incRateLimit();
+          const low = error.message.toLowerCase();
           let msg = error.message;
-          if (msg.includes("already registered")) msg = "Email déjà utilisé";
-          return { success: false, msg };
+          if (low.includes("already registered") || low.includes("already exists") || low.includes("user already")) {
+            msg = "Email déjà utilisé. Connecte-toi, ou utilise « Mot de passe oublié », ou Google.";
+          } else if (low.includes("rate limit") || low.includes("too many") || low.includes("429")) {
+            msg = "Trop d'emails envoyés récemment (limite Supabase). Attends 1 h, ou connecte-toi avec Google.";
+          } else if (low.includes("sending") || low.includes("smtp") || low.includes("confirmation email")) {
+            msg = "Service mail indisponible (SMTP). Attends 1 min et réessaie, ou connecte-toi avec Google.";
+          }
+          // En dev, on affiche l'erreur brute pour diagnostiquer le vrai motif.
+          return { success: false, msg: __DEV__ ? `${msg} [${error.message}]` : msg };
         }
         // offline → fallback local (uniquement si pas online)
       }
-      // Fallback offline : création locale uniquement hors-ligne et sans auto-login aveugle
+      // Fallback offline : compte local Marque NON VERIFIE, jamais connecte sans OTP
       const users = await getOfflineUsers();
       if (users.some((u: any) => u.email.toLowerCase() === email.toLowerCase())) {
         return { success: false, msg: "Email déjà utilisé (hors ligne)" };
       }
-      // avertir que c'est un compte local temporaire
       const uid = `offline-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
       const u: UserType = { uid, email, name, image: null };
-      setUser(u);
-      await saveOfflineUser(u, password);
+      await saveOfflineUser(u, password, false);
       await resetRateLimit();
-      return { success: true };
+      return { success: false, needsVerification: true, msg: "Compte pre-cree hors ligne, non valide tant que le code OTP n est pas saisi. Reconnecte-toi en ligne pour recevoir le code." };
     } catch (error: any) {
       if (isOfflineError(error.message)) {
         const users = await getOfflineUsers();
@@ -282,10 +313,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
         const uid = `offline-${Date.now().toString(36)}`;
         const u: UserType = { uid, email, name, image: null };
-        setUser(u);
-        await saveOfflineUser(u, password);
+        await saveOfflineUser(u, password, false);
         await resetRateLimit();
-        return { success: true };
+        return { success: false, needsVerification: true, msg: "Compte pre-cree hors ligne, non valide tant que le code OTP n est pas saisi. Reconnecte-toi en ligne pour recevoir le code." };
       }
       await incRateLimit();
       return { success: false, msg: error.message };
@@ -303,7 +333,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         await incRateLimit();
         return { success: false, msg: error.message };
       }
-      return { success: true, msg: "Email de confirmation renvoyé. Vérifie ta boîte mail (pense aux spams)." };
+      return { success: true, msg: "Nouveau code renvoyé. Vérifie ta boîte mail (pense aux spams)." };
     } catch (error: any) {
       await incRateLimit();
       return { success: false, msg: error.message };
@@ -317,8 +347,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const { data, error } = await supabase.auth.verifyOtp({ email, token: clean, type: "signup" });
       if (error) {
-        if (error.message.toLowerCase().includes("expired")) return { success: false, msg: "Code expiré. Demande un nouveau code." };
-        if (error.message.toLowerCase().includes("invalid")) return { success: false, msg: "Code incorrect. Réessaie." };
+        const msg = error.message.toLowerCase();
+        // Supabase renvoie "Token has expired or is invalid" dans les deux cas :
+        // on ne peut pas distinguer, on guide vers le dernier code recu.
+        if (msg.includes("expired") || msg.includes("invalid") || msg.includes("token")) return { success: false, msg: "Code incorrect ou expire. Saisis le DERNIER code recu, sans espace. Compte deja confirme ? Connecte-toi directement." };
         return { success: false, msg: error.message };
       }
       if (data.user) {
@@ -328,6 +360,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         } catch {}
         const u: UserType = { uid: data.user.id, email: data.user.email ?? email, name: (data.user.user_metadata?.name as string) ?? null, image: null };
         try { await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u)); } catch {}
+        await markOfflineVerified(email);
         await resetRateLimit();
         return { success: true, msg: "Compte confirmé !" };
       }
@@ -337,12 +370,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const forgotPassword = async (email: string) => {    if (!isSupabaseConfigured) return { success: false, msg: "Supabase non configuré" };
+  const forgotPassword = async (email: string) => {    if (!isSupabaseConfigured) return { success: false, msg: "Supabase non configure" };
     const rateMsg = await checkRateLimit();
     if (rateMsg) return { success: false, msg: rateMsg };
-    if (!email?.includes("@")) return { success: false, msg: "Email invalide" };
+    const clean = email?.trim().toLowerCase();
+    if (!clean?.includes("@")) return { success: false, msg: "Email invalide" };
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: "akoue://login" });
+      const { error } = await supabase.auth.resetPasswordForEmail(clean, { redirectTo: "akoue://reset-password" });
       if (error) {
         await incRateLimit();
         return { success: false, msg: error.message };
@@ -368,8 +402,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const updatePassword = async (oldPassword: string, newPassword: string): Promise<{ success: boolean; msg?: string }> => {
-    if (!isSupabaseConfigured) return { success: false, msg: "Supabase non configuré" };
+  const updatePassword = async (oldPassword: string, newPassword: string): Promise<{ success: boolean; msg?: string }> => {    if (!isSupabaseConfigured) return { success: false, msg: "Supabase non configuré" };
     try {
       const { data: { user: cur } } = await supabase.auth.getUser();
       if (!cur?.email) return { success: false, msg: "Utilisateur non trouvé" };
@@ -379,6 +412,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) return { success: false, msg: error.message };
       return { success: true, msg: "Mot de passe mis à jour" };
+    } catch (error: any) {
+      return { success: false, msg: error.message };
+    }
+  };
+
+  const loginWithGoogle = async (): Promise<{ success: boolean; msg?: string; redirecting?: boolean }> => {
+    if (!isSupabaseConfigured) return { success: false, msg: "Supabase non configuré" };
+    try {
+      // WEB : redirection pleine page. Un popup lancé après un await est bloqué
+      // par les navigateurs (le geste utilisateur est perdu) -> on ne l'utilise pas.
+      if (Platform.OS === "web") {
+        const redirectTo =
+          typeof window !== "undefined" ? window.location.origin + "/" : undefined;
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo },
+        });
+        if (error) return { success: false, msg: error.message };
+        // Le navigateur part vers Google : les appelants ne doivent PAS naviguer.
+        return { success: true, redirecting: true };
+      }
+
+      const redirectTo = makeRedirectUri({ scheme: "akoue", path: "login" });
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo, skipBrowserRedirect: true },
+      });
+      if (error || !data?.url) return { success: false, msg: error?.message || "Google indisponible" };
+      const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+      if (res.type !== "success") return { success: false, msg: "Connexion Google annulée" };
+      const url = new URL(res.url);
+      const code = url.searchParams.get("code");
+      if (code) {
+        const { error: exError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exError) return { success: false, msg: exError.message };
+        await resetRateLimit();
+        return { success: true };
+      }
+      // Fallback implicite : tokens directs dans le hash
+      const hash = res.url.split("#")[1] || "";
+      const params = new URLSearchParams(hash);
+      const access_token = params.get("access_token");
+      const refresh_token = params.get("refresh_token");
+      if (access_token && refresh_token) {
+        const { error: sessError } = await supabase.auth.setSession({ access_token, refresh_token });
+        if (sessError) return { success: false, msg: sessError.message };
+        await resetRateLimit();
+        return { success: true };
+      }
+      return { success: false, msg: "Retour Google illisible. Réessaie." };
     } catch (error: any) {
       return { success: false, msg: error.message };
     }
@@ -416,6 +499,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     verifyCode,
     updateUserData,
     forgotPassword,
+    loginWithGoogle,
     logout,
     updatePassword,
   };

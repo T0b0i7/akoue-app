@@ -1,8 +1,8 @@
-import { colors, radius, spacingX, spacingY } from "@/constants/theme"
+﻿import { colors, radius, spacingX, spacingY } from "@/constants/theme"
 import { useLocale } from "@/context/locale-context"
 import { verticalScale } from "@/utils/styling"
 import { useRouter } from "expo-router"
-import * as Icons from "phosphor-react-native"
+import { ArrowUpRightIcon as IconArrowUpRight } from "phosphor-react-native/src/icons/ArrowUpRight";
 import React from "react"
 import { StyleSheet, TouchableOpacity, View } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
@@ -22,9 +22,9 @@ export default function LanguageSelect() {
     <View style={styles.root}>
       {/* Ethereal Glass orbs */}
       <LinearGradient colors={["#1a0b2e", "#050505"]} style={StyleSheet.absoluteFill} />
-      <View pointerEvents="none" style={styles.orbPurple} />
-      <View pointerEvents="none" style={styles.orbViolet} />
-      <View pointerEvents="none" style={styles.grain} />
+      <View style={styles.orbPurple} />
+      <View style={styles.orbViolet} />
+      <View style={styles.grain} />
 
       <View style={styles.content}>
         {/* Eyebrow */}
@@ -60,7 +60,7 @@ export default function LanguageSelect() {
                   <Typo size={12} color={colors.neutral400}>Continuer en français</Typo>
                 </View>
                 <View style={styles.trailingCircle}>
-                  <Icons.ArrowUpRight size={16} color="#fff" weight="bold" />
+                  <IconArrowUpRight size={16} color="#fff" weight="bold" />
                 </View>
               </View>
               <View style={styles.hairline} />
@@ -83,7 +83,7 @@ export default function LanguageSelect() {
                   <Typo size={12} color={colors.neutral400}>Continue in English</Typo>
                 </View>
                 <View style={styles.trailingCircle}>
-                  <Icons.ArrowUpRight size={16} color="#fff" weight="bold" />
+                  <IconArrowUpRight size={16} color="#fff" weight="bold" />
                 </View>
               </View>
               <View style={styles.hairline} />
@@ -107,6 +107,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#050505" },
   orbPurple: {
     position: "absolute",
+    pointerEvents: "none",
     width: 420,
     height: 420,
     borderRadius: 210,
@@ -116,6 +117,7 @@ const styles = StyleSheet.create({
   },
   orbViolet: {
     position: "absolute",
+    pointerEvents: "none",
     width: 360,
     height: 360,
     borderRadius: 180,

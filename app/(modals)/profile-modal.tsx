@@ -11,7 +11,10 @@ import { OptionType } from "@/types"
 import { verticalScale } from "@/utils/styling"
 import { Image } from "expo-image"
 import { useRouter } from "expo-router"
-import * as Icons from "phosphor-react-native"
+import { CaretRightIcon as IconCaretRight } from "phosphor-react-native/src/icons/CaretRight";
+import { LockIcon as IconLock } from "phosphor-react-native/src/icons/Lock";
+import { PowerIcon as IconPower } from "phosphor-react-native/src/icons/Power";
+import { UserIcon as IconUser } from "phosphor-react-native/src/icons/User";
 import React from "react"
 import { Alert, Platform, StyleSheet, TouchableOpacity, View } from "react-native"
 import Animated, { FadeInDown } from "react-native-reanimated"
@@ -26,19 +29,19 @@ const ProfileModal = () => {
   const accountOptions: OptionType[] = [
     {
       title: t("updateProfile"),
-      icon: <Icons.User size={26} color={colors.white} weight="fill" />,
+      icon: <IconUser size={26} color={colors.white} weight="fill" />,
       routeName: "/(modals)/update-profile-modal",
       bgColor: "#6366f1",
     },
     {
       title: t("changePassword"),
-      icon: <Icons.Lock size={26} color={colors.white} weight="fill" />,
+      icon: <IconLock size={26} color={colors.white} weight="fill" />,
       routeName: "/(modals)/change-password-modal",
       bgColor: "#f59e0b",
     },
     {
       title: t("logout"),
-      icon: <Icons.Power size={26} color={colors.white} weight="fill" />,
+      icon: <IconPower size={26} color={colors.white} weight="fill" />,
       // routeName: "",
       bgColor: "#e11d48",
     },
@@ -140,7 +143,7 @@ const ProfileModal = () => {
                     <Typo size={16} style={{ flex: 1 }} fontWeight="500">
                       {item.title}
                     </Typo>
-                    <Icons.CaretRight
+                    <IconCaretRight
                       size={verticalScale(20)}
                       weight="bold"
                       color={colors.white}

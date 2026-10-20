@@ -23,6 +23,8 @@ export const TransactionList = ({
   title,
   loading,
   emptyListMessage,
+  hasMore,
+  loadMore,
 }: TransactionListType) => {
   //hande transaction item click function
 
@@ -64,6 +66,20 @@ export const TransactionList = ({
             />
           )}
           keyExtractor={(item) => item.id!}
+          getItemLayout={(_data, index) => ({
+            length: verticalScale(76),
+            offset: verticalScale(76) * index,
+            index,
+          })}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            hasMore && !loading ? (
+              <View style={styles.footerLoader}>
+                <LoadingCompenent />
+              </View>
+            ) : null
+          }
         />
       </View>
       {!loading && data.length === 0 && (
@@ -192,5 +208,11 @@ const styles = StyleSheet.create({
   amountDate: {
     alignItems: "flex-end",
     gap: 3,
+  },
+  footerLoader: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 12,
   },
 })

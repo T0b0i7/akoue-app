@@ -14,7 +14,8 @@ import { UserDataType } from "@/types"
 import { scale, verticalScale } from "@/utils/styling"
 import { Image } from "expo-image"
 import * as ImagePicker from "expo-image-picker"
-import * as Icons from "phosphor-react-native"
+import { GenderFemaleIcon as IconGenderFemale } from "phosphor-react-native/src/icons/GenderFemale";
+import { GenderMaleIcon as IconGenderMale } from "phosphor-react-native/src/icons/GenderMale";
 import { useRouter } from "expo-router"
 import React, { useEffect, useState } from "react"
 import {
@@ -107,14 +108,14 @@ const EditProfileModal = () => {
               onPress={() => setUserData({ ...userData, image: "male" })}
               style={[styles.genderBtn, userData.image === "male" && styles.genderBtnActiveMale]}
             >
-              <Icons.GenderMale size={28} color={userData.image === "male" ? "#fff" : colors.neutral400} weight="fill" />
+              <IconGenderMale size={28} color={userData.image === "male" ? "#fff" : colors.neutral400} weight="fill" />
               <Typo size={14} fontWeight="600" color={userData.image === "male" ? "#fff" : colors.neutral400}>Homme</Typo>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setUserData({ ...userData, image: "female" })}
               style={[styles.genderBtn, userData.image === "female" && styles.genderBtnActiveFemale]}
             >
-              <Icons.GenderFemale size={28} color={userData.image === "female" ? "#fff" : colors.neutral400} weight="fill" />
+              <IconGenderFemale size={28} color={userData.image === "female" ? "#fff" : colors.neutral400} weight="fill" />
               <Typo size={14} fontWeight="600" color={userData.image === "female" ? "#fff" : colors.neutral400}>Femme</Typo>
             </TouchableOpacity>
           </View>

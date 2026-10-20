@@ -1,5 +1,8 @@
 import { BlurView } from "expo-blur";
-import * as Icons from "phosphor-react-native";
+import { ChartBarIcon as IconChartBar } from "phosphor-react-native/src/icons/ChartBar";
+import { HouseIcon as IconHouse } from "phosphor-react-native/src/icons/House";
+import { SquaresFourIcon as IconSquaresFour } from "phosphor-react-native/src/icons/SquaresFour";
+import { WalletIcon as IconWallet } from "phosphor-react-native/src/icons/Wallet";
 import {
 	Platform,
 	StyleSheet,
@@ -17,28 +20,28 @@ export default function CustomTabs({ state, descriptors, navigation }: any) {
 	const bottomInset = Platform.OS === "ios" ? 20 : 0;
 	const tabbarIcons: any = {
 		index: (isFocused: boolean) => (
-			<Icons.House
+			<IconHouse
 				size={28} // Slightly smaller size to accommodate label
 				weight={isFocused ? "fill" : "regular"}
 				color={isFocused ? colors.neutral100 : colors.neutral400}
 			/>
 		),
 		statistics: (isFocused: boolean) => (
-			<Icons.ChartBar
+			<IconChartBar
 				size={28}
 				weight={isFocused ? "fill" : "regular"}
 				color={isFocused ? colors.neutral100 : colors.neutral400}
 			/>
 		),
 		wallet: (isFocused: boolean) => (
-			<Icons.Wallet
+			<IconWallet
 				size={28}
 				weight={isFocused ? "fill" : "regular"}
 				color={isFocused ? colors.neutral100 : colors.neutral400}
 			/>
 		),
 		more: (isFocused: boolean) => (
-			<Icons.SquaresFour
+			<IconSquaresFour
 				size={28}
 				weight={isFocused ? "fill" : "regular"}
 				color={isFocused ? colors.neutral100 : colors.neutral400}

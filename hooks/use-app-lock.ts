@@ -73,8 +73,8 @@ export function useAppLock() {
   // Resync légère (retour de la page de configuration) : ne touche pas au verrou
   const syncEnroll = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.id) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
         const off = (await AsyncStorage.getItem("offline_user")) || (await AsyncStorage.getItem("mock_user"));
         if (!off) {
           setShowEnroll(false);
@@ -92,8 +92,8 @@ export function useAppLock() {
     // Sans compte, jamais de verrou  :  sinon bloqué sur "Akouè verrouillé" après reset usine
     let hasAccount = false;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.id) hasAccount = true;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) hasAccount = true;
     } catch {}
     if (!hasAccount) {
       try {

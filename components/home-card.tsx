@@ -5,7 +5,10 @@ import { useSupabaseWallets } from "@/hooks/use-supabase-data"
 import { WalletType } from "@/types"
 import { scale, verticalScale } from "@/utils/styling"
 import { router, useFocusEffect } from "expo-router"
-import * as Icons from "phosphor-react-native"
+import { ArrowDownIcon as IconArrowDown } from "phosphor-react-native/src/icons/ArrowDown";
+import { ArrowUpIcon as IconArrowUp } from "phosphor-react-native/src/icons/ArrowUp";
+import { CaretDownIcon as IconCaretDown } from "phosphor-react-native/src/icons/CaretDown";
+import { DotsThreeOutlineIcon as IconDotsThreeOutline } from "phosphor-react-native/src/icons/DotsThreeOutline";
 import React, { useCallback } from "react"
 import {
   ImageBackground,
@@ -121,7 +124,7 @@ const HomeCard = () => {
               {t("totalBalance")}
             </Typo>
             <TouchableOpacity onPress={() => router.push("/(tabs)/more")}>
-              <Icons.DotsThreeOutline
+              <IconDotsThreeOutline
                 size={verticalScale(23)}
                 color={colors.black}
                 weight="fill"
@@ -148,7 +151,7 @@ const HomeCard = () => {
                   setDisplayCurrency(next);
                 }} style={{ backgroundColor: "rgba(0,0,0,0.08)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, flexDirection: "row", alignItems: "center", gap: 4 }}>
                   <Typo size={10} fontWeight="700" color={colors.black}>{displayCurrency} {dominantInfo?.symbol || ""}</Typo>
-                  <Icons.CaretDown size={10} color={colors.black} weight="bold" />
+                  <IconCaretDown size={10} color={colors.black} weight="bold" />
                 </TouchableOpacity>
               </View>
               {wallets.length > 1 && new Set(wallets.map((w:any)=>w.currency||"XOF")).size > 1 && (
@@ -173,7 +176,7 @@ const HomeCard = () => {
           <View style={{ gap: verticalScale(5) }}>
             <View style={styles.incomeExpense}>
               <View style={styles.statsIcon}>
-                <Icons.ArrowDown
+                <IconArrowDown
                   size={verticalScale(15)}
                   color={colors.black}
                   weight="bold"
@@ -196,7 +199,7 @@ const HomeCard = () => {
           <View style={{ gap: verticalScale(5) }}>
             <View style={styles.incomeExpense}>
               <View style={styles.statsIcon}>
-                <Icons.ArrowUp
+                <IconArrowUp
                   size={verticalScale(15)}
                   color={colors.black}
                   weight="bold"

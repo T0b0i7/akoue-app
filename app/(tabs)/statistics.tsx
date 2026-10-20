@@ -34,14 +34,17 @@ export default function Statistic() {
 	}, []);
 
 	useEffect(() => {
-		if (activeIndex === 0) {
-			getWeeklyStats();
-		}
-		if (activeIndex === 1) {
-			getMonthlyStats();
-		}
-		if (activeIndex === 2) {
-			getYearlyStats();
+		setChartLoading(true);
+		switch (activeIndex) {
+			case 0:
+				getWeeklyStats();
+				break;
+			case 1:
+				getMonthlyStats();
+				break;
+			case 2:
+				getYearlyStats();
+				break;
 		}
 	}, [activeIndex]);
 

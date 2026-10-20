@@ -1,12 +1,19 @@
-import { Alert, Pressable, StyleSheet, View } from "react-native"
+﻿import { Alert, Pressable, StyleSheet, View } from "react-native"
 import React, { useEffect, useState } from "react"
 import ScreenWrapper from "@/components/screen-wrapper"
 import Typo from "@/components/typo"
 import BrandHeader from "@/components/brand-header"
+import AnimatedOrbs from "@/components/animated-orbs"
 import { colors, spacingX, spacingY } from "@/constants/theme"
 import { verticalScale } from "@/utils/styling"
 import Input from "@/components/input"
-import * as Icons from "phosphor-react-native"
+import { ArrowClockwiseIcon as IconArrowClockwise } from "phosphor-react-native/src/icons/ArrowClockwise";
+import { ArrowRightIcon as IconArrowRight } from "phosphor-react-native/src/icons/ArrowRight";
+import { AtIcon as IconAt } from "phosphor-react-native/src/icons/At";
+import { EnvelopeSimpleIcon as IconEnvelopeSimple } from "phosphor-react-native/src/icons/EnvelopeSimple";
+import { GoogleLogoIcon as IconGoogleLogo } from "phosphor-react-native/src/icons/GoogleLogo";
+import { LockIcon as IconLock } from "phosphor-react-native/src/icons/Lock";
+import { UserIcon as IconUser } from "phosphor-react-native/src/icons/User";
 import Button from "@/components/button"
 import { useRouter } from "expo-router"
 import { useAuth } from "@/context/auth-context"
@@ -17,7 +24,7 @@ import Animated, { FadeInDown } from "react-native-reanimated"
 
 const SignUp = () => {
   const router = useRouter()
-  const { signUp, resendConfirmation, verifyCode } = useAuth()
+  const { signUp, resendConfirmation, verifyCode, loginWithGoogle } = useAuth()
   const { t } = useLocale()
   const { showToast } = useToast()
 
@@ -33,14 +40,27 @@ const SignUp = () => {
   const [loading, setLoading] = useState(false)
   const [pendingEmail, setPendingEmail] = useState<string | null>(null)
   const [resending, setResending] = useState(false)
-  const [code, setCode] = useState("")
   const [verifying, setVerifying] = useState(false)
-  const [countdown, setCountdown] = useState(20)
+  const [code, setCode] = useState("")
+  const [countdown, setCountdown] = useState(180)
+  const [googleLoading, setGoogleLoading] = useState(false)
+
+  const handleGoogle = async () => {
+    setGoogleLoading(true)
+    const res = await loginWithGoogle()
+    setGoogleLoading(false)
+    if (res.redirecting) return // web : le navigateur part vers Google
+    if (res.success) {
+      showToast("success", "Compte Google lié", "Bienvenue !")
+      router.replace("/(tabs)" as any)
+    } else if (res.msg !== "Connexion Google annulée") {
+      showToast("error", t("error"), res.msg || t("somethingWentWrong"))
+    }
+  }
 
   useEffect(() => {
     if (!pendingEmail) return
-    setCountdown(20)
-    setCode("")
+    setCountdown(180)
     const timer = setInterval(() => {
       setCountdown((c) => {
         if (c <= 1) {
@@ -57,28 +77,28 @@ const SignUp = () => {
     if (!pendingEmail) return
     setResending(true)
     const res = await resendConfirmation(pendingEmail)
-    if (res.success) setCountdown(20)
+    if (res.success) setCountdown(180)
     showToast(res.success ? "success" : "error", t("emailResent"), res.msg || "")
     setResending(false)
   }
 
   const handleVerify = async () => {
     if (!pendingEmail) return
-    if (countdown <= 0) {
-      showToast("error", t("error"), "Code expire. Demande un nouveau code.")
-      Alert.alert(t("error"), "Code expire. Demande un nouveau code.")
+    const clean = code.replace(/\D/g, "")
+    if (clean.length < 6) {
+      showToast("error", t("error"), "Entre le code a 6 chiffres recu par mail.")
       return
     }
     setVerifying(true)
-    const res = await verifyCode(pendingEmail, code)
+    const res = await verifyCode(pendingEmail, clean)
+    setVerifying(false)
     if (res.success) {
-      showToast("success", "Compte confirme", res.msg || "")
+      showToast("success", "Compte confirme", "Bienvenue !")
       router.replace("/(tabs)" as any)
     } else {
-      showToast("error", t("error"), res.msg || "")
-      Alert.alert(t("error"), res.msg || "")
+      showToast("error", t("error"), res.msg || "Code incorrect ou expire.")
+      Alert.alert(t("error"), res.msg || "Code incorrect ou expire.")
     }
-    setVerifying(false)
   }
 
   const handleSubmit = async () => {
@@ -89,6 +109,7 @@ const SignUp = () => {
       if (!res.success) {
         if ((res as any).needsVerification) {
           setPendingEmail(parsed.email.trim())
+          showToast("error", t("error"), res.msg || t("somethingWentWrong"))
         } else {
           showToast("error", t("error"), res.msg || t("somethingWentWrong"))
           Alert.alert(t("error"), res.msg || t("somethingWentWrong"))
@@ -113,8 +134,7 @@ const SignUp = () => {
   return (
     <ScreenWrapper>
       <View style={styles.root}>
-        <View style={styles.orbBlue} pointerEvents="none" />
-        <View style={styles.orbGreen} pointerEvents="none" />
+        <AnimatedOrbs intensity={0.85} />
 
         <Animated.View entering={FadeInDown.duration(600)} style={styles.container}>
           <BrandHeader email={pendingEmail} compact={!!pendingEmail} />
@@ -126,7 +146,7 @@ const SignUp = () => {
                   <Input
                     placeholder={t("enterName")}
                     onChangeText={setName}
-                    icon={<Icons.User size={verticalScale(22)} color={colors.neutral400} />}
+                    icon={<IconUser size={verticalScale(22)} color={colors.neutral400} />}
                   />
                 </View>
               </Animated.View>
@@ -137,7 +157,7 @@ const SignUp = () => {
                     onChangeText={setEmail}
                     keyboardType="email-address"
                     autoCapitalize="none"
-                    icon={<Icons.At size={verticalScale(22)} color={colors.neutral400} />}
+                    icon={<IconAt size={verticalScale(22)} color={colors.neutral400} />}
                   />
                 </View>
               </Animated.View>
@@ -147,7 +167,7 @@ const SignUp = () => {
                     placeholder={t("enterPassword")}
                     type="password"
                     onChangeText={setPassword}
-                    icon={<Icons.Lock size={verticalScale(22)} color={colors.neutral400} />}
+                    icon={<IconLock size={verticalScale(22)} color={colors.neutral400} />}
                   />
                 </View>
               </Animated.View>
@@ -157,7 +177,7 @@ const SignUp = () => {
                     {t("createAccount")}
                   </Typo>
                   <View style={styles.trailingIcon}>
-                    <Icons.ArrowRight size={18} color={colors.white} weight="bold" />
+                    <IconArrowRight size={18} color={colors.white} weight="bold" />
                   </View>
                 </Button>
               </Animated.View>
@@ -170,55 +190,61 @@ const SignUp = () => {
                   </Typo>
                 </Pressable>
               </View>
+
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Typo size={12} color={colors.neutral500}>ou</Typo>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <Pressable onPress={handleGoogle} disabled={googleLoading || loading} style={styles.googleBtn}>
+                <IconGoogleLogo size={20} color={colors.white} weight="bold" />
+                <Typo size={15} color={colors.white} fontWeight="700">
+                  {googleLoading ? "..." : "Continuer avec Google"}
+                </Typo>
+              </Pressable>
             </View>
           ) : (
             <View style={styles.otpShell}>
               <View style={styles.otpCore}>
                 <View style={styles.otpHead}>
-                  <Icons.EnvelopeSimple size={20} color={colors.primary} />
+                  <IconEnvelopeSimple size={20} color={colors.primary} />
                   <Typo size={16} fontWeight="800" color={colors.white} style={{ textAlign: "center" }}>
                     {t("verifyEmailTitle")}
                   </Typo>
                 </View>
-                <View style={styles.timerRow}>
-                  <Icons.Timer size={18} color={countdown > 0 ? colors.primary : colors.rose} />
-                  <Typo size={14} color={countdown > 0 ? colors.white : colors.rose} fontWeight="700">
-                    {countdown > 0 ? `Expire dans ${countdown}s` : "Code expire"}
-                  </Typo>
-                </View>
-                <View style={styles.progressTrack}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      {
-                        width: `${(countdown / 20) * 100}%`,
-                        backgroundColor: countdown > 5 ? colors.primary : colors.rose,
-                      },
-                    ]}
+                <Typo size={13} color={colors.neutral400} style={{ textAlign: "center", lineHeight: 19 }}>
+                  Code a 6 chiffres envoye a {pendingEmail}. Saisis-le ci-dessous (pense aux spams).
+                </Typo>
+                <View style={styles.fieldShell}>
+                  <Input
+                    placeholder="000000"
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    value={code}
+                    onChangeText={(v: string) => setCode(v.replace(/[^0-9]/g, ""))}
+                    inputStyle={styles.codeInput}
                   />
                 </View>
-                <Typo size={13} color={colors.neutral400} style={{ textAlign: "center", lineHeight: 19 }}>
-                  Code a 6 chiffres envoye a {pendingEmail}
-                </Typo>
-                <Input
-                  placeholder="123456"
-                  value={code}
-                  onChangeText={setCode}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                  inputStyle={styles.codeInput}
-                />
-                <Button onPress={handleVerify} loading={verifying} disabled={countdown <= 0}>
+                <Button onPress={handleVerify} loading={verifying}>
                   <Typo fontWeight="700" color={colors.white} size={16}>
-                    Confirmer
+                    Confirmer mon compte
                   </Typo>
                 </Button>
-                <Pressable onPress={handleResend} disabled={resending} style={styles.resendBtn}>
-                  <Icons.ArrowClockwise size={16} color={colors.primary} />
-                  <Typo size={14} color={colors.primary} fontWeight="700">
-                    {resending ? "..." : t("resendEmail")}
+                <Pressable onPress={handleResend} disabled={resending || countdown > 0} style={styles.resendBtn}>
+                  <IconArrowClockwise size={16} color={countdown > 0 ? colors.neutral500 : colors.primary} />
+                  <Typo size={14} color={countdown > 0 ? colors.neutral500 : colors.primary} fontWeight="700">
+                    {resending ? "..." : countdown > 0 ? `Renvoyer dans ${countdown}s` : "Renvoyer le code"}
                   </Typo>
                 </Pressable>
+                {countdown <= 0 && (
+                  <Typo size={12} color={colors.rose} style={{ textAlign: "center" }}>
+                    Code expire. Demande un nouveau code.
+                  </Typo>
+                )}
+                <Typo size={12} color={colors.neutral500} style={{ textAlign: "center", lineHeight: 17 }}>
+                  Pas de mail apres 5 min ? Verifie les spams et l'onglet Promotions de Gmail.
+                </Typo>
                 <Pressable onPress={() => router.replace("/(auth)/login")}>
                   <Typo size={14} color={colors.neutral400} fontWeight="600" style={{ textAlign: "center" }}>
                     {t("goToLogin")}
@@ -241,24 +267,6 @@ const styles = StyleSheet.create({
     position: "relative",
     backgroundColor: "#05070F",
     justifyContent: "center",
-  },
-  orbBlue: {
-    position: "absolute",
-    top: -80,
-    right: -60,
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    backgroundColor: "rgba(10,92,255,0.22)",
-  },
-  orbGreen: {
-    position: "absolute",
-    bottom: -70,
-    left: -60,
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: "rgba(34,197,94,0.12)",
   },
   container: {
     flex: 1,
@@ -343,5 +351,27 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     paddingVertical: 6,
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 4,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.10)",
+  },
+  googleBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.14)",
+    paddingVertical: 14,
   },
 })

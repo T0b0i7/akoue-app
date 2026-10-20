@@ -7,7 +7,9 @@ import { colors, radius, spacingX, spacingY } from "@/constants/theme"
 import { useLocale } from "@/context/locale-context"
 import { formatCurrency } from "@/utils/common"
 import { verticalScale } from "@/utils/styling"
-import * as Icons from "phosphor-react-native"
+import { CalendarIcon as IconCalendar } from "phosphor-react-native/src/icons/Calendar";
+import { CoinsIcon as IconCoins } from "phosphor-react-native/src/icons/Coins";
+import { PercentIcon as IconPercent } from "phosphor-react-native/src/icons/Percent";
 import React, { useMemo, useState } from "react"
 import { ScrollView, StyleSheet, View } from "react-native"
 
@@ -56,7 +58,7 @@ const LoanCalculatorModal = () => {
             <View style={styles.resultCard}>
               <View style={styles.resultRow}>
                 <View style={[styles.iconBox, { backgroundColor: "#7A4DFF" }]}>
-                  <Icons.Calendar size={20} color="#fff" weight="fill" />
+                  <IconCalendar size={20} color="#fff" weight="fill" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Typo size={13} color={colors.neutral400}>Mensualité</Typo>
@@ -66,7 +68,7 @@ const LoanCalculatorModal = () => {
               <View style={styles.divider} />
               <View style={styles.resultRow}>
                 <View style={[styles.iconBox, { backgroundColor: "#0ea5e9" }]}>
-                  <Icons.Coins size={20} color="#fff" weight="fill" />
+                  <IconCoins size={20} color="#fff" weight="fill" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Typo size={13} color={colors.neutral400}>Total payé</Typo>
@@ -75,7 +77,7 @@ const LoanCalculatorModal = () => {
               </View>
               <View style={styles.resultRow}>
                 <View style={[styles.iconBox, { backgroundColor: "#f59e0b" }]}>
-                  <Icons.Percent size={20} color="#fff" weight="fill" />
+                  <IconPercent size={20} color="#fff" weight="fill" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Typo size={13} color={colors.neutral400}>Intérêts totaux</Typo>

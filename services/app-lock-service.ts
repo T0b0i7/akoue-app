@@ -141,7 +141,9 @@ export async function verifyAppLock(secret: string): Promise<boolean> {
 // Au login : restaure la méthode depuis la base vers le local.
 export async function pullLockFromCloud(): Promise<void> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    // getSession = lecture locale (pas d'aller-retour réseau au démarrage).
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     if (!user?.id) return;
     const { data } = await supabase.from("profiles").select("lock_method,lock_hash").eq("id", user.id).single();
     if (data) {

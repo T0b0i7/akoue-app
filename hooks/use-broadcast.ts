@@ -85,15 +85,23 @@ export function useBroadcast() {
         broadcasts = raw ? JSON.parse(raw) : [];
       } else {
         try {
-          const { data, error } = await supabase
-            .from("broadcasts")
-            .select("id,title,body,details,version,kind,action_url,action_label,created_at")
-            .eq("active", true)
-            .order("created_at", { ascending: false })
-            .limit(5);
-          if (error) throw error;
-          broadcasts = data || [];
-          await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(broadcasts));
+          // Pas de session (visiteur sur welcome/login) : cache local seul,
+          // evite les 400 RLS en boucle avant connexion.
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            const raw = await AsyncStorage.getItem(CACHE_KEY);
+            broadcasts = raw ? JSON.parse(raw) : [];
+          } else {
+            const { data, error } = await supabase
+              .from("broadcasts")
+              .select("id,title,body,details,version,kind,action_url,action_label,created_at")
+              .eq("active", true)
+              .order("created_at", { ascending: false })
+              .limit(5);
+            if (error) throw error;
+            broadcasts = data || [];
+            await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(broadcasts));
+          }
         } catch (e: any) {
           if (isOfflineError(e.message)) {
             const raw = await AsyncStorage.getItem(CACHE_KEY);

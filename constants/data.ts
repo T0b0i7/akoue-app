@@ -1,77 +1,89 @@
 import { CategoryType, ExpenseCategoriesType } from "@/types";
-import * as Icons from "phosphor-react-native";
+import { CarIcon as IconCar } from "phosphor-react-native/src/icons/Car";
+import { CurrencyDollarSimpleIcon as IconCurrencyDollarSimple } from "phosphor-react-native/src/icons/CurrencyDollarSimple";
+import { DotsThreeOutlineIcon as IconDotsThreeOutline } from "phosphor-react-native/src/icons/DotsThreeOutline";
+import { FilmStripIcon as IconFilmStrip } from "phosphor-react-native/src/icons/FilmStrip";
+import { ForkKnifeIcon as IconForkKnife } from "phosphor-react-native/src/icons/ForkKnife";
+import { HeartIcon as IconHeart } from "phosphor-react-native/src/icons/Heart";
+import { HouseIcon as IconHouse } from "phosphor-react-native/src/icons/House";
+import { LightbulbIcon as IconLightbulb } from "phosphor-react-native/src/icons/Lightbulb";
+import { PiggyBankIcon as IconPiggyBank } from "phosphor-react-native/src/icons/PiggyBank";
+import { ShieldCheckIcon as IconShieldCheck } from "phosphor-react-native/src/icons/ShieldCheck";
+import { ShoppingCartIcon as IconShoppingCart } from "phosphor-react-native/src/icons/ShoppingCart";
+import { TShirtIcon as IconTShirt } from "phosphor-react-native/src/icons/TShirt";
+import { UserIcon as IconUser } from "phosphor-react-native/src/icons/User";
 
 export const expenseCategories: ExpenseCategoriesType = {
   groceries: {
     label: "Groceries",
     value: "groceries",
-    icon: Icons.ShoppingCart,
+    icon: IconShoppingCart,
     bgColor: "#4B5563", // Deep Teal Green
   },
   rent: {
     label: "Rent",
     value: "rent",
-    icon: Icons.House,
+    icon: IconHouse,
     bgColor: "#075985", // Dark Blue
   },
   utilities: {
     label: "Utilities",
     value: "utilities",
-    icon: Icons.Lightbulb,
+    icon: IconLightbulb,
     bgColor: "#ca8a04", // Dark Golden Brown
   },
   transportation: {
     label: "Transportation",
     value: "transportation",
-    icon: Icons.Car,
+    icon: IconCar,
     bgColor: "#b45309", // Dark Orange-Red
   },
   entertainment: {
     label: "Entertainment",
     value: "entertainment",
-    icon: Icons.FilmStrip,
+    icon: IconFilmStrip,
     bgColor: "#0f766e", // Darker Red-Brown
   },
   dining: {
     label: "Dining",
     value: "dining",
-    icon: Icons.ForkKnife,
+    icon: IconForkKnife,
     bgColor: "#be185d", // Dark Red
   },
   health: {
     label: "Health",
     value: "health",
-    icon: Icons.Heart,
+    icon: IconHeart,
     bgColor: "#e11d48", // Dark Purple
   },
   insurance: {
     label: "Insurance",
     value: "insurance",
-    icon: Icons.ShieldCheck,
+    icon: IconShieldCheck,
     bgColor: "#404040", // Dark Gray
   },
   savings: {
     label: "Savings",
     value: "savings",
-    icon: Icons.PiggyBank,
+    icon: IconPiggyBank,
     bgColor: "#065F46", // Deep Teal Green
   },
   clothing: {
     label: "Clothing",
     value: "clothing",
-    icon: Icons.TShirt,
+    icon: IconTShirt,
     bgColor: "#7c3aed", // Dark Indigo
   },
   personal: {
     label: "Personal",
     value: "personal",
-    icon: Icons.User,
+    icon: IconUser,
     bgColor: "#a21caf", // Deep Pink
   },
   others: {
     label: "Others",
     value: "others",
-    icon: Icons.DotsThreeOutline,
+    icon: IconDotsThreeOutline,
     bgColor: "#525252", // Neutral Dark Gray
   },
 };
@@ -79,7 +91,7 @@ export const expenseCategories: ExpenseCategoriesType = {
 export const incomeCategory: CategoryType = {
   label: "Income",
   value: "income",
-  icon: Icons.CurrencyDollarSimple,
+  icon: IconCurrencyDollarSimple,
   bgColor: "#16a34a", // Dark
 };
 

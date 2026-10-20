@@ -1,5 +1,9 @@
 import { CURRENCY_CONFIG } from "@/config/currency-exchange-api";
 import { CurrencyApiResponse, CurrencyType } from "@/types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const CURRENCY_CACHE_KEY = "currency_rates";
+const CURRENCY_CACHE_TTL = 60 * 60 * 1000; // 1 heure
 
 const currencyMap: Record<string, string> = {
   VND: "Vietnamese Dong",
@@ -57,6 +61,19 @@ export const fetchCurrencies = async (
 ): Promise<CurrencyType[]> => {
   try {
     const safeBase = sanitizeCurrencyCode(base_currency || "EUR");
+    
+    // Vérifier le cache local (valide 1h)
+    try {
+      const cached = await AsyncStorage.getItem(CURRENCY_CACHE_KEY);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        const now = Date.now();
+        if (now - timestamp < CURRENCY_CACHE_TTL) {
+          return data;
+        }
+      }
+    } catch {}
+
     // Si config manquante, fallback sur Frankfurter (gratuit, sans clé) + open.er-api
     const hasConfig = !!CURRENCY_CONFIG.API_URL && !!CURRENCY_CONFIG.API_KEY;
     if (!hasConfig) {
@@ -71,11 +88,16 @@ export const fetchCurrencies = async (
       const rates: Record<string, number> = json.rates || json.data || {};
       // open.er-api met dans json.rates, frankfurter aussi
       if (!rates || Object.keys(rates).length === 0) throw new Error("Aucun taux reçu");
-      return Object.entries(rates).map(([code, value]) => ({
+      const result = Object.entries(rates).map(([code, value]) => ({
         code,
         value: Number(value),
         name: currencyMap[code] || code,
       }));
+      // Mettre en cache
+      try {
+        await AsyncStorage.setItem(CURRENCY_CACHE_KEY, JSON.stringify({ data: result, timestamp: Date.now() }));
+      } catch {}
+      return result;
     }
     const currencies = CURRENCY_CONFIG.currencies || FALLBACK_CURRENCIES;
     const url = safeBase
@@ -84,15 +106,25 @@ export const fetchCurrencies = async (
     const response = await fetch(url);
     const data: CurrencyApiResponse = await response.json();
     // @ts-ignore currencyapi renvoie {data:{USD:{code, value}}}
-    if ((data as any).data) return transformCurrencyData(data);
+    if ((data as any).data) {
+      const result = transformCurrencyData(data);
+      try {
+        await AsyncStorage.setItem(CURRENCY_CACHE_KEY, JSON.stringify({ data: result, timestamp: Date.now() }));
+      } catch {}
+      return result;
+    }
     // Fallback si API renvoie déjà {rates:{USD:1.2}}
     const rates2: any = (data as any).rates || (data as any).data;
     if (rates2) {
-      return Object.entries(rates2).map(([code, v]: any) => ({
+      const result = Object.entries(rates2).map(([code, v]: any) => ({
         code,
         value: typeof v === "number" ? v : v.value,
         name: currencyMap[code] || code,
       }));
+      try {
+        await AsyncStorage.setItem(CURRENCY_CACHE_KEY, JSON.stringify({ data: result, timestamp: Date.now() }));
+      } catch {}
+      return result;
     }
     return [];
   } catch {

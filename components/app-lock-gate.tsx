@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
-import * as Icons from "phosphor-react-native";
+import { FaceMaskIcon as IconFaceMask } from "phosphor-react-native/src/icons/FaceMask";
+import { TimerIcon as IconTimer } from "phosphor-react-native/src/icons/Timer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as bcrypt from "bcryptjs";
 import Typo from "@/components/typo";
@@ -92,7 +93,7 @@ export default function AppLockGate(p: Props) {
           bounces={false}
         >
         <View style={styles.inner}>
-        <View style={styles.avatar}><Icons.FaceMask size={44} color="#fff" weight="fill" /></View>
+        <View style={styles.avatar}><IconFaceMask size={44} color="#fff" weight="fill" /></View>
         <Typo size={24} fontWeight="800" style={{ textAlign: "center" }}>Akouè verrouillé</Typo>
         <Typo size={13} color={colors.neutral400} style={{ textAlign: "center", marginTop: 6 }}>
           {p.method === "biometric" ? "Montre ton visage / pose ton doigt." : p.method === "pin" ? "Entre ton PIN." : p.method === "password" ? "Entre ton mot de passe." : "Trace ton schéma."}
@@ -100,14 +101,14 @@ export default function AppLockGate(p: Props) {
         {err && <Typo size={13} color={colors.rose} style={{ textAlign: "center", marginTop: 10 }}>{err}</Typo>}
         {p.lockoutSecs > 0 && (
           <View style={styles.lockout}>
-            <Icons.Timer size={18} color={colors.rose} weight="fill" />
+            <IconTimer size={18} color={colors.rose} weight="fill" />
             <Typo size={14} fontWeight="700" color={colors.rose}>Pause {p.lockoutSecs}s. Trop d'essais</Typo>
           </View>
         )}
         <View style={{ marginTop: 18, width: "100%", alignItems: "center" }}>
           {p.method === "biometric" && (
             <TouchableOpacity style={styles.btn} onPress={bio} disabled={busy} activeOpacity={0.85}>
-              <Icons.FaceMask size={20} color="#fff" weight="fill" />
+              <IconFaceMask size={20} color="#fff" weight="fill" />
               <Typo size={16} fontWeight="700" color={colors.white}>{busy ? "…" : "Déverrouiller"}</Typo>
             </TouchableOpacity>
           )}

@@ -32,10 +32,16 @@ function AuthLinkHandler() {
       if (!url || !url.startsWith("akoue://")) return;
       try {
         const parsed = Linking.parse(url);
-        const code = (parsed.queryParams?.code as string) || new URL(url.replace("akoue://", "https://x/")).searchParams.get("code");
+        const params = parsed.queryParams ?? {};
+        const code = (params.code as string) || new URL(url.replace("akoue://", "https://x/")).searchParams.get("code");
+        const type = (params.type as string) || new URL(url.replace("akoue://", "https://x/")).searchParams.get("type");
+        const path = parsed.hostname || parsed.path || "";
+        const isRecovery = type === "recovery" || path.includes("reset-password");
         if (code) {
           await supabase.auth.exchangeCodeForSession(code);
-          router.replace("/(auth)/login" as any);
+          router.replace(isRecovery ? ("/(auth)/reset-password" as any) : ("/(auth)/login" as any));
+        } else if (isRecovery) {
+          router.replace("/(auth)/reset-password" as any);
         }
       } catch {}
     };

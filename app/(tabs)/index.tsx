@@ -8,7 +8,8 @@ import { useAuth } from "@/context/auth-context";
 import { useLocale } from "@/context/locale-context";
 import ScreenWrapper from "@/components/screen-wrapper";
 import { verticalScale } from "@/utils/styling";
-import * as Icons from "phosphor-react-native";
+import { MagnifyingGlassIcon as IconMagnifyingGlass } from "phosphor-react-native/src/icons/MagnifyingGlass";
+import { PlusIcon as IconPlus } from "phosphor-react-native/src/icons/Plus";
 import HomeCard from "@/components/home-card";
 import { useRouter } from "expo-router";
 import { useSupabaseTransactions } from "@/hooks/use-supabase-data";
@@ -23,6 +24,8 @@ const Home = () => {
     data: recentTransactions,
     error,
     loading: recentTransactionsLoading,
+    hasMore,
+    loadMore,
   } = useSupabaseTransactions(user?.uid, 30);
 
   return (
@@ -42,7 +45,7 @@ const Home = () => {
             onPress={() => router.push("/(modals)/search-modal")}
             style={styles.searchIcon}
           >
-            <Icons.MagnifyingGlass
+            <IconMagnifyingGlass
               size={verticalScale(22)}
               color={colors.neutral200}
               weight="bold"
@@ -65,6 +68,8 @@ const Home = () => {
             loading={recentTransactionsLoading}
             emptyListMessage={t("noTransactions")}
             title={t("recentTransactions")}
+            hasMore={hasMore}
+            loadMore={loadMore}
           />
         </ScrollView>
 
@@ -73,7 +78,7 @@ const Home = () => {
           onPress={() => router.push("/(modals)/transaction-modal")}
           style={styles.floatingButton}
         >
-          <Icons.Plus
+          <IconPlus
             size={verticalScale(24)}
             color={colors.white}
             weight="bold"

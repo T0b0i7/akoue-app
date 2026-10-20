@@ -3,7 +3,7 @@ import { WalletType } from "@/types"
 import { verticalScale } from "@/utils/styling"
 import { Image } from "expo-image"
 import { Router } from "expo-router"
-import * as Icons from "phosphor-react-native"
+import { CaretRightIcon as IconCaretRight } from "phosphor-react-native/src/icons/CaretRight";
 import React from "react"
 import { StyleSheet, TouchableOpacity, View } from "react-native"
 import Animated, { FadeInDown } from "react-native-reanimated"
@@ -73,7 +73,7 @@ const WalletListItem = ({
             })()}
           </Typo>
         </View>
-        <Icons.CaretRight
+        <IconCaretRight
           size={verticalScale(20)}
           weight="bold"
           color={colors.white}

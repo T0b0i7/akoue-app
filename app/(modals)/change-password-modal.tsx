@@ -10,7 +10,7 @@ import { useLocale } from "@/context/locale-context"
 import { useToast } from "@/context/toast-context"
 import { scale, verticalScale } from "@/utils/styling"
 import { useRouter } from "expo-router"
-import * as Icons from "phosphor-react-native"
+import { LockIcon as IconLock } from "phosphor-react-native/src/icons/Lock";
 import React, { useState } from "react"
 import { Alert, ScrollView, StyleSheet, View } from "react-native"
 
@@ -89,7 +89,7 @@ const ChangePasswordModal = () => {
               }
               type="password"
               icon={
-                <Icons.Lock
+                <IconLock
                   size={verticalScale(26)}
                   color={colors.neutral350}
                   weight="fill"
@@ -107,7 +107,7 @@ const ChangePasswordModal = () => {
                 setPasswords({ ...passwords, newPassword: value })
               }
               icon={
-                <Icons.Lock
+                <IconLock
                   size={verticalScale(26)}
                   color={colors.neutral350}
                   weight="fill"
@@ -125,7 +125,7 @@ const ChangePasswordModal = () => {
                 setPasswords({ ...passwords, confirmPassword: value })
               }
               icon={
-                <Icons.Lock
+                <IconLock
                   size={verticalScale(26)}
                   color={colors.neutral350}
                   weight="fill"

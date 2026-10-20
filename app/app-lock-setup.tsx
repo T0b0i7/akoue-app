@@ -8,7 +8,9 @@ import { verticalScale } from "@/utils/styling";
 import { markEnrollDone, setAppLock, type LockMethod } from "@/services/app-lock-service";
 import { authenticateWithFace, requestCameraForFace } from "@/services/face-lock-service";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import * as Icons from "phosphor-react-native";
+import { CheckCircleIcon as IconCheckCircle } from "phosphor-react-native/src/icons/CheckCircle";
+import { LockOpenIcon as IconLockOpen } from "phosphor-react-native/src/icons/LockOpen";
+import { ShieldCheckIcon as IconShieldCheck } from "phosphor-react-native/src/icons/ShieldCheck";
 import React, { useState } from "react";
 import { KeyboardAvoidingView, Platform, StyleSheet, TextInput, TouchableOpacity, View, ScrollView } from "react-native";
 
@@ -78,7 +80,7 @@ export default function AppLockSetup() {
           <>
             <View style={styles.hero}>
               <View style={styles.avatar}>
-                <Icons.ShieldCheck size={30} color="#fff" weight="fill" />
+                <IconShieldCheck size={30} color="#fff" weight="fill" />
               </View>
               <Typo size={20} fontWeight="800" style={{ textAlign: "center" }}>Choisis ton verrou</Typo>
               <Typo size={13} color={colors.neutral400} style={{ textAlign: "center", marginTop: 8, lineHeight: 19 }}>
@@ -116,8 +118,8 @@ export default function AppLockSetup() {
           <View style={styles.hero}>
             <View style={[styles.avatar, { backgroundColor: picked === "none" ? "#525252" : "#10b981" }]}>
               {picked === "none"
-                ? <Icons.LockOpen size={30} color="#fff" weight="fill" />
-                : <Icons.CheckCircle size={30} color="#fff" weight="fill" />}
+                ? <IconLockOpen size={30} color="#fff" weight="fill" />
+                : <IconCheckCircle size={30} color="#fff" weight="fill" />}
             </View>
             <Typo size={20} fontWeight="800" style={{ textAlign: "center" }}>
               {picked === "none" ? "Aucun verrou" : "Verrou appliqué ✓"}

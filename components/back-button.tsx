@@ -1,5 +1,5 @@
 import { useRouter, usePathname } from "expo-router";
-import { CaretLeft } from "phosphor-react-native";
+import { CaretLeftIcon as CaretLeft } from "phosphor-react-native/src/icons/CaretLeft";
 import React, { useRef } from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
 import { colors, radius } from "@/constants/theme";

@@ -7,7 +7,11 @@ import { colors, radius, spacingX, spacingY } from "@/constants/theme";
 import { useLocale } from "@/context/locale-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { verticalScale } from "@/utils/styling";
-import * as Icons from "phosphor-react-native";
+import { BellIcon as IconBell } from "phosphor-react-native/src/icons/Bell";
+import { BellSlashIcon as IconBellSlash } from "phosphor-react-native/src/icons/BellSlash";
+import { BroomIcon as IconBroom } from "phosphor-react-native/src/icons/Broom";
+import { HandGrabbingIcon as IconHandGrabbing } from "phosphor-react-native/src/icons/HandGrabbing";
+import { TrashIcon as IconTrash } from "phosphor-react-native/src/icons/Trash";
 import React, { useCallback, useEffect, useState } from "react";
 import { Alert, FlatList, Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -77,7 +81,7 @@ export default function NotificationsModal() {
         >
           <View style={styles.cardTop}>
             <View style={styles.iconBox}>
-              <Icons.Bell size={18} color="#fff" weight="fill" />
+              <IconBell size={18} color="#fff" weight="fill" />
             </View>
             <View style={{ flex: 1, gap: 4 }}>
               <Typo size={15} fontWeight="700" color={colors.white} style={{ flex: 1 }} textProps={{ numberOfLines: 1 }}>
@@ -89,13 +93,13 @@ export default function NotificationsModal() {
                 </Typo>
               ) : null}
             </View>
-            <Icons.Trash size={16} color={colors.neutral500} />
+            <IconTrash size={16} color={colors.neutral500} />
           </View>
           <Typo size={13} color={colors.neutral400} style={{ lineHeight: 18 }}>
             {item.body}
           </Typo>
           <View style={styles.hintRow}>
-            <Icons.HandGrabbing size={12} color={colors.neutral500} />
+            <IconHandGrabbing size={12} color={colors.neutral500} />
             <Typo size={11} color={colors.neutral500}>
               Appui long pour supprimer
             </Typo>
@@ -112,7 +116,7 @@ export default function NotificationsModal() {
 
         {items.length > 0 && (
           <Pressable onPress={() => setConfirmId("__clear_all__")} style={styles.clearBtn}>
-            <Icons.Broom size={14} color={colors.neutral400} />
+            <IconBroom size={14} color={colors.neutral400} />
             <Typo size={13} color={colors.neutral400} fontWeight="600">
               Tout effacer
             </Typo>
@@ -127,7 +131,7 @@ export default function NotificationsModal() {
           ListEmptyComponent={
             <View style={styles.empty}>
               <View style={styles.emptyIcon}>
-                <Icons.BellSlash size={32} color={colors.neutral500} weight="fill" />
+                <IconBellSlash size={32} color={colors.neutral500} weight="fill" />
               </View>
               <Typo size={16} fontWeight="600" color={colors.neutral400} style={{ textAlign: "center" }}>
                 Aucune notification

@@ -19,7 +19,7 @@ import { TransactionType } from "@/types"
 import { scale, verticalScale } from "@/utils/styling"
 import DateTimePicker from "@react-native-community/datetimepicker"
 import { useLocalSearchParams, useRouter } from "expo-router"
-import * as Icons from "phosphor-react-native"
+import { TrashIcon as IconTrash } from "phosphor-react-native/src/icons/Trash";
 import React, { useEffect, useState } from "react"
 import {
   Alert,
@@ -167,7 +167,7 @@ const TransactionModal = () => {
     setLoading(false)
     if (result!.success) {
       setFeedback({ type: "success", msg: t("walletDeleted") })
-      showToast("success", "Transaction supprimée", "Transaction supprimée � : �️")
+      showToast("success", "Transaction supprimée", "Transaction supprimée � : �️")
       setTimeout(() => closeModal(), 600)
     } else {
       const msg = result!.msg || "Erreur"
@@ -420,7 +420,7 @@ const TransactionModal = () => {
               paddingHorizontal: spacingX._15,
             }}
           >
-            <Icons.Trash
+            <IconTrash
               color={colors.white}
               size={verticalScale(24)}
               weight="bold"

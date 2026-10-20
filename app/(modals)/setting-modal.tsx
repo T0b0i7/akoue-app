@@ -5,7 +5,17 @@ import Typo from "@/components/typo"
 import { colors, radius, spacingX, spacingY } from "@/constants/theme"
 import { OptionType } from "@/types"
 import { verticalScale } from "@/utils/styling"
-import * as Icons from "phosphor-react-native"
+import { ArrowCounterClockwiseIcon as IconArrowCounterClockwise } from "phosphor-react-native/src/icons/ArrowCounterClockwise";
+import { BellIcon as IconBell } from "phosphor-react-native/src/icons/Bell";
+import { BroomIcon as IconBroom } from "phosphor-react-native/src/icons/Broom";
+import { CaretRightIcon as IconCaretRight } from "phosphor-react-native/src/icons/CaretRight";
+import { CurrencyDollarIcon as IconCurrencyDollar } from "phosphor-react-native/src/icons/CurrencyDollar";
+import { EyeIcon as IconEye } from "phosphor-react-native/src/icons/Eye";
+import { InfoIcon as IconInfo } from "phosphor-react-native/src/icons/Info";
+import { LockIcon as IconLock } from "phosphor-react-native/src/icons/Lock";
+import { TranslateIcon as IconTranslate } from "phosphor-react-native/src/icons/Translate";
+import { TrashIcon as IconTrash } from "phosphor-react-native/src/icons/Trash";
+import { WarningIcon as IconWarning } from "phosphor-react-native/src/icons/Warning";
 import React, { useEffect, useState } from "react"
 import { Alert, StyleSheet, Switch, TouchableOpacity, View, ScrollView } from "react-native"
 import { useRouter } from "expo-router"
@@ -86,6 +96,11 @@ const SettingsModal = () => {
     try {
       const uid = user?.uid
       if (uid) {
+        // 1) Supprime l'activation cote Supabase (auth.users + cascade
+        // profiles/wallets/transactions). Sans ca, le meme email ne peut
+        // pas se reinscrire proprement.
+        try { await supabase.rpc("delete_own_account") } catch {}
+        // 2) Filet de securite si la fonction RPC n'est pas encore deployee
         try { await supabase.from("transactions").delete().eq("uid", uid) } catch {}
         try { await supabase.from("wallets").delete().eq("uid", uid) } catch {}
         try { await supabase.from("profiles").delete().eq("id", uid) } catch {}
@@ -95,7 +110,7 @@ const SettingsModal = () => {
       const toRemove = keys.filter(k => k !== "app_locale" && k !== "app_theme")
       if (toRemove.length) await AsyncStorage.multiRemove(toRemove)
       await logout()
-      showToast("success", "Compte supprimé", "Toutes les données et le compte ont été supprimés")
+      showToast("success", "Compte supprimé", "Activation et donnees supprimees : tu peux recreer le compte avec le meme email")
       setConfirm(null)
       setTimeout(() => router.replace("/(auth)/welcome" as any), 600)
     } catch (e: any) {
@@ -106,14 +121,14 @@ const SettingsModal = () => {
   const settings: OptionType[] = [
     {
       title: t("notification"),
-      icon: <Icons.Bell size={26} color={colors.white} weight="fill" />,
+      icon: <IconBell size={26} color={colors.white} weight="fill" />,
       type: "arrow",
       bgColor: "#8b5cf6",
       onPress: handleNotificationPress,
     },
     {
       title: "Français",
-      icon: <Icons.Translate size={26} color={colors.white} weight="fill" />,
+      icon: <IconTranslate size={26} color={colors.white} weight="fill" />,
       type: "switch",
       value: isFR,
       onChange: (value: boolean) => setLanguage(value ? "fr" : "en"),
@@ -121,7 +136,7 @@ const SettingsModal = () => {
     },
     {
       title: "English",
-      icon: <Icons.Translate size={26} color={colors.white} weight="fill" />,
+      icon: <IconTranslate size={26} color={colors.white} weight="fill" />,
       type: "switch",
       value: !isFR,
       onChange: (value: boolean) => setLanguage(value ? "en" : "fr"),
@@ -129,7 +144,7 @@ const SettingsModal = () => {
     },
     {
       title: t("version"),
-      icon: <Icons.Info size={26} color={colors.white} weight="fill" />,
+      icon: <IconInfo size={26} color={colors.white} weight="fill" />,
       type: "text",
       value: Constants.expoConfig?.version ?? "1.0.0",
       bgColor: "#6366f1",
@@ -149,7 +164,7 @@ const SettingsModal = () => {
         )
       case "arrow":
         return (
-          <Icons.CaretRight
+          <IconCaretRight
             size={verticalScale(20)}
             weight="bold"
             color={colors.white}
@@ -215,13 +230,13 @@ const SettingsModal = () => {
         <View style={[styles.cardContainer, { marginTop: 16 }]}>
           <View style={{ padding: 12, gap: 10 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Icons.Eye size={16} color={colors.primary} weight="fill" />
+              <IconEye size={16} color={colors.primary} weight="fill" />
               <Typo size={13} fontWeight="700" color={colors.white}>Affichage</Typo>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                 <View style={[styles.listIcon, { backgroundColor: "#0ea5e9", width: 36, height: 36 }]}>
-                  <Icons.CurrencyDollar size={18} color="#fff" weight="fill" />
+                  <IconCurrencyDollar size={18} color="#fff" weight="fill" />
                 </View>
                 <Typo size={14} fontWeight="600" color={colors.white}>Devise d'affichage</Typo>
               </View>
@@ -247,7 +262,7 @@ const SettingsModal = () => {
         <View style={[styles.cardContainer, { marginTop: 16 }]}>
           <View style={{ padding: 12, gap: 10 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Icons.Lock size={16} color={colors.primary} weight="fill" />
+              <IconLock size={16} color={colors.primary} weight="fill" />
               <Typo size={13} fontWeight="700" color={colors.white}>Verrouillage</Typo>
             </View>
             <LockMethodCards
@@ -283,40 +298,40 @@ const SettingsModal = () => {
         <View style={[styles.cardContainer, { marginTop: 16, borderWidth: 1, borderColor: "rgba(239,68,68,0.25)" }]}>
           <View style={{ padding: 12, gap: 8 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Icons.Warning size={16} color={colors.rose} weight="fill" />
+              <IconWarning size={16} color={colors.rose} weight="fill" />
               <Typo size={13} fontWeight="700" color={colors.rose}>Zone dangereuse</Typo>
             </View>
             <TouchableOpacity onPress={() => setConfirm("data")} style={styles.dangerRow} activeOpacity={0.7}>
               <View style={[styles.listIcon, { backgroundColor: "#f97316", width: 36, height: 36 }]}>
-                <Icons.Broom size={18} color="#fff" weight="fill" />
+                <IconBroom size={18} color="#fff" weight="fill" />
               </View>
               <View style={{ flex: 1 }}>
                 <Typo size={14} fontWeight="600" color={colors.white}>Effacer toutes mes données</Typo>
                 <Typo size={11} color={colors.neutral400}>Garde le compte, supprime wallets & transactions</Typo>
               </View>
-              <Icons.CaretRight size={16} color={colors.neutral500} weight="bold" />
+              <IconCaretRight size={16} color={colors.neutral500} weight="bold" />
             </TouchableOpacity>
             <View style={styles.divider} />
             <TouchableOpacity onPress={() => setConfirm("account")} style={styles.dangerRow} activeOpacity={0.7}>
               <View style={[styles.listIcon, { backgroundColor: colors.rose, width: 36, height: 36 }]}>
-                <Icons.Trash size={18} color="#fff" weight="fill" />
+                <IconTrash size={18} color="#fff" weight="fill" />
               </View>
               <View style={{ flex: 1 }}>
                 <Typo size={14} fontWeight="600" color={colors.white}>Supprimer le compte</Typo>
                 <Typo size={11} color={colors.neutral400}>Efface tout + déconnecte définitivement</Typo>
               </View>
-              <Icons.CaretRight size={16} color={colors.neutral500} weight="bold" />
+              <IconCaretRight size={16} color={colors.neutral500} weight="bold" />
             </TouchableOpacity>
             <View style={styles.divider} />
             <TouchableOpacity onPress={() => setConfirm("factory")} style={styles.dangerRow} activeOpacity={0.7}>
               <View style={[styles.listIcon, { backgroundColor: "#7A4DFF", width: 36, height: 36 }]}>
-                <Icons.ArrowCounterClockwise size={18} color="#fff" weight="fill" />
+                <IconArrowCounterClockwise size={18} color="#fff" weight="fill" />
               </View>
               <View style={{ flex: 1 }}>
                 <Typo size={14} fontWeight="600" color={colors.white}>Reset usine (zéro)</Typo>
                 <Typo size={11} color={colors.neutral400}>Supprime TOUS les comptes locaux et le verrou, pour revoir la logique</Typo>
               </View>
-              <Icons.CaretRight size={16} color={colors.neutral500} weight="bold" />
+              <IconCaretRight size={16} color={colors.neutral500} weight="bold" />
             </TouchableOpacity>
           </View>
         </View>

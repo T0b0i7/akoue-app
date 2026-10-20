@@ -1,8 +1,10 @@
-import { colors, radius } from "@/constants/theme"
+﻿import { colors, radius } from "@/constants/theme"
 import { useToast } from "@/context/toast-context"
 import * as Haptics from "expo-haptics"
 import { BlurView } from "expo-blur"
-import * as Icons from "phosphor-react-native"
+import { CheckIcon as IconCheck } from "phosphor-react-native/src/icons/Check";
+import { InfoIcon as IconInfo } from "phosphor-react-native/src/icons/Info";
+import { WarningIcon as IconWarning } from "phosphor-react-native/src/icons/Warning";
 import React, { useEffect } from "react"
 import { Platform, StyleSheet, View } from "react-native"
 import Animated, { FadeInDown, FadeOutUp, LinearTransition } from "react-native-reanimated"
@@ -23,10 +25,10 @@ export const AppToast = () => {
   if (!toast) return null
 
   const bg = toast.type === "success" ? "#16a34a" : toast.type === "error" ? "#e11d48" : "#7A4DFF"
-  const Icon = toast.type === "success" ? Icons.Check : toast.type === "error" ? Icons.Warning : Icons.Info
+  const Icon = toast.type === "success" ? IconCheck : toast.type === "error" ? IconWarning : IconInfo
 
   return (
-    <View pointerEvents="none" style={styles.wrapper}>
+    <View style={styles.wrapper}>
       <Animated.View
         entering={FadeInDown.springify().damping(16).mass(0.8)}
         exiting={FadeOutUp.duration(280)}
@@ -50,6 +52,7 @@ export const AppToast = () => {
 const styles = StyleSheet.create({
   wrapper: {
     position: "absolute",
+    pointerEvents: "none",
     top: Platform.OS === "web" ? 18 : 54,
     left: 16,
     right: 16,

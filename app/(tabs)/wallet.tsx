@@ -4,7 +4,7 @@ import ScreenWrapper from "@/components/screen-wrapper";
 import Typo from "@/components/typo";
 import { colors, radius, spacingX, spacingY } from "@/constants/theme";
 import { verticalScale } from "@/utils/styling";
-import * as Icons from "phosphor-react-native";
+import { PlusCircleIcon as IconPlusCircle } from "phosphor-react-native/src/icons/PlusCircle";
 import { useRouter, useFocusEffect } from "expo-router";
 import { useSupabaseWallets } from "@/hooks/use-supabase-data";
 import WalletListItem from "@/components/wallet-list-item";
@@ -47,12 +47,12 @@ export default function Wallet() {
   })();
   const [displayCurrency, setDisplayCurrency] = React.useState<string>(dominantCurrency);
 
+  // Chargement une seule fois depuis le stockage local
   React.useEffect(() => {
-    AsyncStorage.getItem("display_currency").then(v => { if (v) setDisplayCurrency(v); });
-  }, []);
-
-  React.useEffect(() => {
-    AsyncStorage.getItem("display_currency").then(v => { if (!v) setDisplayCurrency(dominantCurrency); });
+    AsyncStorage.getItem("display_currency").then((v) => {
+      if (v) setDisplayCurrency(v);
+      else setDisplayCurrency(dominantCurrency);
+    });
   }, [dominantCurrency]);
 
   // Fetch total balance from API
@@ -94,7 +94,7 @@ export default function Wallet() {
             <TouchableOpacity
               onPress={() => router.push("/(modals)/wallet-modal")}
             >
-              <Icons.PlusCircle
+              <IconPlusCircle
                 weight="fill"
                 color={colors.white}
                 size={verticalScale(33)}

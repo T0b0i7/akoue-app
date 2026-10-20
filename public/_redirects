@@ -1,0 +1,8 @@
+# Netlify / static hosts SPA fallback — redirige toute route vers index.html
+# pour que expo-router fonctionne après un rafraîchissement de page.
+/*    /index.html   200
+
+# Assets statiques
+/static/*   /static/:splat   200
+/assets/*   /assets/:splat   200
+/favicon.ico   /favicon.ico   200

@@ -1,6 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { PanResponder, StyleSheet, TouchableOpacity, View } from "react-native";
-import * as Icons from "phosphor-react-native";
+import { CaretRightIcon as IconCaretRight } from "phosphor-react-native/src/icons/CaretRight";
+import { CheckCircleIcon as IconCheckCircle } from "phosphor-react-native/src/icons/CheckCircle";
+import { FingerprintIcon as IconFingerprint } from "phosphor-react-native/src/icons/Fingerprint";
+import { GridNineIcon as IconGridNine } from "phosphor-react-native/src/icons/GridNine";
+import { HashIcon as IconHash } from "phosphor-react-native/src/icons/Hash";
+import { KeyIcon as IconKey } from "phosphor-react-native/src/icons/Key";
+import { LockOpenIcon as IconLockOpen } from "phosphor-react-native/src/icons/LockOpen";
 import Svg, { Circle, Polyline } from "react-native-svg";
 import Typo from "@/components/typo";
 import { colors, radius } from "@/constants/theme";
@@ -9,11 +15,11 @@ import type { LockMethod } from "@/services/app-lock-service";
 // ---------- Cartes de choix (joli design accompagné) ----------
 
 const METHOD_STYLE: Record<LockMethod, { icon: any; tint: string; title: string; desc: string }> = {
-  none: { icon: Icons.LockOpen, tint: "#525252", title: "Aucun", desc: "Ouverture directe" },
-  biometric: { icon: Icons.Fingerprint, tint: "#7A4DFF", title: "Visage / Empreinte", desc: "Un geste, rien stocké. Recommandé" },
-  pin: { icon: Icons.Hash, tint: "#0ea5e9", title: "PIN", desc: "4 à 6 chiffres" },
-  password: { icon: Icons.Key, tint: "#f59e0b", title: "Mot de passe", desc: "8 caractères minimum" },
-  pattern: { icon: Icons.GridNine, tint: "#10b981", title: "Schéma", desc: "Glisse le doigt sur les points" },
+  none: { icon: IconLockOpen, tint: "#525252", title: "Aucun", desc: "Ouverture directe" },
+  biometric: { icon: IconFingerprint, tint: "#7A4DFF", title: "Visage / Empreinte", desc: "Un geste, rien stocké. Recommandé" },
+  pin: { icon: IconHash, tint: "#0ea5e9", title: "PIN", desc: "4 à 6 chiffres" },
+  password: { icon: IconKey, tint: "#f59e0b", title: "Mot de passe", desc: "8 caractères minimum" },
+  pattern: { icon: IconGridNine, tint: "#10b981", title: "Schéma", desc: "Glisse le doigt sur les points" },
 };
 
 export function LockMethodCards({
@@ -46,9 +52,9 @@ export function LockMethodCards({
               <Typo size={11} color={colors.neutral400}>{s.desc}</Typo>
             </View>
             {on ? (
-              <Icons.CheckCircle size={22} color="#7A4DFF" weight="fill" />
+              <IconCheckCircle size={22} color="#7A4DFF" weight="fill" />
             ) : (
-              <Icons.CaretRight size={18} color={colors.neutral500} weight="bold" />
+              <IconCaretRight size={18} color={colors.neutral500} weight="bold" />
             )}
           </TouchableOpacity>
         );

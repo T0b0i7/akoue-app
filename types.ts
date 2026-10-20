@@ -1,4 +1,4 @@
-import { Icon } from "phosphor-react-native";
+import type { Icon } from "phosphor-react-native";
 import React, { ReactNode } from "react";
 import {
   ActivityIndicator,
@@ -96,6 +96,8 @@ export type TransactionListType = {
   title?: string;
   loading?: boolean;
   emptyListMessage?: string;
+  hasMore?: boolean;
+  loadMore?: () => void;
 };
 
 export type TransactionItemProps = {
@@ -153,6 +155,7 @@ export type AuthContextType = {
   verifyCode: (email: string, code: string) => Promise<{ success: boolean; msg?: string }>;
   updateUserData: (userId: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<{ success: boolean; msg?: string }>;
+  loginWithGoogle: () => Promise<{ success: boolean; msg?: string; redirecting?: boolean }>;
   logout: () => Promise<{ success: boolean; msg?: string }>;
   updatePassword: (
     oldPassword: string,

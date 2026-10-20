@@ -28,7 +28,7 @@ const Index = () => {
         // fallback : si AsyncStorage échoue sur web, va vers language
         router.replace("/language" as any);
       }
-    }, 700);
+    }, 120);
     return () => { cancelled = true; clearTimeout(t); };
   }, [user, navigationState?.key]);
 

@@ -8,7 +8,16 @@ import { OptionType } from "@/types"
 import { verticalScale } from "@/utils/styling"
 import { Image } from "expo-image"
 import { useRouter } from "expo-router"
-import * as Icons from "phosphor-react-native"
+import { ArrowsClockwiseIcon as IconArrowsClockwise } from "phosphor-react-native/src/icons/ArrowsClockwise";
+import { CaretRightIcon as IconCaretRight } from "phosphor-react-native/src/icons/CaretRight";
+import { ChartBarIcon as IconChartBar } from "phosphor-react-native/src/icons/ChartBar";
+import { CurrencyCircleDollarIcon as IconCurrencyCircleDollar } from "phosphor-react-native/src/icons/CurrencyCircleDollar";
+import { FileArrowUpIcon as IconFileArrowUp } from "phosphor-react-native/src/icons/FileArrowUp";
+import { FoldersIcon as IconFolders } from "phosphor-react-native/src/icons/Folders";
+import { GearSixIcon as IconGearSix } from "phosphor-react-native/src/icons/GearSix";
+import { HardDrivesIcon as IconHardDrives } from "phosphor-react-native/src/icons/HardDrives";
+import { PercentIcon as IconPercent } from "phosphor-react-native/src/icons/Percent";
+import { UsersThreeIcon as IconUsersThree } from "phosphor-react-native/src/icons/UsersThree";
 import React from "react"
 import { ActivityIndicator, Alert, Platform, StyleSheet, TouchableOpacity, View } from "react-native"
 import Animated, { FadeInDown, FadeInRight } from "react-native-reanimated"
@@ -19,19 +28,19 @@ import { useOTAUpdate } from "@/hooks/use-ota-update"
 const getFeatures = (t:any): OptionType[] => [
   {
     title: t("statistics"),
-    icon: <Icons.ChartBar size={26} color={colors.white} weight="fill" />,
+    icon: <IconChartBar size={26} color={colors.white} weight="fill" />,
     bgColor: "#8b5cf6",
     routeName: "/statistics",
   },
   {
     title: t("myWallets"),
-    icon: <Icons.Folders size={26} color={colors.white} weight="fill" />,
+    icon: <IconFolders size={26} color={colors.white} weight="fill" />,
     bgColor: "#ec4899",
     routeName: "/wallet",
   },
   {
     title: t("exportData"),
-    icon: <Icons.FileArrowUp size={26} color={colors.white} weight="fill" />,
+    icon: <IconFileArrowUp size={26} color={colors.white} weight="fill" />,
     bgColor: "#0ea5e9",
     routeName: "/(modals)/export-data-modal",
   },
@@ -41,7 +50,7 @@ const getUtilities = (t:any): OptionType[] => [
   {
     title: t("exchangeRate"),
     icon: (
-      <Icons.CurrencyCircleDollar
+      <IconCurrencyCircleDollar
         size={26}
         color={colors.white}
         weight="fill"
@@ -52,13 +61,13 @@ const getUtilities = (t:any): OptionType[] => [
   },
   {
     title: t("loanCalculator"),
-    icon: <Icons.Percent size={26} color={colors.white} weight="fill" />,
+    icon: <IconPercent size={26} color={colors.white} weight="fill" />,
     bgColor: "#10b981",
     routeName: "/(modals)/loan-calculator-modal",
   },
   {
     title: t("splitBill"),
-    icon: <Icons.UsersThree size={26} color={colors.white} weight="fill" />,
+    icon: <IconUsersThree size={26} color={colors.white} weight="fill" />,
     bgColor: "#6366f1",
     routeName: "/(modals)/split-bill-modal",
   },
@@ -67,13 +76,13 @@ const getUtilities = (t:any): OptionType[] => [
 const getSettings = (t:any): OptionType[] => [
   {
     title: t("updateProfile"),
-    icon: <Icons.HardDrives size={26} color={colors.white} weight="fill" />,
+    icon: <IconHardDrives size={26} color={colors.white} weight="fill" />,
     routeName: "/(modals)/update-profile-modal",
     bgColor: colors.neutral600,
   },
   {
     title: t("settings"),
-    icon: <Icons.GearSix size={26} color={colors.white} weight="fill" />,
+    icon: <IconGearSix size={26} color={colors.white} weight="fill" />,
     routeName: "/(modals)/setting-modal",
     bgColor: "#6366f1",
   },
@@ -269,7 +278,7 @@ const More = () => {
                   <Typo size={16} style={{ flex: 1 }} fontWeight={"500"}>
                     {item.title}
                   </Typo>
-                  <Icons.CaretRight
+                  <IconCaretRight
                     size={verticalScale(20)}
                     weight="bold"
                     color={colors.white}
@@ -282,13 +291,13 @@ const More = () => {
                 <View style={styles.divider} />
                 <TouchableOpacity onPress={handleCheckUpdate} style={styles.flexRow} disabled={isChecking}>
                   <View style={[styles.listIcon, { backgroundColor: "#f97316" }]}>
-                    <Icons.ArrowsClockwise size={26} color={colors.white} weight="fill" />
+                    <IconArrowsClockwise size={26} color={colors.white} weight="fill" />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Typo size={16} fontWeight={"500"}>{t("checkUpdate")}</Typo>
                     <Typo size={12} color={colors.neutral400}>v{Constants.expoConfig?.version ?? "1.0.0"} • {Updates.isEnabled ? (Updates.channel ?? "preview") : "dev"}</Typo>
                   </View>
-                  {isChecking ? <ActivityIndicator color={colors.white} /> : <Icons.CaretRight size={verticalScale(20)} weight="bold" color={colors.white} />}
+                  {isChecking ? <ActivityIndicator color={colors.white} /> : <IconCaretRight size={verticalScale(20)} weight="bold" color={colors.white} />}
                 </TouchableOpacity>
               </>
             )}

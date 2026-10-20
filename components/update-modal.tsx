@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { ActivityIndicator, Modal, StyleSheet, TouchableOpacity, View } from "react-native";
-import * as Icons from "phosphor-react-native";
+import { ArrowCircleUpIcon as IconArrowCircleUp } from "phosphor-react-native/src/icons/ArrowCircleUp";
+import { CheckCircleIcon as IconCheckCircle } from "phosphor-react-native/src/icons/CheckCircle";
+import { DownloadSimpleIcon as IconDownloadSimple } from "phosphor-react-native/src/icons/DownloadSimple";
 import Typo from "@/components/typo";
 import { colors, radius, spacingX, spacingY } from "@/constants/theme";
 import { verticalScale } from "@/utils/styling";
@@ -33,7 +35,7 @@ export default function UpdateModal({ update, downloading, busy, progress, onUpd
           {!downloading ? (
             <>
               <View style={styles.icon}>
-                <Icons.ArrowCircleUp size={30} color="#fff" weight="fill" />
+                <IconArrowCircleUp size={30} color="#fff" weight="fill" />
               </View>
               <Typo size={20} fontWeight="800" style={{ textAlign: "center" }}>
                 {update?.title || "Mise à jour disponible"}
@@ -56,7 +58,7 @@ export default function UpdateModal({ update, downloading, busy, progress, onUpd
                 </>
               ) : null}
               <TouchableOpacity style={styles.btn} onPress={onUpdate} disabled={busy} activeOpacity={0.85}>
-                <Icons.DownloadSimple size={18} color="#fff" weight="fill" />
+                <IconDownloadSimple size={18} color="#fff" weight="fill" />
                 <Typo size={15} fontWeight="700" color={colors.white}>
                   {busy ? "…" : update?.label || "Mettre à jour"}
                 </Typo>
@@ -92,7 +94,7 @@ export default function UpdateModal({ update, downloading, busy, progress, onUpd
                 <Typo size={12} color={colors.neutral100}>3. Installe par-dessus l'ancienne version</Typo>
               </View>
               <TouchableOpacity style={styles.btn} onPress={onDone} activeOpacity={0.85}>
-                <Icons.CheckCircle size={18} color="#fff" weight="fill" />
+                <IconCheckCircle size={18} color="#fff" weight="fill" />
                 <Typo size={15} fontWeight="700" color={colors.white}>J'ai installé la MAJ</Typo>
               </TouchableOpacity>
               <TouchableOpacity onPress={onDone} style={styles.later} activeOpacity={0.7}>

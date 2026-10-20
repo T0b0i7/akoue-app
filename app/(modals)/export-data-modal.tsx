@@ -9,7 +9,9 @@ import { supabase } from "@/config/supabase"
 import { verticalScale } from "@/utils/styling"
 import * as FileSystem from "expo-file-system/legacy"
 import * as Sharing from "expo-sharing"
-import * as Icons from "phosphor-react-native"
+import { CodeIcon as IconCode } from "phosphor-react-native/src/icons/Code";
+import { FileArrowUpIcon as IconFileArrowUp } from "phosphor-react-native/src/icons/FileArrowUp";
+import { TableIcon as IconTable } from "phosphor-react-native/src/icons/Table";
 import React, { useState } from "react"
 import { Alert, Platform, ScrollView, StyleSheet, View } from "react-native"
 
@@ -100,20 +102,20 @@ const ExportDataModal = () => {
         <Header title="Exporter les données" leftIcon={<BackButton />} style={{ marginBottom: spacingY._10 }} />
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.card}>
-            <View style={styles.iconBox}><Icons.FileArrowUp size={26} color="#fff" weight="fill" /></View>
+            <View style={styles.iconBox}><IconFileArrowUp size={26} color="#fff" weight="fill" /></View>
             <Typo size={16} fontWeight="600">Tes données t'appartiennent</Typo>
             <Typo size={13} color={colors.neutral400} style={{ textAlign: "center", lineHeight: 18 }}>Exporte tous tes portefeuilles et transactions. Fichier compatible Excel / Google Sheets. Fonctionne même hors ligne.</Typo>
           </View>
 
           <View style={styles.actions}>
             <ButtonComponent onPress={handleCSV} loading={loading==="csv"} style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" } as any}>
-              <Icons.Table size={20} color="#fff" weight="bold" />
+              <IconTable size={20} color="#fff" weight="bold" />
               <Typo color="#fff" fontWeight="700"> Exporter en CSV</Typo>
             </ButtonComponent>
             <Typo size={12} color={colors.neutral500} style={{ textAlign: "center" }}>Ideal pour Excel : colonnes date, type, montant, categorie, portefeuille</Typo>
 
             <ButtonComponent onPress={handleJSON} loading={loading==="json"} style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: colors.neutral700 } as any}>
-              <Icons.Code size={20} color="#fff" weight="bold" />
+              <IconCode size={20} color="#fff" weight="bold" />
               <Typo color="#fff" fontWeight="700"> Exporter en JSON</Typo>
             </ButtonComponent>
             <Typo size={12} color={colors.neutral500} style={{ textAlign: "center" }}>Sauvegarde complete : wallets + transactions</Typo>

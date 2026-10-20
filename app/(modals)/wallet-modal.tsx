@@ -16,7 +16,10 @@ import { createOrUpdateWallet, deleteWallet } from "@/services/wallet-service"
 import { WalletType } from "@/types"
 import { scale, verticalScale } from "@/utils/styling"
 import { useLocalSearchParams, useRouter } from "expo-router"
-import * as Icons from "phosphor-react-native"
+import { ImageIcon as IconImage } from "phosphor-react-native/src/icons/Image";
+import { InfoIcon as IconInfo } from "phosphor-react-native/src/icons/Info";
+import { SmileyIcon as IconSmiley } from "phosphor-react-native/src/icons/Smiley";
+import { TrashIcon as IconTrash } from "phosphor-react-native/src/icons/Trash";
 import React, { useEffect, useState } from "react"
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native"
 import { Dropdown } from "react-native-element-dropdown"
@@ -229,18 +232,18 @@ const WalletModal = () => {
             </View>
           </View>
           <View style={styles.currencyHint}>
-            <Icons.Info size={14} color={colors.neutral400} />
+            <IconInfo size={14} color={colors.neutral400} />
             <Typo size={12} color={colors.neutral400}>{WORLD_CURRENCIES.find((c) => c.code === currency)?.symbol} {WORLD_CURRENCIES.find((c) => c.code === currency)?.name}</Typo>
           </View>
           <View style={styles.inputContainer}>
             <Typo color={colors.neutral200}>{t("chooseIcon")}</Typo>
             <View style={styles.tabRow}>
               <Pressable onPress={() => setMode("icon")} style={[styles.tab, mode === "icon" && styles.tabActive]}>
-                <Icons.Smiley size={16} color={mode === "icon" ? colors.white : colors.neutral400} weight="fill" />
+                <IconSmiley size={16} color={mode === "icon" ? colors.white : colors.neutral400} weight="fill" />
                 <Typo size={13} color={mode === "icon" ? colors.white : colors.neutral400} fontWeight="700">Icônes</Typo>
               </Pressable>
               <Pressable onPress={() => setMode("photo")} style={[styles.tab, mode === "photo" && styles.tabActive]}>
-                <Icons.Image size={16} color={mode === "photo" ? colors.white : colors.neutral400} weight="fill" />
+                <IconImage size={16} color={mode === "photo" ? colors.white : colors.neutral400} weight="fill" />
                 <Typo size={13} color={mode === "photo" ? colors.white : colors.neutral400} fontWeight="700">Photo</Typo>
               </Pressable>
             </View>
@@ -272,7 +275,7 @@ const WalletModal = () => {
               paddingHorizontal: spacingX._15,
             }}
           >
-            <Icons.Trash
+            <IconTrash
               color={colors.white}
               size={verticalScale(24)}
               weight="bold"

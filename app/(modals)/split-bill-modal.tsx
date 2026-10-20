@@ -6,7 +6,7 @@ import Typo from "@/components/typo"
 import { colors, radius, spacingX, spacingY } from "@/constants/theme"
 import { formatCurrency } from "@/utils/common"
 import { verticalScale } from "@/utils/styling"
-import * as Icons from "phosphor-react-native"
+import { UsersThreeIcon as IconUsersThree } from "phosphor-react-native/src/icons/UsersThree";
 import React, { useMemo, useState } from "react"
 import { ScrollView, StyleSheet, View } from "react-native"
 
@@ -40,7 +40,7 @@ const SplitBillModal = () => {
             <View style={styles.resultCard}>
               <View style={styles.resultRow}>
                 <View style={[styles.iconBox, { backgroundColor: "#6366f1" }]}>
-                  <Icons.UsersThree size={22} color="#fff" weight="fill" />
+                  <IconUsersThree size={22} color="#fff" weight="fill" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Typo size={13} color={colors.neutral400}>Par personne</Typo>
