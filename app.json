@@ -3,6 +3,7 @@
     "name": "Akouè",
     "slug": "akoue-app",
     "version": "1.1.0",
+    "runtimeVersion": "1.0.0",
     "orientation": "portrait",
     "icon": "./public/images/mono-akoue.png",
     "scheme": "akoue",
