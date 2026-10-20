@@ -159,6 +159,12 @@ export default function RootLayout() {
       if (Platform.OS !== "web") {
         SplashScreen.hideAsync().catch(() => {});
       }
+      // Enregistrement du Service Worker PWA (web uniquement)
+      if (typeof document !== "undefined" && "serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js")
+          .then((reg) => console.log("Akouè SW enregistré :", reg.scope))
+          .catch((err) => console.log("Akouè SW erreur :", err));
+      }
       try {
         if (typeof document !== "undefined" && (window as any).hideSplash) (window as any).hideSplash();
         else if (typeof document !== "undefined") {
