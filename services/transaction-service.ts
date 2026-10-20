@@ -1,5 +1,5 @@
 import { supabase } from "@/config/supabase";
-import { ResponseType } from "@/types";
+import { TransactionType, ResponseType } from "@/types";
 import { uploadFileToSupabase } from "./images-service";
 import { createOrUpdateWallet, humanizeError, ensureValidSession } from "./wallet-service";
 import { getLast12Months, getLast7Days, getYearsRange } from "@/utils/common";

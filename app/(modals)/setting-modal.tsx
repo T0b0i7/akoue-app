@@ -40,6 +40,7 @@ const SettingsModal = () => {
   const { user, logout } = useAuth()
   const { showToast } = useToast()
   const isFR = language === "fr"
+  const [loading, setLoading] = useState(false)
   const [confirm, setConfirm] = useState<"data" | "account" | "factory" | null>(null)
   const [displayCurrency, setDisplayCurrency] = useState("XOF")
   const lock = useAppLock()
