@@ -26,7 +26,8 @@ export function useSupabaseWallets(uid?: string | null) {
       await AsyncStorage.setItem("mock_wallets", JSON.stringify(wallets));
     } catch (e: any) {
       // Hors ligne → fallback cache
-      const cached = await AsyncStorage.getItem(`wallets_${uid}`) || await AsyncStorage.getItem("mock_wallets");
+      const cached = await AsyncStorage.getItem(`wallets_${uid}`)
+        || (!isSupabaseConfigured ? await AsyncStorage.getItem("mock_wallets") : null);
       if (cached) { setData(JSON.parse(cached)); setError(null); }
       else setError(e.message || "Hors ligne");
     } finally { setLoading(false); }
@@ -118,7 +119,8 @@ export function useSupabaseTransactions(uid?: string | null, limit = 30) {
       if (requestId !== requestRef.current) return;
       let cached: string | null = null;
       try {
-        cached = await AsyncStorage.getItem(`txs_${uid}`) || await AsyncStorage.getItem("mock_transactions");
+        cached = await AsyncStorage.getItem(`txs_${uid}`)
+          || (!isSupabaseConfigured ? await AsyncStorage.getItem("mock_transactions") : null);
       } catch (cacheError: any) {
         console.warn("[transactions] Lecture du cache local impossible :", cacheError?.message || cacheError);
       }

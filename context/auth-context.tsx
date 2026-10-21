@@ -13,7 +13,24 @@ WebBrowser.maybeCompleteAuthSession();
 
 const OFFLINE_USER_KEY = "offline_user";
 const OFFLINE_USERS_KEY = "offline_users"; // [{email,passwordHash,uid,name}]
+const AUTH_SESSION_MODE_KEY = "auth_session_mode";
 const isOfflineError = (msg: string) => /fetch|network|offline|Failed to fetch|Network request failed/i.test(msg || "");
+async function setAuthSessionMode(mode: "supabase" | "offline") {
+  try {
+    await AsyncStorage.setItem(AUTH_SESSION_MODE_KEY, mode);
+  } catch (error: any) {
+    console.warn("[auth] Impossible d'enregistrer le mode de session :", error?.message || error);
+  }
+}
+
+async function clearCachedRemoteSession() {
+  try {
+    await AsyncStorage.multiRemove([OFFLINE_USER_KEY, "mock_user", AUTH_SESSION_MODE_KEY]);
+  } catch (error: any) {
+    console.warn("[auth] Impossible d'effacer la session locale obsolète :", error?.message || error);
+  }
+}
+
 // Compte créé mais email jamais confirmé (Supabase "Confirm email" actif)
 const isNotConfirmed = (msg: string) => /confirm|not confirmed|email not confirmed/i.test(msg || "");
 const NOT_CONFIRMED_MSG = "Compte non confirmé. Vérifie ta boîte mail (pense aux spams), clique le lien, puis reconnecte-toi.";
@@ -126,32 +143,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      // 1) Toujours essayer de restaurer une session offline d'abord (mode avion)
       const offline = await getOfflineSession();
-      if (offline && !cancelled) {
-        setUser(offline);
-      }
-
       if (!isSupabaseConfigured) {
+        if (offline && !cancelled) setUser(offline);
         if (!cancelled) setInitializing(false);
         return;
       }
 
-      // 2) Puis essayer Supabase : si offline, on garde la session offline
       try {
         const { data: { session } }: any = await supabase.auth.getSession();
-        if (!cancelled && session?.user) {
-          const u: UserType = {
-            uid: session.user.id,
-            email: session.user.email ?? null,
-            name: (session.user.user_metadata?.name as string) ?? session.user.email?.split("@")[0] ?? null,
-            image: (session.user.user_metadata?.avatar_url as string) ?? null,
-          };
-          setUser(u);
-          await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u));
-          updateUserData(session.user.id);
+        if (session?.user) {
+          const { data: { user: verifiedUser }, error } = await supabase.auth.getUser();
+          if (error) {
+            if (isOfflineError(error.message) && offline?.uid === session.user.id) {
+              if (!cancelled) setUser(offline);
+            } else {
+              await supabase.auth.signOut({ scope: "local" });
+              await clearCachedRemoteSession();
+              if (!cancelled) setUser(null);
+            }
+          } else if (verifiedUser && !cancelled) {
+            const u: UserType = {
+              uid: verifiedUser.id,
+              email: verifiedUser.email ?? null,
+              name: (verifiedUser.user_metadata?.name as string) ?? verifiedUser.email?.split("@")[0] ?? null,
+              image: (verifiedUser.user_metadata?.avatar_url as string) ?? null,
+            };
+            setUser(u);
+            await setAuthSessionMode("supabase");
+            await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u));
+            updateUserData(verifiedUser.id);
+          } else {
+            await supabase.auth.signOut({ scope: "local" });
+            await clearCachedRemoteSession();
+            if (!cancelled) setUser(null);
+          }
+        } else {
+          const mode = await AsyncStorage.getItem(AUTH_SESSION_MODE_KEY);
+          if (!cancelled && offline && (mode === "offline" || offline.uid?.startsWith("offline-"))) {
+            setUser(offline);
+          } else {
+            await clearCachedRemoteSession();
+            if (!cancelled) setUser(null);
+          }
         }
-      } catch {}
+      } catch (error: any) {
+        const mode = await AsyncStorage.getItem(AUTH_SESSION_MODE_KEY).catch(() => null);
+        if (!cancelled && offline && (mode === "offline" || offline.uid?.startsWith("offline-"))) {
+          setUser(offline);
+        } else if (!isOfflineError(error?.message)) {
+          await clearCachedRemoteSession();
+          if (!cancelled) setUser(null);
+        } else if (!cancelled && offline && mode === "supabase") {
+          setUser(offline);
+        }
+      }
       if (!cancelled) setInitializing(false);
     })();
 
@@ -166,12 +212,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           image: (session.user.user_metadata?.avatar_url as string) ?? null,
         };
         setUser(u);
+        await setAuthSessionMode("supabase");
         try { await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u)); } catch {}
         updateUserData(session.user.id);
       } else {
-        // Ne pas écraser la session offline si on est en mode avion (pas de session mais offline_user existe)
         const off = await getOfflineSession();
-        if (!off) setUser(null);
+        const mode = await AsyncStorage.getItem(AUTH_SESSION_MODE_KEY).catch(() => null);
+        if (off && (mode === "offline" || off.uid?.startsWith("offline-"))) {
+          setUser(off);
+        } else {
+          await clearCachedRemoteSession();
+          setUser(null);
+        }
       }
       setInitializing(false);
     });
@@ -192,6 +244,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (isSupabaseConfigured) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (!error) {
+          await setAuthSessionMode("supabase");
           await resetRateLimit();
           return { success: true };
         }
@@ -220,6 +273,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           const u: UserType = { uid: found.uid, email: found.email, name: found.name, image: null };
           setUser(u);
           await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u));
+          await setAuthSessionMode("offline");
           await resetRateLimit();
           return { success: true };
         }
@@ -241,6 +295,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             const u: UserType = { uid: found.uid, email: found.email, name: found.name, image: null };
             setUser(u);
             await AsyncStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(u));
+            await setAuthSessionMode("offline");
             await resetRateLimit();
             return { success: true };
           }
@@ -479,8 +534,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (isSupabaseConfigured) await supabase.auth.signOut().catch(() => {});
       setUser(null);
       try {
-        await AsyncStorage.removeItem(OFFLINE_USER_KEY);
-        await AsyncStorage.removeItem("mock_user");
+        await AsyncStorage.multiRemove([OFFLINE_USER_KEY, "mock_user", AUTH_SESSION_MODE_KEY]);
         // purge sensible: wallets, transactions, pending
         // SAUF prefs appareil : broadcasts vus/notifiés/snoozés + verrou (pas liés au compte)
         const keep = (k: string) =>

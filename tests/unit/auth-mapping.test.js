@@ -115,3 +115,31 @@ describe("app-lock : configuration facultative", () => {
     assert.doesNotMatch(appLockHook, /setShowEnroll|showEnroll/);
   });
 });
+
+describe("session persistante : isolation des utilisateurs", () => {
+  it("valide la session Supabase et supprime un compte distant sans session", () => {
+    assert.match(authContext, /supabase\.auth\.getUser\(\)/);
+    assert.match(authContext, /signOut\(\{ scope: "local" \}\)/);
+    assert.match(authContext, /multiRemove\(\[OFFLINE_USER_KEY, "mock_user", AUTH_SESSION_MODE_KEY\]\)/);
+  });
+
+  it("ne restaure une session hors ligne que si elle est explicitement locale", () => {
+    assert.match(authContext, /mode === "offline" \|\| offline\.uid\?\.startsWith\("offline-"\)/);
+    assert.match(authContext, /mode === "offline" \|\| off\.uid\?\.startsWith\("offline-"\)/);
+  });
+
+  it("n'utilise pas les caches globaux mock pour un utilisateur Supabase", () => {
+    const hook = fs.readFileSync(path.join(process.cwd(), "hooks", "use-supabase-data.ts"), "utf8");
+    assert.match(hook, /wallets_\$\{uid\}[\s\S]*?!isSupabaseConfigured \? await AsyncStorage\.getItem\("mock_wallets"\)/);
+    assert.match(hook, /txs_\$\{uid\}[\s\S]*?!isSupabaseConfigured \? await AsyncStorage\.getItem\("mock_transactions"\)/);
+  });
+
+  it("incrémente la version Android pour remplacer le build déjà installé", () => {
+    const appConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), "app.json"), "utf8"));
+    assert.equal(appConfig.expo.version, "1.1.1");
+    assert.equal(appConfig.expo.android.versionCode, 3);
+    const gradle = fs.readFileSync(path.join(process.cwd(), "android", "app", "build.gradle"), "utf8");
+    assert.match(gradle, /versionCode 3/);
+    assert.match(gradle, /versionName "1\.1\.1"/);
+  });
+});
