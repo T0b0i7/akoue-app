@@ -23,6 +23,7 @@ describe("e-mail d'annonce de mise à jour", () => {
     assert.match(notifications, /f_send_email/);
     assert.match(notifications, /confirm\("Envoyer cet e-mail de service/);
     assert.match(notifications, /\/api\/admin\/send-update-email/);
+    assert.match(notifications, /kind !== "update"/);
   });
 
   it("protège l'envoi avec l'identité et le rôle admin Supabase, sans service_role", () => {
@@ -31,6 +32,8 @@ describe("e-mail d'annonce de mise à jour", () => {
     assert.match(endpoint, /\/rest\/v1\/admin_users/);
     assert.match(endpoint, /Seul un administrateur Akouè/);
     assert.match(endpoint, /SMTP_APP_PASSWORD/);
+    assert.match(endpoint, /const downloadUrl = actionUrl\?\.trim\(\) \|\| ""/);
+    assert.match(endpoint, /const downloadButton = parsedUrl/);
     assert.doesNotMatch(endpoint, /SERVICE_ROLE|service_role/i);
     assert.match(endpoint, /bcc: batch/);
   });

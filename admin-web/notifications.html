@@ -21,7 +21,7 @@
     <div class="row">
       <select id="f_kind"><option value="info">info</option><option value="update">update (mise à jour)</option></select>
       <input id="f_version" placeholder="Version ciblée (ex : 1.2.0)">
-      <input id="f_url" placeholder="Lien mise à jour (store)">
+      <input id="f_url" placeholder="Lien APK Expo (facultatif pour une annonce à venir)">
     </div>
     <textarea id="f_details" rows="2" placeholder="Détails vulgarisés (optionnel)"></textarea>
     <label class="row" style="align-items:center;gap:10px">
@@ -57,8 +57,8 @@ async function publish() {
   const version = document.getElementById("f_version").value.trim();
   const actionUrl = document.getElementById("f_url").value.trim();
   if (!title || !body) { alert("Titre + message requis"); return; }
-  if (sendEmail && (kind !== "update" || !actionUrl)) {
-    alert("L'e-mail de mise à jour nécessite le type « update » et un lien de téléchargement.");
+  if (sendEmail && kind !== "update") {
+    alert("L'e-mail de service nécessite le type « update ».");
     return;
   }
   if (sendEmail && !confirm("Envoyer cet e-mail de service à tous les comptes Akouè inscrits avec une adresse e-mail ? L'envoi ne pourra pas être annulé.")) return;

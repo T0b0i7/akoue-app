@@ -73,17 +73,23 @@ module.exports = async function sendUpdateEmail(req, res) {
     return respond(res, 400, { error: "Titre, message ou détails invalides." });
   }
 
-  let parsedUrl;
-  try {
-    parsedUrl = new URL(actionUrl);
-  } catch {
+  if (actionUrl != null && typeof actionUrl !== "string") {
     return respond(res, 400, { error: "Lien de téléchargement invalide." });
   }
-  if (parsedUrl.protocol !== "https:"
-    || parsedUrl.username
-    || parsedUrl.password
-    || (parsedUrl.hostname !== "expo.dev" && !parsedUrl.hostname.endsWith(".expo.dev"))) {
-    return respond(res, 400, { error: "Le lien de mise à jour doit être un lien HTTPS Expo." });
+  const downloadUrl = actionUrl?.trim() || "";
+  let parsedUrl = null;
+  if (downloadUrl) {
+    try {
+      parsedUrl = new URL(downloadUrl);
+    } catch {
+      return respond(res, 400, { error: "Lien de téléchargement invalide." });
+    }
+    if (parsedUrl.protocol !== "https:"
+      || parsedUrl.username
+      || parsedUrl.password
+      || (parsedUrl.hostname !== "expo.dev" && !parsedUrl.hostname.endsWith(".expo.dev"))) {
+      return respond(res, 400, { error: "Le lien de mise à jour doit être un lien HTTPS Expo." });
+    }
   }
 
   let deliveryClaimed = false;
@@ -221,10 +227,14 @@ module.exports = async function sendUpdateEmail(req, res) {
     const safeTitle = escapeHtml(title.trim());
     const safeBody = escapeHtml(body.trim()).replace(/\r?\n/g, "<br>");
     const safeDetails = escapeHtml(details).replace(/\r?\n/g, "<br>");
-    const safeUrl = escapeHtml(parsedUrl.toString());
+    const safeUrl = parsedUrl ? escapeHtml(parsedUrl.toString()) : "";
     const subject = `Mise à jour Akouè${version.trim() ? ` ${version.trim()}` : ""} : ${title.trim()}`;
-    const text = `${title.trim()}\n\n${body.trim()}${details.trim() ? `\n\n${details.trim()}` : ""}\n\nTélécharger la mise à jour : ${parsedUrl.toString()}\n\nTu reçois cet e-mail car tu as un compte Akouè.`;
-    const html = `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#202124;max-width:560px;margin:auto"><h1>${safeTitle}</h1><p>${safeBody}</p>${safeDetails ? `<p>${safeDetails}</p>` : ""}<p><a href="${safeUrl}" style="display:inline-block;background:#7047eb;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none">Télécharger la mise à jour</a></p><p style="font-size:12px;color:#666">Tu reçois cet e-mail car tu as un compte Akouè. Il s'agit d'une information relative au service, pas d'une newsletter.</p></div>`;
+    const downloadText = parsedUrl ? `\n\nTélécharger la mise à jour : ${parsedUrl.toString()}` : "";
+    const downloadButton = parsedUrl
+      ? `<p><a href="${safeUrl}" style="display:inline-block;background:#7047eb;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none">Télécharger la mise à jour</a></p>`
+      : "";
+    const text = `${title.trim()}\n\n${body.trim()}${details.trim() ? `\n\n${details.trim()}` : ""}${downloadText}\n\nTu reçois cet e-mail car tu as un compte Akouè.`;
+    const html = `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#202124;max-width:560px;margin:auto"><h1>${safeTitle}</h1><p>${safeBody}</p>${safeDetails ? `<p>${safeDetails}</p>` : ""}${downloadButton}<p style="font-size:12px;color:#666">Tu reçois cet e-mail car tu as un compte Akouè. Il s'agit d'une information relative au service, pas d'une newsletter.</p></div>`;
 
     const emailList = [...recipients];
     for (let offset = 0; offset < emailList.length; offset += BCC_BATCH_SIZE) {

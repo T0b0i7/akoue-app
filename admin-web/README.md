@@ -28,7 +28,7 @@ l'app mobile n'est pas impactée.
 
 ## Annoncer une mise à jour par e-mail
 
-Sur `notifications.html`, publier une annonce de type `update`, renseigner le lien APK Expo, puis cocher l'envoi de l'e-mail de service. L'envoi requiert que `admin-web/supabase-admin.sql` puis `supabase/broadcast-email-deliveries.sql` aient été exécutés dans l'éditeur SQL Supabase et que l'admin dispose d'une session valide.
+Sur `notifications.html`, publier une annonce de type `update`, puis cocher l'envoi de l'e-mail de service. Le lien APK Expo est facultatif pour une préannonce ; lorsqu'il est renseigné, un bouton de téléchargement est inclus. L'envoi requiert que `admin-web/supabase-admin.sql` puis `supabase/broadcast-email-deliveries.sql` aient été exécutés dans l'éditeur SQL Supabase et que l'admin dispose d'une session valide.
 
 Dans Vercel, configurer ces variables d'environnement pour l'API `/api/admin/send-update-email` :
 
