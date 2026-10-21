@@ -124,12 +124,13 @@ describe("session persistante : isolation des utilisateurs", () => {
   });
 
   describe("audio et ancien verrou", () => {
-    it("coupe la musique automatiquement sur les formulaires d'authentification", () => {
+    it("ne joue la musique que sur l'écran de bienvenue", () => {
       const audio = fs.readFileSync(path.join(process.cwd(), "context", "audio-context.tsx"), "utf8");
       assert.match(audio, /usePathname/);
-      assert.match(audio, /login\|sign-up\|forgot-password\|reset-password/);
+      assert.match(audio, /welcomeScreenActive = .*welcome/);
+      assert.match(audio, /const muted = userMuted \|\| !welcomeScreenActive/);
       assert.match(audio, /if \(muted\) \{\s*player\.pause\(\)/);
-      assert.match(audio, /if \(authFormOpen\) return/);
+      assert.match(audio, /if \(!welcomeScreenActive\) return/);
     });
 
     it("désactive une fois l'ancien verrou et bloque sa restauration depuis le cloud", () => {
@@ -155,9 +156,9 @@ describe("session persistante : isolation des utilisateurs", () => {
   it("incrémente la version Android pour remplacer le build déjà installé", () => {
     const appConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), "app.json"), "utf8"));
     assert.equal(appConfig.expo.version, "1.1.2");
-    assert.equal(appConfig.expo.android.versionCode, 4);
+    assert.equal(appConfig.expo.android.versionCode, 5);
     const gradle = fs.readFileSync(path.join(process.cwd(), "android", "app", "build.gradle"), "utf8");
-    assert.match(gradle, /versionCode 4/);
+    assert.match(gradle, /versionCode 5/);
     assert.match(gradle, /versionName "1\.1\.2"/);
   });
 });

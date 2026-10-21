@@ -13,8 +13,8 @@ const AudioContext = createContext<AudioContextType | null>(null)
 export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [userMuted, setUserMuted] = useState(false)
   const pathname = usePathname()
-  const authFormOpen = /\/(login|sign-up|forgot-password|reset-password)(\/|$)/.test(pathname ?? "")
-  const muted = userMuted || authFormOpen
+  const welcomeScreenActive = /(?:^|\/)welcome(?:\/|$)/.test(pathname ?? "")
+  const muted = userMuted || !welcomeScreenActive
   const player = useAudioPlayer(require("@/public/sounds/money-theme.wav"))
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   }, [muted, player])
 
   const toggleSound = () => {
-    if (authFormOpen) return
+    if (!welcomeScreenActive) return
     const next = !userMuted
     setUserMuted(next)
     try {

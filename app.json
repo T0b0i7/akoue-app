@@ -19,7 +19,7 @@
       }
     },
     "android": {
-      "versionCode": 4,
+      "versionCode": 5,
       "adaptiveIcon": {
         "foregroundImage": "./public/images/mono-akoue.png",
         "backgroundColor": "#171717"
