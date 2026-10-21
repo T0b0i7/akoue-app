@@ -26,10 +26,19 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
+
+      - name: Install project dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Install EAS CLI
         run: npm install --global eas-cli
@@ -39,4 +48,7 @@ jobs:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EAS_CHANNEL: ${{ inputs.channel }}
           RELEASE_MESSAGE: ${{ inputs.message }}
-        run: eas update --channel "$EAS_CHANNEL" --platform android --message "$RELEASE_MESSAGE" --non-interactive
+          CI: "1"
+        run: |
+          test -n "$EXPO_TOKEN" || (echo "Set the repository EXPO_TOKEN secret first." && exit 1)
+          eas update --channel "$EAS_CHANNEL" --platform android --message "$RELEASE_MESSAGE"

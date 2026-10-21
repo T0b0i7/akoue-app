@@ -89,6 +89,7 @@ module.exports = async function sendUpdateEmail(req, res) {
   let deliveryClaimed = false;
   let sentCount = 0;
   let recipientCount = 0;
+  let smtp = null;
   try {
     const { data: admin } = await supabaseRequest(
       supabaseUrl,
@@ -207,7 +208,7 @@ module.exports = async function sendUpdateEmail(req, res) {
     }
     deliveryClaimed = true;
 
-    const smtp = nodemailer.createTransport({
+    smtp = nodemailer.createTransport({
       host: process.env.SMTP_HOST || "smtp.gmail.com",
       port: Number(process.env.SMTP_PORT || 587),
       secure: Number(process.env.SMTP_PORT || 587) === 465,
@@ -240,9 +241,21 @@ module.exports = async function sendUpdateEmail(req, res) {
       if ((result.rejected?.length || 0) > 0 || (result.accepted?.length || 0) !== batch.length) {
         throw new Error("Le serveur SMTP a refusé une ou plusieurs adresses.");
       }
+      await supabaseRequest(
+        supabaseUrl,
+        anonKey,
+        accessToken,
+        `/rest/v1/broadcast_email_deliveries?${new URLSearchParams({ broadcast_id: `eq.${broadcastId}`, status: "eq.sending" })}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", Prefer: "return=minimal" },
+          body: JSON.stringify({ sent_count: sentCount, updated_at: new Date().toISOString() }),
+        }
+      );
     }
 
     await smtp.close();
+    smtp = null;
     await supabaseRequest(
       supabaseUrl,
       anonKey,
@@ -256,6 +269,7 @@ module.exports = async function sendUpdateEmail(req, res) {
     );
     return respond(res, 200, { sentCount, recipientCount });
   } catch (error) {
+    if (smtp) smtp.close();
     if (deliveryClaimed) {
       try {
         await supabaseRequest(
