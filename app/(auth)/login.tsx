@@ -63,8 +63,8 @@ const Login = () => {
   const handleVerify = async () => {
     if (!verifyEmail) return
     const clean = code.replace(/\D/g, "")
-    if (clean.length < 6) {
-      showToast("error", t("error"), "Entre le code a 6 chiffres recu par mail.")
+    if (clean.length !== 8) {
+      showToast("error", t("error"), "Entre les 8 chiffres du code reçu par mail.")
       return
     }
     setVerifying(true)
@@ -199,13 +199,13 @@ const Login = () => {
                   {t("verifyEmailMsg")}
                 </Typo>
                 <Typo size={13} color={colors.white} fontWeight="700" style={{ textAlign: "center", lineHeight: 19 }}>
-                  Code a 6 chiffres envoye a {verifyEmail}. Saisis-le pour activer ton compte.
+                  Code à 8 chiffres envoyé à {verifyEmail}. Saisis-le pour activer ton compte.
                 </Typo>
                 <View style={styles.fieldShell}>
                   <Input
-                    placeholder="000000"
+                    placeholder="00000000"
                     keyboardType="number-pad"
-                    maxLength={6}
+                    maxLength={8}
                     value={code}
                     onChangeText={(v: string) => setCode(v.replace(/[^0-9]/g, ""))}
                     inputStyle={styles.codeInput}

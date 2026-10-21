@@ -23,12 +23,16 @@ export const TransactionList = ({
   title,
   loading,
   emptyListMessage,
+  error,
+  onRetry,
   hasMore,
   loadMore,
 }: TransactionListType) => {
   //hande transaction item click function
 
   const router = useRouter()
+  const { user } = useAuth()
+  const { data: wallets } = useSupabaseWallets(user?.uid)
   const handleClick = (item: TransactionType) => {
     const d: any = item?.date;
     const iso = d?.toDate ? d.toDate().toISOString() : d ? new Date(d).toISOString() : new Date().toISOString();
@@ -62,6 +66,7 @@ export const TransactionList = ({
             <TransactionItem
               item={item}
               index={index}
+              wallets={wallets}
               handleClick={handleClick}
             />
           )}
@@ -96,6 +101,18 @@ export const TransactionList = ({
           <LoadingCompenent />
         </View>
       )}
+      {!!error && !loading && (
+        <View style={styles.errorContainer}>
+          <Typo size={13} color={colors.rose} style={{ textAlign: "center" }}>
+            {error}
+          </Typo>
+          {onRetry ? (
+            <TouchableOpacity onPress={onRetry} accessibilityRole="button">
+              <Typo size={13} color={colors.primary} fontWeight="700">Réessayer</Typo>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      )}
     </View>
   )
 }
@@ -104,10 +121,9 @@ export const TransactionList = ({
 const TransactionItem = ({
   item,
   index,
+  wallets,
   handleClick,
-}: TransactionItemProps) => {
-  const { user } = useAuth()
-  const { data: wallets } = useSupabaseWallets(user?.uid)
+}: TransactionItemProps & { wallets: any[] }) => {
   let category =
     item?.type === "income"
       ? incomeCategory
@@ -214,5 +230,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 12,
+  },
+  errorContainer: {
+    alignItems: "center",
+    gap: 8,
+    marginTop: spacingY._15,
   },
 })

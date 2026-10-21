@@ -86,8 +86,8 @@ const SignUp = () => {
   const handleVerify = async () => {
     if (!pendingEmail) return
     const clean = code.replace(/\D/g, "")
-    if (clean.length < 6) {
-      showToast("error", t("error"), "Entre le code a 6 chiffres recu par mail.")
+    if (clean.length !== 8) {
+      showToast("error", t("error"), "Entre les 8 chiffres du code reçu par mail.")
       return
     }
     setVerifying(true)
@@ -110,7 +110,7 @@ const SignUp = () => {
       if (!res.success) {
         if ((res as any).needsVerification) {
           setPendingEmail(parsed.email.trim())
-          showToast("error", t("error"), res.msg || t("somethingWentWrong"))
+          showToast("success", "Compte créé", res.msg || "Saisis le code reçu par e-mail pour confirmer ton compte.")
         } else {
           showToast("error", t("error"), res.msg || t("somethingWentWrong"))
           Alert.alert(t("error"), res.msg || t("somethingWentWrong"))
@@ -216,13 +216,13 @@ const SignUp = () => {
                   </Typo>
                 </View>
                 <Typo size={13} color={colors.neutral400} style={{ textAlign: "center", lineHeight: 19 }}>
-                  Code a 6 chiffres envoye a {pendingEmail}. Saisis-le ci-dessous (pense aux spams).
+                  Code à 8 chiffres envoyé à {pendingEmail}. Saisis-le ci-dessous (pense aux spams).
                 </Typo>
                 <View style={styles.fieldShell}>
                   <Input
-                    placeholder="000000"
+                    placeholder="00000000"
                     keyboardType="number-pad"
-                    maxLength={6}
+                    maxLength={8}
                     value={code}
                     onChangeText={(v: string) => setCode(v.replace(/[^0-9]/g, ""))}
                     inputStyle={styles.codeInput}

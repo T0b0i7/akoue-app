@@ -285,7 +285,7 @@ const SettingsModal = () => {
             />
             <Typo size={11} color={colors.neutral500}>Biométrie = rien en base (préférable). PIN / mot de passe / schéma = hash bcrypt en base + local.</Typo>
             <TouchableOpacity
-              onPress={async () => { await lock.resetLock(); showToast("success", "Verrou réinitialisé", "Choisis une nouvelle manière de verrouiller"); }}
+              onPress={async () => { await lock.resetLock(); showToast("success", "Verrou désactivé", "Tu peux en configurer un autre à tout moment"); }}
               style={{ paddingVertical: 6 }}
               activeOpacity={0.7}
             >

@@ -7,6 +7,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as bcrypt from "bcryptjs";
 import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from "expo-auth-session";
+import { clearPwaInstallPending, markPwaInstallPending } from "@/services/pwa-install";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -111,7 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     if (initializing) return;
-    // ne pas rediriger pendant le splash/index, language ou choix du verrou : laisses a leurs ecrans
+    // Ne pas rediriger pendant le splash/index, la langue ou la configuration du verrou.
     if (!pathname || pathname === "/" || pathname === "/language" || pathname === "/app-lock-setup") return;
     const inAuth = pathname?.startsWith("/welcome") || pathname?.startsWith("/login") || pathname?.startsWith("/sign-up") || pathname?.startsWith("/forgot") || pathname?.startsWith("/(auth)");
     if (user && inAuth) router.replace("/(tabs)" as any);
@@ -260,6 +261,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
     try {
       if (isSupabaseConfigured) {
+        await markPwaInstallPending(email);
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -268,7 +270,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         if (!error) {
           // Pas de session = email de confirmation en attente : ne pas faire croire que c'est connecté
           if (!data.session) {
-            return { success: false, needsVerification: true, msg: "Compte créé ! Saisis le code à 6 chiffres reçu par mail (pense aux spams)." };
+            return { success: false, needsVerification: true, msg: "Compte créé ! Saisis le code à 8 chiffres reçu par mail (pense aux spams)." };
           }
           if (data.user) {
             try { await supabase.from("profiles").insert({ id: data.user.id, name, email, image: null }); } catch {}
@@ -279,6 +281,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           await resetRateLimit();
           return { success: true };
         }
+        await clearPwaInstallPending(email);
         if (!isOfflineError(error.message)) {
           await incRateLimit();
           const low = error.message.toLowerCase();
@@ -343,10 +346,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const verifyCode = async (email: string, code: string) => {
     if (!isSupabaseConfigured) return { success: false, msg: "Supabase non configuré" };
     const clean = code.trim().replace(/\s/g, "");
-    if (!email?.includes("@") || clean.length < 6) return { success: false, msg: "Code invalide" };
+    if (!email?.includes("@") || clean.length !== 8) return { success: false, msg: "Le code doit contenir 8 chiffres" };
     try {
-      const { data, error } = await supabase.auth.verifyOtp({ email, token: clean, type: "signup" });
+      await markPwaInstallPending(email);
+      const { data, error } = await supabase.auth.verifyOtp({ email, token: clean, type: "email" });
       if (error) {
+        await clearPwaInstallPending(email);
+        if (__DEV__) console.warn("[auth] Échec de vérification OTP :", error.message);
         const msg = error.message.toLowerCase();
         // Supabase renvoie "Token has expired or is invalid" dans les deux cas :
         // on ne peut pas distinguer, on guide vers le dernier code recu.
@@ -366,6 +372,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       return { success: false, msg: "Code invalide" };
     } catch (error: any) {
+      await clearPwaInstallPending(email);
       return { success: false, msg: error.message };
     }
   };

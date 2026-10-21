@@ -3,7 +3,6 @@ import HeaderComponent from "@/components/header"
 import ModalWrapper from "@/components/modal-wrapper"
 import TextInput from "@/components/text-input"
 import { colors, spacingX, spacingY } from "@/constants/theme"
-import { TransactionType } from "@/types"
 import { scale } from "@/utils/styling"
 import React, { useState } from "react"
 import { ScrollView, StyleSheet, View } from "react-native"
@@ -17,12 +16,12 @@ const SearchModal = () => {
   const { user } = useAuth()
   const { t } = useLocale()
 
-  const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState("")
 
   const {
     data: allTransactions,
     error,
+    refetch,
     loading: recentTransactionsLoading,
   } = useSupabaseTransactions(user?.uid, 100)
 
@@ -66,7 +65,9 @@ const SearchModal = () => {
         <ScrollView contentContainerStyle={styles.form}>
           {/* list of all transactions */}
           <TransactionList
-            loading={loading}
+            loading={recentTransactionsLoading}
+            error={error}
+            onRetry={() => { void refetch(); }}
             data={filteredTransactions}
             emptyListMessage={t("noTransactionSearch")}
           />

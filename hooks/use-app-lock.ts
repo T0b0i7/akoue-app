@@ -2,9 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AppState } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-  clearEnrollDone,
   getLocalLock,
-  isEnrollDone,
   markEnrollDone,
   pullLockFromCloud,
   setAppLock,
@@ -67,25 +65,22 @@ export function useAppLock() {
   const [locked, setLocked] = useState(false);
   const [lockoutSecs, setLockoutSecs] = useState(0);
   const [support, setSupport] = useState<FaceSupport | null>(null);
-  const [showEnroll, setShowEnroll] = useState(false);
   const [checking, setChecking] = useState(true);
 
   // Resync légère (retour de la page de configuration) : ne touche pas au verrou
-  const syncEnroll = useCallback(async () => {
+  const syncLock = useCallback(async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) {
         const off = (await AsyncStorage.getItem("offline_user")) || (await AsyncStorage.getItem("mock_user"));
         if (!off) {
-          setShowEnroll(false);
           setLocked(false);
           return;
         }
       }
     } catch {}
-    const [l, done] = await Promise.all([getLocalLock(), isEnrollDone()]);
+    const l = await getLocalLock();
     setMethod(l.method);
-    setShowEnroll(l.method === "none" && !done);
   }, []);
 
   const refresh = useCallback(async () => {
@@ -109,7 +104,6 @@ export function useAppLock() {
     if (!hasAccount) {
       setMethod("none");
       setLocked(false);
-      setShowEnroll(false);
       setChecking(false);
       setLockoutSecs(0);
       return;
@@ -121,10 +115,8 @@ export function useAppLock() {
     // Si compte connecté, la base fait foi pour pin/password/pattern
     await pullLockFromCloud().catch(() => {});
     const after = await getLocalLock().catch(() => local);
-    const done = await isEnrollDone();
     setMethod(after.method);
     setSupport(sup);
-    if (after.method === "none" && !done) setShowEnroll(true);
     setLocked(after.method !== "none");
     setChecking(false);
     setLockoutSecs(await getLockoutSecs());
@@ -212,18 +204,15 @@ export function useAppLock() {
     await markEnrollDone();
     setMethod(m);
     setLocked(m !== "none");
-    setShowEnroll(false);
     return { success: true as const };
   }, []);
 
-  // Réinitialise : efface le verrou, la page de choix sera redemandée
+  // Réinitialise le verrou sans imposer de nouvelle configuration.
   const resetLock = useCallback(async () => {
     await setAppLock("none");
-    await clearEnrollDone();
     setMethod("none");
     setLocked(false);
-    setShowEnroll(true);
   }, []);
 
-  return { method, locked, lockoutSecs, support, showEnroll, checking, unlockBiometric, unlockSecret, choose, resetLock, refresh, syncEnroll };
+  return { method, locked, lockoutSecs, support, checking, unlockBiometric, unlockSecret, choose, resetLock, refresh, syncLock };
 }

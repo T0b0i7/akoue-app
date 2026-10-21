@@ -16,29 +16,35 @@
 <body>
   <div id="root"></div>
   <script>
-    // Enregistrement du Service Worker PWA (installation + hors ligne)
+    // Le service worker ne doit pas servir un ancien bundle Metro en développement.
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then((reg) => console.log('Akouè SW enregistré :', reg.scope))
-          .catch((err) => console.log('Akouè SW erreur :', err));
-      });
+      const localDev = ['localhost', '127.0.0.1'].includes(location.hostname);
+      if (localDev) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          registrations.forEach((registration) => registration.unregister());
+        });
+        if ('caches' in window) {
+          caches.keys().then((keys) => {
+            keys.filter((key) => key.startsWith('akoue-')).forEach((key) => caches.delete(key));
+          });
+        }
+      } else {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .catch((err) => console.warn('Akouè SW erreur :', err));
+        });
+      }
     }
 
     // Détection de l'installation PWA (Android)
-    let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
-      deferredPrompt = e;
+      e.preventDefault();
+      window.__akoueInstallPrompt = e;
+      window.dispatchEvent(new Event('akoue-install-available'));
     });
-    window.__akoueInstall = () => {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choice) => {
-          if (choice.outcome === 'accepted') console.log('Akouè installé');
-          deferredPrompt = null;
-        });
-      }
-    };
+    window.addEventListener('appinstalled', () => {
+      window.__akoueInstallPrompt = null;
+    });
   </script>
 </body>
 </html>

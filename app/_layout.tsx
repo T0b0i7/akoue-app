@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { usePathname, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 // @ts-ignore expo-asset déjà présent via expo mais types pnpm non résolus
@@ -19,6 +19,7 @@ import { useAppLock } from "@/hooks/use-app-lock";
 import { useOTAUpdate } from "@/hooks/use-ota-update";
 import { useBroadcast } from "@/hooks/use-broadcast";
 import UpdateModal from "@/components/update-modal";
+import PwaInstallPrompt from "@/components/pwa-install-prompt";
 
 if (Platform.OS !== "web") {
   SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -73,24 +74,6 @@ function BroadcastWatcher() {
   );
 }
 
-// Choix du verrou obligatoire sur une PAGE (pas de bottom-sheet) :
-// redirige vers la page tant que l'utilisateur n'a pas choisi.
-// Note : usePathname() masque les groupes → "/app-lock-setup", pas "/(modals)/...".
-function LockSetupRedirect({ showEnroll, locked, checking }: { showEnroll: boolean; locked: boolean; checking: boolean }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const redirected = useRef(false);
-  useEffect(() => {
-    if (checking || locked) return;
-    if (showEnroll && pathname !== "/app-lock-setup" && !redirected.current) {
-      redirected.current = true;
-      router.replace("/app-lock-setup" as any);
-    }
-    if (!showEnroll) redirected.current = false;
-  }, [showEnroll, locked, checking, pathname]);
-  return null;
-}
-
 // Coquille interne (sous les providers) : recharge le verrou à chaque
 // changement de compte : sinon on garde le code de l'ancien compte.
 function AppShell() {
@@ -100,7 +83,7 @@ function AppShell() {
   const uid = (user as any)?.uid ?? null;
   // Retour de la page de configuration → resync sans toucher au verrou
   useEffect(() => {
-    lock.syncEnroll();
+    lock.syncLock();
   }, [pathname]);
   // Changement de compte → verrou du nouveau compte (ou déverrouillé si aucun)
   useEffect(() => {
@@ -111,7 +94,7 @@ function AppShell() {
       <OTAWatcher />
       <AuthLinkHandler />
       <BroadcastWatcher />
-      <LockSetupRedirect showEnroll={lock.showEnroll} locked={lock.locked} checking={lock.checking} />
+      <PwaInstallPrompt user={user} />
       <AppToast />
       <AppLockGate
         locked={lock.locked}
@@ -158,12 +141,6 @@ export default function RootLayout() {
       if (!cancelled) setReady(true);
       if (Platform.OS !== "web") {
         SplashScreen.hideAsync().catch(() => {});
-      }
-      // Enregistrement du Service Worker PWA (web uniquement)
-      if (typeof document !== "undefined" && "serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/sw.js")
-          .then((reg) => console.log("Akouè SW enregistré :", reg.scope))
-          .catch((err) => console.log("Akouè SW erreur :", err));
       }
       try {
         if (typeof document !== "undefined" && (window as any).hideSplash) (window as any).hideSplash();

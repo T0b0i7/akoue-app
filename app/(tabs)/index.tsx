@@ -23,6 +23,8 @@ const Home = () => {
   const {
     data: recentTransactions,
     loading: recentTransactionsLoading,
+    error: recentTransactionsError,
+    refetch: refetchTransactions,
     hasMore,
     loadMore,
   } = useSupabaseTransactions(user?.uid, 30);
@@ -65,6 +67,8 @@ const Home = () => {
           <TransactionList
             data={recentTransactions}
             loading={recentTransactionsLoading}
+            error={recentTransactionsError}
+            onRetry={() => { void refetchTransactions(); }}
             emptyListMessage={t("noTransactions")}
             title={t("recentTransactions")}
             hasMore={hasMore}

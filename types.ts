@@ -96,6 +96,8 @@ export type TransactionListType = {
   title?: string;
   loading?: boolean;
   emptyListMessage?: string;
+  error?: string | null;
+  onRetry?: () => void;
   hasMore?: boolean;
   loadMore?: () => void;
 };
