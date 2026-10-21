@@ -1,0 +1,42 @@
+name: Publish Android OTA update
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: EAS update channel
+        required: true
+        type: choice
+        options:
+          - preview
+          - production
+        default: preview
+      message:
+        description: Short release description
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install EAS CLI
+        run: npm install --global eas-cli
+
+      - name: Publish compatible Android update
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_CHANNEL: ${{ inputs.channel }}
+          RELEASE_MESSAGE: ${{ inputs.message }}
+        run: eas update --channel "$EAS_CHANNEL" --platform android --message "$RELEASE_MESSAGE" --non-interactive

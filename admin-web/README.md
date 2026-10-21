@@ -25,3 +25,21 @@ l'app mobile n'est pas impactée.
 - Pas de `service_role` nulle part — l'accès admin passe par le RLS
   (`admin_users` + `auth.jwt() ->> 'email'`).
 - L'app mobile garde ses policies `uid = auth.uid()` : chaque user ne voit que ses données.
+
+## Annoncer une mise à jour par e-mail
+
+Sur `notifications.html`, publier une annonce de type `update`, renseigner le lien APK Expo, puis cocher l'envoi de l'e-mail de service. L'envoi requiert que la migration `supabase/broadcast-email-deliveries.sql` ait été exécutée et que l'admin dispose d'une session valide.
+
+Dans Vercel, configurer ces variables d'environnement pour l'API `/api/admin/send-update-email` :
+
+- `SMTP_USER` : `[redacted-email]`
+- `SMTP_APP_PASSWORD` : mot de passe d'application Gmail (secret, jamais dans le dépôt ni dans le client)
+- `EXPO_PUBLIC_SUPABASE_URL` et `EXPO_PUBLIC_SUPABASE_ANON_KEY` : déjà nécessaires à l'app
+
+L'API vérifie l'administrateur côté serveur, récupère les adresses autorisées par RLS, masque les destinataires en BCC et consigne l'envoi par annonce pour empêcher les doublons. Elle n'utilise pas de clé `service_role`. En cas d'envoi partiel, elle ne relance pas automatiquement les mêmes messages. L'envoi est limité à 450 adresses par annonce pour rester dans la capacité d'un compte Gmail courant.
+
+## Publication OTA Android
+
+Les modifications JavaScript compatibles sont téléchargées en arrière-plan par l'application et prises en compte à son prochain démarrage. Pour publier une OTA de test locale, utiliser `pnpm update:android:preview`; pour la production, `pnpm update:android:production`.
+
+Le workflow GitHub **Publish Android OTA update** permet aussi de choisir `preview` ou `production` et de publier depuis Actions. Ajouter une fois un secret de dépôt `EXPO_TOKEN` créé dans le compte Expo. Les changements natifs (permissions, modules ou configuration native) exigent toujours un nouvel APK et ne doivent pas être publiés en OTA.

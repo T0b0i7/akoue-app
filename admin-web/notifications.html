@@ -24,6 +24,10 @@
       <input id="f_url" placeholder="Lien mise à jour (store)">
     </div>
     <textarea id="f_details" rows="2" placeholder="Détails vulgarisés (optionnel)"></textarea>
+    <label class="row" style="align-items:center;gap:10px">
+      <input id="f_send_email" type="checkbox" style="width:auto">
+      <span>Envoyer aussi un e-mail de service aux comptes inscrits (une seule fois)</span>
+    </label>
     <button class="primary" onclick="publish()">Publier pour tous</button>
   </div>
 
@@ -48,17 +52,62 @@ async function load() {
 async function publish() {
   const title = document.getElementById("f_title").value.trim();
   const body = document.getElementById("f_body").value.trim();
+  const sendEmail = document.getElementById("f_send_email").checked;
+  const kind = document.getElementById("f_kind").value;
+  const version = document.getElementById("f_version").value.trim();
+  const actionUrl = document.getElementById("f_url").value.trim();
   if (!title || !body) { alert("Titre + message requis"); return; }
-  const { error } = await sb.from("broadcasts").insert({
+  if (sendEmail && (kind !== "update" || !actionUrl)) {
+    alert("L'e-mail de mise à jour nécessite le type « update » et un lien de téléchargement.");
+    return;
+  }
+  if (sendEmail && !confirm("Envoyer cet e-mail de service à tous les comptes Akouè inscrits avec une adresse e-mail ? L'envoi ne pourra pas être annulé.")) return;
+  const { data: broadcast, error } = await sb.from("broadcasts").insert({
     title, body,
-    kind: document.getElementById("f_kind").value,
-    version: document.getElementById("f_version").value || null,
+    kind,
+    version: version || null,
     details: document.getElementById("f_details").value || null,
-    action_url: document.getElementById("f_url").value || null,
+    action_url: actionUrl || null,
     active: true,
-  });
+  }).select("id").single();
   if (error) { alert("Erreur : " + error.message); return; }
+  if (sendEmail) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.access_token) {
+      alert("Annonce publiée, mais aucun jeton admin n'est disponible pour l'e-mail.");
+      return;
+    }
+    try {
+      const response = await fetch("https://akoue-app.vercel.app/api/admin/send-update-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          broadcastId: broadcast.id,
+          title,
+          body,
+          details: document.getElementById("f_details").value.trim(),
+          version,
+          actionUrl,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        alert(`Annonce publiée. E-mail non envoyé : ${result.error || "erreur serveur"}${result.sentCount ? ` (${result.sentCount}/${result.recipientCount} destinataires déjà traités)` : ""}`);
+        load();
+        return;
+      }
+      alert(`Annonce publiée et e-mail envoyé à ${result.sentCount} compte(s).`);
+    } catch (e) {
+      alert(`Annonce publiée, mais l'envoi d'e-mail a échoué : ${e.message}`);
+      load();
+      return;
+    }
+  }
   ["f_title","f_body","f_version","f_details","f_url"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("f_send_email").checked = false;
   load();
 }
 async function toggle(id, active) {
