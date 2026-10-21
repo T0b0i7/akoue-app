@@ -24,6 +24,9 @@ describe("e-mail d'annonce de mise à jour", () => {
     assert.match(notifications, /confirm\("Envoyer cet e-mail de service/);
     assert.match(notifications, /\/api\/admin\/send-update-email/);
     assert.match(notifications, /kind !== "update"/);
+    assert.match(notifications, /if \(version\) announcement\.version = version/);
+    assert.match(notifications, /if \(actionUrl\) announcement\.action_url = actionUrl/);
+    assert.match(notifications, /if \(details\) announcement\.details = details/);
   });
 
   it("protège l'envoi avec l'identité et le rôle admin Supabase, sans service_role", () => {

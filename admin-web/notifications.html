@@ -62,14 +62,16 @@ async function publish() {
     return;
   }
   if (sendEmail && !confirm("Envoyer cet e-mail de service à tous les comptes Akouè inscrits avec une adresse e-mail ? L'envoi ne pourra pas être annulé.")) return;
-  const { data: broadcast, error } = await sb.from("broadcasts").insert({
+  const details = document.getElementById("f_details").value.trim();
+  const announcement = {
     title, body,
     kind,
-    version: version || null,
-    details: document.getElementById("f_details").value || null,
-    action_url: actionUrl || null,
     active: true,
-  }).select("id").single();
+  };
+  if (version) announcement.version = version;
+  if (actionUrl) announcement.action_url = actionUrl;
+  if (details) announcement.details = details;
+  const { data: broadcast, error } = await sb.from("broadcasts").insert(announcement).select("id").single();
   if (error) { alert("Erreur : " + error.message); return; }
   if (sendEmail) {
     const { data: { session } } = await sb.auth.getSession();
@@ -88,7 +90,7 @@ async function publish() {
           broadcastId: broadcast.id,
           title,
           body,
-          details: document.getElementById("f_details").value.trim(),
+          details,
           version,
           actionUrl,
         }),
