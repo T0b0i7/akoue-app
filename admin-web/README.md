@@ -8,7 +8,9 @@ l'app mobile n'est pas impactée.
 - `index.html` — connexion + KPI (inscrits, 7j, wallets, transactions, revenus/dépenses)
 - `users.html` — liste des inscrits (nom, email, inscription, wallets, tx, activité, verrou) + recherche + export CSV
 - `notifications.html` — publier une notif visible par TOUS les utilisateurs de l'app (`info` / `update`)
-- `styles.css`, `app.js`, `config.js` — style + logique partagée
+- `styles.css`, `app.js`, `config.js` — interface responsive + logique partagée
+
+Le dashboard utilise une interface sombre pensée pour les écrans d’administration, avec navigation clavier visible, adaptation mobile et messages d’erreur en cas d’échec de chargement des données.
 
 ## Mise en route (une fois)
 

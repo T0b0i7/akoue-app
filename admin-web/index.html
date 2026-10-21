@@ -8,87 +8,149 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-<nav><span class="brand">Akouè Admin</span><a href="index.html">Dashboard</a><a href="users.html">Utilisateurs</a><a href="notifications.html">Notifications</a><button id="logout">Déconnexion</button></nav>
+<nav><span class="brand"><span class="brand-mark" aria-hidden="true">A</span>Akouè <span class="muted">Admin</span></span><a href="index.html" aria-current="page">Dashboard</a><a href="users.html">Utilisateurs</a><a href="notifications.html">Notifications</a><button id="logout" hidden>Déconnexion</button></nav>
 <main>
-  <div id="login" class="panel login" style="display:none">
+  <div id="authLoading" class="panel status-text" role="status">Vérification de la session administrateur…</div>
+  <div id="login" class="panel login" hidden>
+    <p class="eyebrow">Espace sécurisé</p>
     <h2>Connexion admin</h2>
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Mot de passe">
-    <p id="loginErr" class="err"></p>
+    <p class="muted">Connecte-toi avec un compte autorisé dans la table admin_users.</p>
+    <label class="form-field" for="email">Adresse e-mail<input id="email" type="email" autocomplete="username" placeholder="[REDACTED_EMAIL]"></label>
+    <label class="form-field" for="password">Mot de passe<input id="password" type="password" autocomplete="current-password" placeholder="Mot de passe"></label>
+    <p id="loginErr" class="alert" role="alert" hidden></p>
     <button class="primary" onclick="doLogin()">Se connecter</button>
-    <button class="ghost" id="resendBtn" style="display:none" onclick="resendLink()">Renvoyer le lien de confirmation</button>
-    <p class="muted">Ton email doit être dans la table admin_users.</p>
+    <button class="ghost" id="resendBtn" hidden onclick="resendLink()">Renvoyer le lien de confirmation</button>
   </div>
-  <div id="dash" style="display:none">
-    <h1>Vue d'ensemble</h1>
-    <div class="cards" id="cards"></div>
+  <div id="dash" hidden>
+    <header class="page-header">
+      <div><p class="eyebrow">Pilotage Akouè</p><h1>Vue d’ensemble</h1><p>Activité globale de la plateforme et mouvements déclarés.</p></div>
+      <span id="updatedAt" class="updated-at"></span>
+    </header>
+    <p id="dashError" class="alert" role="alert" hidden></p>
+    <section class="cards" id="cards" aria-label="Indicateurs clés"></section>
+    <div class="dashboard-grid">
+      <section class="panel">
+        <div class="section-header"><div><h2>Flux financiers</h2><p>Sommes calculées à partir des transactions disponibles.</p></div></div>
+        <div id="finance" class="finance-list"></div>
+        <p class="finance-note">Les revenus et dépenses reflètent uniquement les enregistrements accessibles à ce compte.</p>
+      </section>
+      <section class="panel">
+        <div class="section-header"><div><h2>À retenir</h2><p>Les indicateurs sont actualisés à l’ouverture.</p></div></div>
+        <p class="muted">Les inscriptions récentes sont comptées sur les 7 derniers jours. Les volumes de transactions et de wallets couvrent les données accessibles dans l’espace d’administration.</p>
+        <a class="button" href="users.html">Consulter les utilisateurs</a>
+      </section>
+    </div>
   </div>
 </main>
 <script src="config.js"></script>
 <script src="app.js"></script>
 <script>
 async function doLogin() {
-  document.getElementById("resendBtn").style.display = "none";
+  const errorMessage = document.getElementById("loginErr");
+  document.getElementById("resendBtn").hidden = true;
+  errorMessage.hidden = true;
   const email = document.getElementById("email").value.trim();
-  const { error } = await sb.auth.signInWithPassword({
-    email,
-    password: document.getElementById("password").value,
-  });
+  let error;
+  try {
+    ({ error } = await sb.auth.signInWithPassword({ email, password: document.getElementById("password").value }));
+  } catch (e) {
+    errorMessage.textContent = "Connexion impossible : " + e.message;
+    errorMessage.hidden = false;
+    return;
+  }
   if (error) {
     const msg = error.message || "";
     if (/not confirmed|confirm/i.test(msg)) {
-      document.getElementById("loginErr").textContent =
+      errorMessage.textContent =
         "Compte créé mais email jamais confirmé. Clique le lien reçu par mail (vérifie les spams), ou renvoie-le ci-dessous.";
-      document.getElementById("resendBtn").style.display = "block";
+      document.getElementById("resendBtn").hidden = false;
       window._pendingEmail = email;
     } else {
-      document.getElementById("loginErr").textContent =
+      errorMessage.textContent =
         "Email ou mot de passe incorrect. Mot de passe oublié ? Réinitialise-le depuis l'app mobile (Mot de passe oublié).";
     }
+    errorMessage.hidden = false;
     return;
   }
   location.reload();
 }
 
 async function resendLink() {
-  const { error } = await sb.auth.resend({ type: "signup", email: window._pendingEmail });
-  document.getElementById("loginErr").textContent = error
-    ? "Erreur : " + error.message
-    : "Lien renvoyé ! Vérifie ta boîte mail puis reconnecte-toi.";
+  const errorMessage = document.getElementById("loginErr");
+  try {
+    const { error } = await sb.auth.resend({ type: "signup", email: window._pendingEmail });
+    errorMessage.textContent = error ? "Erreur : " + error.message : "Lien renvoyé ! Vérifie ta boîte mail puis reconnecte-toi.";
+  } catch (e) {
+    errorMessage.textContent = "Erreur : " + e.message;
+  }
+  errorMessage.hidden = false;
 }
 
 (async () => {
-  const session = await currentAdmin();
-  if (!session) {
-    const { data: { session: s } } = await sb.auth.getSession();
-    document.getElementById("login").style.display = "block";
-    if (s?.user?.email) document.getElementById("loginErr").textContent = "Ce compte n'est pas admin.";
+  const authLoading = document.getElementById("authLoading");
+  const login = document.getElementById("login");
+  const loginError = document.getElementById("loginErr");
+  let session;
+  try {
+    session = await currentAdmin();
+    if (!session) {
+      const { data: { session: existingSession }, error } = await sb.auth.getSession();
+      authLoading.hidden = true;
+      login.hidden = false;
+      if (existingSession?.user?.email) {
+        loginError.textContent = "Ce compte n'est pas admin.";
+        loginError.hidden = false;
+      } else if (error) {
+        loginError.textContent = "Impossible de vérifier la session : " + error.message;
+        loginError.hidden = false;
+      }
+      return;
+    }
+  } catch (e) {
+    authLoading.hidden = true;
+    login.hidden = false;
+    loginError.textContent = "Impossible de vérifier la session administrateur : " + e.message;
+    loginError.hidden = false;
     return;
   }
+  authLoading.hidden = true;
   document.getElementById("logout").onclick = async () => { await sb.auth.signOut(); location.reload(); };
-  document.getElementById("dash").style.display = "block";
+  document.getElementById("logout").hidden = false;
+  document.getElementById("dash").hidden = false;
 
-  const [u, w, tx] = await Promise.all([
-    sb.from("profiles").select("id", { count: "exact", head: true }),
-    sb.from("wallets").select("id", { count: "exact", head: true }),
-    sb.from("transactions").select("amount,type"),
-  ]);
-  const rows = tx.data || [];
-  const income = rows.filter(t => t.type === "income").reduce((s, t) => s + Number(t.amount), 0);
-  const expense = rows.filter(t => t.type === "expense").reduce((s, t) => s + Number(t.amount), 0);
-  const week = new Date(Date.now() - 7 * 864e5).toISOString();
-  const { count: new7d } = await sb.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", week);
-
-  const cards = [
-    ["Inscrits", fmtNum(u.count)],
-    ["Nouveaux (7j)", fmtNum(new7d)],
-    ["Wallets", fmtNum(w.count)],
-    ["Transactions", fmtNum(rows.length)],
-    ["Revenus", fmtNum(income) + " XOF"],
-    ["Dépenses", fmtNum(expense) + " XOF"],
-  ];
-  document.getElementById("cards").innerHTML = cards.map(([k, v]) =>
-    `<div class="card"><small>${k}</small><b>${v}</b></div>`).join("");
+  const errorElement = document.getElementById("dashError");
+  try {
+    const week = new Date(Date.now() - 7 * 864e5).toISOString();
+    const [u, w, tx, recent] = await Promise.all([
+      sb.from("profiles").select("id", { count: "exact", head: true }),
+      sb.from("wallets").select("id", { count: "exact", head: true }),
+      sb.from("transactions").select("amount,type"),
+      sb.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", week),
+    ]);
+    const failure = [u, w, tx, recent].find((result) => result.error);
+    if (failure) throw failure.error;
+    const rows = tx.data || [];
+    const income = rows.filter(t => t.type === "income").reduce((s, t) => s + Number(t.amount || 0), 0);
+    const expense = rows.filter(t => t.type === "expense").reduce((s, t) => s + Number(t.amount || 0), 0);
+    const cards = [
+      ["Utilisateurs inscrits", u.count, "blue", "comptes"],
+      ["Nouvelles inscriptions", recent.count, "green", "7 derniers jours"],
+      ["Wallets", w.count, "blue", "comptes accessibles"],
+      ["Transactions", rows.length, "green", "enregistrements accessibles"],
+    ];
+    document.getElementById("cards").innerHTML = cards.map(([label, value, tone, note]) =>
+      `<article class="metric-card" data-tone="${tone}"><div class="metric-top"><span class="metric-label">${label}</span><span class="metric-tag">Total</span></div><strong class="metric-value">${fmtNum(value)}</strong><span class="metric-foot">${note}</span></article>`).join("");
+    const total = income + expense;
+    const incomeWidth = total ? (income / total) * 100 : 0;
+    const expenseWidth = total ? (expense / total) * 100 : 0;
+    document.getElementById("finance").innerHTML = `
+      <div class="finance-row"><div class="finance-label"><span>Revenus</span><strong>${fmtNum(income)} XOF</strong></div><div class="bar-track" role="img" aria-label="Revenus : ${fmtNum(income)} XOF"><div class="bar-fill" style="width:${incomeWidth}%"></div></div></div>
+      <div class="finance-row"><div class="finance-label"><span>Dépenses</span><strong>${fmtNum(expense)} XOF</strong></div><div class="bar-track" role="img" aria-label="Dépenses : ${fmtNum(expense)} XOF"><div class="bar-fill expense" style="width:${expenseWidth}%"></div></div></div>`;
+    document.getElementById("updatedAt").textContent = `Mis à jour le ${new Date().toLocaleString("fr-FR")}`;
+  } catch (e) {
+    errorElement.textContent = "Impossible de charger les indicateurs. Vérifie les droits admin et l'accès aux données. " + e.message;
+    errorElement.hidden = false;
+  }
 })();
 </script>
 </body>

@@ -1,3 +1,7 @@
+/**
+ * Copyright (c) 2026 Akouè — Créé par [redacted-name].
+ * Voir LICENSE pour les conditions de réutilisation.
+ */
 import { Stack } from "expo-router";
 import { usePathname, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";

@@ -8,47 +8,71 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-<nav><span class="brand">Akouè Admin</span><a href="index.html">Dashboard</a><a href="users.html">Utilisateurs</a><a href="notifications.html">Notifications</a><button id="logout">Déconnexion</button></nav>
+<nav><span class="brand"><span class="brand-mark" aria-hidden="true">A</span>Akouè <span class="muted">Admin</span></span><a href="index.html">Dashboard</a><a href="users.html">Utilisateurs</a><a href="notifications.html" aria-current="page">Notifications</a><button id="logout">Déconnexion</button></nav>
 <main>
-  <h1>Notifications → tous les utilisateurs</h1>
-  <p class="muted">Publié ici = affiché dans l'app mobile (table <code>broadcasts</code> avec <code>active = true</code>).<br>
-  <b>info</b> : annonce simple &nbsp;•&nbsp; <b>update</b> : mise à jour avec bouton + version ciblée.</p>
+  <header class="page-header">
+    <div><p class="eyebrow">Communication produit</p><h1>Notifications</h1><p>Publie une annonce dans l’application ou préviens les utilisateurs d’une mise à jour.</p></div>
+  </header>
+  <p id="notice" class="alert" role="status" hidden></p>
 
-  <div class="panel">
-    <h3>Nouvelle notification</h3>
-    <input id="f_title" placeholder="Titre (ex : Akouè 1.2 disponible)">
-    <textarea id="f_body" rows="3" placeholder="Message…"></textarea>
+  <section class="panel">
+    <div class="section-header"><div><h2>Nouvelle notification</h2><p>Les annonces publiées sont visibles dans l’application mobile.</p></div></div>
+    <label class="form-field" for="f_title">Titre<input id="f_title" maxlength="120" placeholder="Ex. : Akouè 1.2 disponible"></label>
+    <label class="form-field" for="f_body">Message<textarea id="f_body" rows="3" maxlength="2000" placeholder="Écris le message destiné aux utilisateurs…"></textarea></label>
     <div class="row">
-      <select id="f_kind"><option value="info">info</option><option value="update">update (mise à jour)</option></select>
-      <input id="f_version" placeholder="Version ciblée (ex : 1.2.0)">
-      <input id="f_url" placeholder="Lien APK Expo (facultatif pour une annonce à venir)">
+      <label class="form-field" for="f_kind">Type<select id="f_kind"><option value="info">Annonce</option><option value="update">Mise à jour</option></select></label>
+      <label class="form-field" for="f_version">Version ciblée<input id="f_version" placeholder="Ex. : 1.2.0"></label>
+      <label class="form-field" for="f_url">Lien APK (facultatif)<input id="f_url" type="url" placeholder="https://…"></label>
     </div>
-    <textarea id="f_details" rows="2" placeholder="Détails vulgarisés (optionnel)"></textarea>
-    <label class="row" style="align-items:center;gap:10px">
-      <input id="f_send_email" type="checkbox" style="width:auto">
+    <label class="form-field" for="f_details">Détails supplémentaires (facultatif)<textarea id="f_details" rows="2" maxlength="3000" placeholder="Informations complémentaires"></textarea></label>
+    <label class="row" style="align-items:center;gap:10px;margin:8px 0 18px">
+      <input id="f_send_email" type="checkbox">
       <span>Envoyer aussi un e-mail de service aux comptes inscrits (une seule fois)</span>
     </label>
     <button class="primary" onclick="publish()">Publier pour tous</button>
-  </div>
+  </section>
 
-  <h3>Historique</h3>
-  <div id="list"></div>
+  <section style="margin-top:28px">
+    <div class="section-header"><div><h2>Historique des annonces</h2><p>Les annonces désactivées ne sont plus affichées dans l’application.</p></div></div>
+    <div id="list" class="cards"></div>
+  </section>
 </main>
 <script src="config.js"></script>
 <script src="app.js"></script>
 <script>
 async function load() {
   if (!await guard()) return;
-  const { data } = await sb.from("broadcasts").select("*").order("created_at", { ascending: false }).limit(100);
-  document.getElementById("list").innerHTML = (data || []).map(r => `
-    <div class="panel" style="opacity:${r.active ? 1 : .55}">
-      <span class="badge ${r.kind === "update" ? "update" : ""} ${r.active ? "" : "off"}">${r.kind}${r.active ? "" : " — désactivé"}</span>
-      <b> ${r.title}</b> ${r.version ? `<span class="muted">→ v${r.version}</span>` : ""}
-      <p>${r.body}</p>
-      <button class="ghost" onclick="toggle('${r.id}', ${!r.active})">${r.active ? "Désactiver" : "Réactiver"}</button>
-      <button class="ghost" onclick="removeOne('${r.id}')">Supprimer</button>
-    </div>`).join("");
+  const list = document.getElementById("list");
+  try {
+    const { data, error } = await sb.from("broadcasts").select("*").order("created_at", { ascending: false }).limit(100);
+    if (error) throw error;
+    list.innerHTML = data?.length ? data.map(r => `
+      <article class="panel notification-card" style="opacity:${r.active ? 1 : .7}">
+        <div class="notification-badges">
+          <span class="badge ${r.kind === "update" ? "update" : ""}">${r.kind === "update" ? "Mise à jour" : "Annonce"}</span>
+          ${r.active ? "" : '<span class="badge off">Désactivée</span>'}
+        </div>
+        <h3 class="notification-title">${escapeHtml(r.title)} ${r.version ? `<span class="muted">v${escapeHtml(r.version)}</span>` : ""}</h3>
+        <p class="notification-copy">${escapeHtml(r.body)}</p>
+        ${r.details ? `<p class="muted notification-copy">${escapeHtml(r.details)}</p>` : ""}
+        <span class="table-secondary">${fmtDate(r.created_at)}</span>
+        <div class="header-actions" style="margin-top:14px">
+          <button class="ghost" data-action="toggle" data-id="${escapeHtml(r.id)}" data-active="${!r.active}">${r.active ? "Désactiver" : "Réactiver"}</button>
+          <button class="ghost" data-action="delete" data-id="${escapeHtml(r.id)}">Supprimer</button>
+        </div>
+      </article>`).join("") : `<div class="panel empty-state">Aucune annonce pour le moment.</div>`;
+  } catch (e) {
+    document.getElementById("notice").textContent = "Impossible de charger l’historique des annonces : " + e.message;
+    document.getElementById("notice").hidden = false;
+  }
 }
+
+document.getElementById("list").addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+  if (button.dataset.action === "toggle") toggle(button.dataset.id, button.dataset.active === "true");
+  if (button.dataset.action === "delete") removeOne(button.dataset.id);
+});
 async function publish() {
   const title = document.getElementById("f_title").value.trim();
   const body = document.getElementById("f_body").value.trim();
@@ -113,12 +137,22 @@ async function publish() {
   load();
 }
 async function toggle(id, active) {
-  await sb.from("broadcasts").update({ active }).eq("id", id);
+  const { error } = await sb.from("broadcasts").update({ active }).eq("id", id);
+  if (error) {
+    document.getElementById("notice").textContent = "Impossible de modifier l’annonce : " + error.message;
+    document.getElementById("notice").hidden = false;
+    return;
+  }
   load();
 }
 async function removeOne(id) {
   if (!confirm("Supprimer ?")) return;
-  await sb.from("broadcasts").delete().eq("id", id);
+  const { error } = await sb.from("broadcasts").delete().eq("id", id);
+  if (error) {
+    document.getElementById("notice").textContent = "Impossible de supprimer l’annonce : " + error.message;
+    document.getElementById("notice").hidden = false;
+    return;
+  }
   load();
 }
 load();

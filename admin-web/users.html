@@ -8,17 +8,23 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-<nav><span class="brand">Akouè Admin</span><a href="index.html">Dashboard</a><a href="users.html">Utilisateurs</a><a href="notifications.html">Notifications</a><button id="logout">Déconnexion</button></nav>
+<nav><span class="brand"><span class="brand-mark" aria-hidden="true">A</span>Akouè <span class="muted">Admin</span></span><a href="index.html">Dashboard</a><a href="users.html" aria-current="page">Utilisateurs</a><a href="notifications.html">Notifications</a><button id="logout">Déconnexion</button></nav>
 <main>
-  <h1>Utilisateurs inscrits <span id="total" class="muted"></span></h1>
-  <div class="toolbar">
-    <input id="search" placeholder="Rechercher email / nom…" oninput="render()">
+  <header class="page-header">
+    <div><p class="eyebrow">Comptes Akouè</p><h1>Utilisateurs inscrits <span id="total" class="muted"></span></h1><p>Recherche et activité des profils accessibles à l’administration.</p></div>
     <button class="ghost" onclick="exportCSV()">Exporter CSV</button>
+  </header>
+  <p id="loadError" class="alert" role="alert" hidden></p>
+  <div class="toolbar">
+    <input id="search" type="search" aria-label="Rechercher les utilisateurs" placeholder="Rechercher par e-mail ou nom…" oninput="render()">
+    <span id="resultsCount" class="results-count" aria-live="polite"></span>
   </div>
-  <table>
-    <thead><tr><th>Nom</th><th>Email</th><th>Inscription</th><th>Wallets</th><th>Tx</th><th>Dernière activité</th><th>Verrou</th></tr></thead>
-    <tbody id="rows"></tbody>
-  </table>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Nom</th><th>E-mail</th><th>Inscription</th><th>Wallets</th><th>Transactions</th><th>Dernière activité</th><th>Verrou</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
 </main>
 <script src="config.js"></script>
 <script src="app.js"></script>
@@ -26,32 +32,49 @@
 let ALL = [];
 async function load() {
   if (!await guard()) return;
-  const [{ data: profs }, { data: wallets }, { data: txs }] = await Promise.all([
-    sb.from("profiles").select("id,name,email,created_at,lock_method").order("created_at", { ascending: false }).limit(500),
-    sb.from("wallets").select("uid"),
-    sb.from("transactions").select("uid,date"),
-  ]);
-  const wc = {}, tc = {}, last = {};
-  (wallets || []).forEach(w => wc[w.uid] = (wc[w.uid] || 0) + 1);
-  (txs || []).forEach(t => {
-    tc[t.uid] = (tc[t.uid] || 0) + 1;
-    if (!last[t.uid] || t.date > last[t.uid]) last[t.uid] = t.date;
-  });
-  ALL = (profs || []).map(p => ({ ...p, wallets: wc[p.id] || 0, tx: tc[p.id] || 0, last: last[p.id] || null }));
-  document.getElementById("total").textContent = `(${ALL.length})`;
-  render();
+  try {
+    const [profiles, walletsResult, transactions] = await Promise.all([
+      sb.from("profiles").select("id,name,email,created_at,lock_method").order("created_at", { ascending: false }).limit(500),
+      sb.from("wallets").select("uid"),
+      sb.from("transactions").select("uid,date"),
+    ]);
+    const failure = [profiles, walletsResult, transactions].find((result) => result.error);
+    if (failure) throw failure.error;
+    const profs = profiles.data || [];
+    const wallets = walletsResult.data || [];
+    const txs = transactions.data || [];
+    const wc = {}, tc = {}, last = {};
+    wallets.forEach(w => wc[w.uid] = (wc[w.uid] || 0) + 1);
+    txs.forEach(t => {
+      tc[t.uid] = (tc[t.uid] || 0) + 1;
+      if (!last[t.uid] || t.date > last[t.uid]) last[t.uid] = t.date;
+    });
+    ALL = profs.map(p => ({ ...p, wallets: wc[p.id] || 0, tx: tc[p.id] || 0, last: last[p.id] || null }));
+    document.getElementById("total").textContent = `(${ALL.length})`;
+    render();
+  } catch (e) {
+    const error = document.getElementById("loadError");
+    error.textContent = "Impossible de charger les utilisateurs. Vérifie les droits admin et l'accès aux données. " + e.message;
+    error.hidden = false;
+  }
 }
 function render() {
-  const q = document.getElementById("search").value.toLowerCase();
+  const q = document.getElementById("search").value.trim().toLowerCase();
   const rows = ALL.filter(r => !q || (r.email || "").toLowerCase().includes(q) || (r.name || "").toLowerCase().includes(q));
+  document.getElementById("resultsCount").textContent = `${fmtNum(rows.length)} résultat${rows.length > 1 ? "s" : ""}`;
+  if (!rows.length) {
+    document.getElementById("rows").innerHTML = `<tr><td colspan="7" class="empty-state">${ALL.length ? "Aucun utilisateur ne correspond à cette recherche." : "Aucun utilisateur à afficher."}</td></tr>`;
+    return;
+  }
   document.getElementById("rows").innerHTML = rows.map(r => `<tr>
-    <td>${r.name || "—"}</td><td>${r.email || "—"}</td><td>${fmtDate(r.created_at)}</td>
-    <td>${r.wallets}</td><td>${r.tx}</td><td>${fmtDate(r.last)}</td><td>${r.lock_method || "none"}</td>
+    <td class="table-primary">${escapeHtml(r.name || "—")}</td><td>${escapeHtml(r.email || "—")}</td><td>${fmtDate(r.created_at)}</td>
+    <td>${r.wallets}</td><td>${r.tx}</td><td>${fmtDate(r.last)}</td><td>${escapeHtml(r.lock_method || "none")}</td>
   </tr>`).join("");
 }
 function exportCSV() {
-  const csv = "nom;email;inscription;wallets;transactions\n" + ALL.map(r =>
-    [r.name || "", r.email || "", r.created_at || "", r.wallets, r.tx].join(";")).join("\n");
+  const cell = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+  const csv = "\uFEFFnom;email;inscription;wallets;transactions\n" + ALL.map(r =>
+    [r.name || "", r.email || "", r.created_at || "", r.wallets, r.tx].map(cell).join(";")).join("\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
   a.download = "akoue-utilisateurs.csv"; a.click();

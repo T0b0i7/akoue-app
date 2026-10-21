@@ -47,24 +47,44 @@
 <details>
 <summary>Table des matières</summary>
 
-- [À propos](#about-the-project)
-- [Captures](#-screenshots)
-- [Fonctionnalités](#-key-features)
-- [Technologies](#-technologies-used)
-- [Démarrage](#-setup)
-- [Contribuer](#-contributing)
+- [À propos](#à-propos-dakouè)
+- [Nouveautés](#-akouè-évolue)
+- [Captures](#-captures-décran)
+- [Fonctionnalités](#-fonctionnalités)
+- [Technologies](#-technologies)
+- [Démarrage](#-installation-et-démarrage)
+- [Tableau de bord admin](#admin-dashboard)
+- [Contribuer](#-contribuer)
 - [Licence](#-licence)
-- [Remerciements](#-acknowledgements)
+- [Remerciements](#-remerciements)
 
 </details>
 
-## About the Project
+## À propos d’Akouè
 
-**Akouè** — Reprends le contrôle de tes finances. Conçue et maintenue par [[redacted-name]](https://github.com/T0b0i7).
+**Akouè** est une application de gestion financière personnelle conçue et maintenue par [[redacted-name]](https://github.com/T0b0i7). Organise tes portefeuilles, suis tes revenus et tes dépenses, et comprends mieux tes habitudes financières.
 
-Gère plusieurs portefeuilles (Salaire, Freelance, Espèces), suis tes revenus/dépenses au quotidien et visualise tes habitudes avec des statistiques animées en temps réel. Stack moderne : **Expo 54 + React Native 0.81 + Supabase**.
+Le projet utilise **Expo 54, React Native 0.81 et Supabase**. Le dépôt est public et distribué sous licence MIT.
 
-> **Open source** sous licence **MIT** — contributions bienvenues !
+> **Une étoile avant de commencer ?** Si Akouè te plaît, [ajoute une étoile au dépôt](https://github.com/T0b0i7/akoue-app/stargazers) pour soutenir le projet et le faire découvrir. Cette étoile est volontaire : GitHub ne permet pas de l’imposer ni de bloquer techniquement l’exécution du code en son absence.
+
+## 📣 Akouè évolue
+
+Akouè est conçue pour aider chacun à reprendre simplement le contrôle de son argent. L’application réunit au même endroit les portefeuilles, les revenus, les dépenses et les justificatifs, pour que le suivi du quotidien soit plus clair et plus pratique.
+
+Les dernières évolutions mettent l’accent sur une utilisation plus fluide et une meilleure protection des données personnelles. Tu peux choisir un verrouillage adapté à ton appareil, continuer à consulter et saisir tes opérations hors connexion, puis synchroniser les données lorsque le réseau revient. Les statistiques et les soldes multi-devises aident à mieux comprendre l’activité, tandis que les annonces intégrées préviennent des nouveautés et des mises à jour disponibles.
+
+### Ce que tu peux faire avec Akouè
+
+- Organiser ton argent dans plusieurs portefeuilles.
+- Enregistrer tes revenus et dépenses avec catégories, dates, notes et justificatifs.
+- Explorer tes habitudes grâce aux statistiques et aux graphiques.
+- Protéger l’accès à l’application avec la biométrie, un code PIN, un mot de passe ou un schéma, selon les options disponibles sur l’appareil.
+- Continuer à utiliser les fonctions prévues hors connexion et synchroniser plus tard.
+- Afficher les soldes dans une devise de ton choix parmi celles prises en charge.
+- Recevoir les annonces et informations de mise à jour directement dans l’application.
+
+Akouè continue d’évoluer. Les contributions, retours d’expérience et signalements de bugs sont les bienvenus.
 
 ## 📥 Télécharger
 
@@ -73,7 +93,7 @@ Installe-le direct sur ton téléphone pour tester (autorise l'installation depu
 
 Version web installable (PWA) : **[akoue-app sur le web](https://akoue-app--vtjbp6hmzm.expo.app)** — ouvrable dans Chrome Android puis "Ajouter à l'écran d'accueil" pour l'installer comme une app, utilisable hors ligne.
 
-## 📷 Screenshots
+## 📷 Captures d’écran
 
 <p align="center">
   <img src="public/images/logo-akoue.png" alt="Logo Akoue" width="120" />
@@ -83,7 +103,7 @@ Version web installable (PWA) : **[akoue-app sur le web](https://akoue-app--vtjb
 |---|---|---|---|
 | <img src="public/images/iPhone-14-PRO-localhost.png" width="220" alt="Accueil Akouè" /> | <img src="public/images/iPhone-14-PRO-localhost (1).png" width="220" alt="Portefeuilles Akouè" /> | <img src="public/images/iPhone-14-PRO-localhost (2).png" width="220" alt="Statistiques Akouè" /> | <img src="public/images/iPhone-14-PRO-localhost (3).png" width="220" alt="Transactions Akouè" /> |
 
-## 🔥 Key Features
+## 🔥 Fonctionnalités
 
 - **💰 Multi-Wallet Management**
   Crée et gère plusieurs portefeuilles pour organiser tes finances.
@@ -118,7 +138,7 @@ Version web installable (PWA) : **[akoue-app sur le web](https://akoue-app--vtjb
 - **🎨 Smooth UI/UX**
   Tab bar custom, animations Reanimated, design responsive.
 
-## ✨ Technologies Used
+## ✨ Technologies
 
 <details><summary><b>Akouè App</b> est construit avec :</summary>
 
@@ -135,74 +155,87 @@ Version web installable (PWA) : **[akoue-app sur le web](https://akoue-app--vtjb
 
 [![Technologies Used](https://go-skill-icons.vercel.app/api/icons?i=ts,expo,reactnative,firebase,supabase,android,)](https://github.com/T0b0i7/akoue-app)
 
-## 🧰 Setup
+## 🧰 Installation et démarrage
 
- 1. Prérequis : [Git](https://git-scm.com/downloads), [Node.js](https://nodejs.org/en/) (>=18) et [pnpm](https://pnpm.io/installation) (`npm i -g pnpm`).
+ 1. Prérequis : [Git](https://git-scm.com/downloads), [Node.js](https://nodejs.org/) 20 ou plus, et [pnpm](https://pnpm.io/installation) (`npm install --global pnpm`).
  2. Clone ton fork :
 
     ```bash
     git clone https://github.com/T0b0i7/akoue-app.git
     cd akoue-app
     ```
- 3. Installe les dépendances (SSD recommandé) :
+ 3. Installe les dépendances :
 
     ```bash
     pnpm install
-    # Si erreur "Ignored build scripts" avec pnpm 11+ :
-    pnpm config set dangerously-allow-all-builds true
-    pnpm install
     ```
- 4. Variables d'environnement — copie `.env.example` vers `.env` et remplis tes clés Supabase/Firebase :
+ 4. Configure tes services : copie `.env.example` vers `.env`, puis renseigne les variables Supabase nécessaires. Les variables Firebase sont facultatives si tu n’utilises pas ces fonctions.
 
     ```bash
     cp .env.example .env
     ```
- 5. Lance le dev server :
+    N’utilise jamais de clé `service_role` ou de secret serveur dans une variable `EXPO_PUBLIC_*`. Ces variables sont intégrées au client public.
+ 5. **Démarre le projet avant de l’utiliser ou de le modifier** :
 
     ```bash
-    pnpm start          # Expo DevTools + QR code
-    pnpm android        # ou pnpm ios / pnpm web
+    pnpm start
     ```
 
-  > **Note Windows HDD :** Mets le projet + le store pnpm (`C:\pnpm-store`) sur SSD. Sur HDD, `pnpm install` prend 20-30min. Config : `pnpm config set store-dir C:\pnpm-store`.
- 6. Base de données — dans le SQL Editor Supabase, exécute [`supabase/schema.sql`](./supabase/schema.sql) (tables, RLS, storage privé `receipts`).
- 7. (Optionnel) Builds :
+    Pour lancer une cible précise, utilise ensuite `pnpm android`, `pnpm ios` ou `pnpm web`.
+ 6. Configure ta base de données Supabase : exécute [`supabase/schema.sql`](./supabase/schema.sql) dans le SQL Editor de ton projet. Ce schéma met en place les tables et politiques nécessaires à l’application.
+ 7. Vérifications du projet :
      ```bash
-     eas build -p android --profile preview     # APK test direct
-     eas build -p android --profile production  # AAB pour le Play Store
-     eas update --channel preview               # OTA (JS uniquement, sans réinstaller)
+     pnpm lint
+     pnpm test:unit
+     node scripts/check-attribution.js
      ```
- 8. (Optionnel) Compte démo avec données fictives (captures, bannière) :
+ 8. (Optionnel) Builds et mises à jour Android :
+     ```bash
+     pnpm build:android                         # build de prévisualisation
+     pnpm update:android:preview                 # mise à jour OTA du canal preview
+     pnpm update:android:production              # mise à jour OTA du canal production
+     ```
+
+    Une mise à jour OTA ne convient qu’aux changements compatibles avec le runtime natif déjà installé. Les changements natifs nécessitent un nouveau build. Les publications EAS nécessitent une configuration de compte et un jeton Expo.
+ 9. (Optionnel) Compte démo avec données fictives :
      ```bash
      node scripts/seed-eucher.js
      ```
 
-## 🔧 Contributing
+<a id="admin-dashboard"></a>
+
+## 🛠️ Tableau de bord d’administration
+
+Le tableau de bord web statique est dans [`admin-web/`](./admin-web/). Consulte [`admin-web/README.md`](./admin-web/README.md) pour la configuration Supabase et son utilisation. Il nécessite son propre compte Supabase et les règles d’accès administrateur décrites dans la documentation.
+
+## 🔧 Contribuer
 
 [![contributors](https://contrib.rocks/image?repo=T0b0i7/akoue-app)](https://github.com/T0b0i7/akoue-app/graphs/contributors)
 
-Les contributions font vivre l'open source. Toute aide est **grandement appréciée** !
+Les contributions sont les bienvenues. Avant d’ouvrir une Pull Request :
 
-1. Fork le repo
-2. Crée ta branche (`git checkout -b feat/ma-feature`)
-3. Commit (`git commit -m 'feat: ajoute ma feature'`)
-4. Push (`git push origin feat/ma-feature`)
-5. Ouvre une Pull Request 🎉
+1. Consulte [`CONTRIBUTING.md`](./CONTRIBUTING.md) et crée un fork.
+2. Crée une branche dédiée (`git checkout -b feat/ma-feature`).
+3. Démarre le projet avec `pnpm start` et vérifie tes changements.
+4. Lance `pnpm lint` et `pnpm test:unit`.
+5. Fais un commit clair, pousse ta branche et ouvre une Pull Request vers `main`.
 
-Merci de lire `CONTRIBUTING.md` si présent et de respecter le code de conduite.
+Ne publie jamais de fichier `.env`, de mot de passe, de clé privée ou de jeton. Les fichiers d’environnement locaux sont ignorés par Git ; vérifie toujours le contenu de ta Pull Request avant de la soumettre.
 
 ## 📄 Licence
 
-Distribué sous licence **MIT**. Voir [`LICENSE`](./LICENSE) pour plus d'infos.
+Distribué sous licence **MIT**. La licence exige que l’avis de copyright et le texte de licence soient conservés dans les copies ou portions substantielles du logiciel. Voir [`LICENSE`](./LICENSE).
 
-Copyright (c) 2026 Akouè App — [redacted-name].
+**Copyright (c) 2026 Akouè — Créé par [redacted-name]**
 
-## 💎 Acknowledgements
+Le dépôt public et la licence ne peuvent pas empêcher techniquement la modification d’un fork. L’avis de copyright est protégé par les conditions de la licence MIT ; le contrôle automatique du dépôt vérifie aussi sa présence dans les fichiers principaux. Pour refuser une modification de `main`, configure les règles de protection de branche GitHub et rends le contrôle d’attribution obligatoire.
+
+## 💎 Remerciements
 
 - [Expo](https://expo.dev/) • [React Native](https://reactnative.dev/) • [Supabase](https://supabase.com/)
 - [Expo Router](https://docs.expo.dev/router/introduction/) • [Reanimated](https://docs.swmansion.com/react-native-reanimated/) • [Gifted Charts](https://github.com/Abhinandan-Kushwaha/react-native-gifted-charts) • [Phosphor Icons](https://phosphoricons.com/) • [Flash List](https://shopify.github.io/flash-list/) • [Zod](https://zod.dev/)
 
-## ⭐ Give A Star
+## ⭐ Soutenir Akouè
 
 Si Akouè t'aide, laisse une ⭐ — ça aide le projet à être découvert !
 

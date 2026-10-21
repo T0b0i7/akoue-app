@@ -18,3 +18,10 @@ async function guard() {
 
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString("fr-FR") : "—";
 const fmtNum = (n) => Number(n || 0).toLocaleString("fr-FR");
+const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+}[char]));
