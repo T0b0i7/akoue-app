@@ -123,6 +123,24 @@ describe("session persistante : isolation des utilisateurs", () => {
     assert.match(authContext, /multiRemove\(\[OFFLINE_USER_KEY, "mock_user", AUTH_SESSION_MODE_KEY\]\)/);
   });
 
+  describe("audio et ancien verrou", () => {
+    it("coupe la musique automatiquement sur les formulaires d'authentification", () => {
+      const audio = fs.readFileSync(path.join(process.cwd(), "context", "audio-context.tsx"), "utf8");
+      assert.match(audio, /usePathname/);
+      assert.match(audio, /login\|sign-up\|forgot-password\|reset-password/);
+      assert.match(audio, /if \(muted\) \{\s*player\.pause\(\)/);
+      assert.match(audio, /if \(authFormOpen\) return/);
+    });
+
+    it("désactive une fois l'ancien verrou et bloque sa restauration depuis le cloud", () => {
+      const lockHook = fs.readFileSync(path.join(process.cwd(), "hooks", "use-app-lock.ts"), "utf8");
+      assert.match(lockHook, /LEGACY_LOCK_DISABLED_KEY/);
+      assert.match(lockHook, /legacyLockDisabled !== "1"[\s\S]*?setAppLock\("none"\)/);
+      assert.match(lockHook, /if \(\(await AsyncStorage\.getItem\(LEGACY_LOCK_DISABLED_KEY\)[\s\S]*?setLocked\(false\)[\s\S]*?return/);
+      assert.match(lockHook, /removeItem\(LEGACY_LOCK_DISABLED_KEY\)/);
+    });
+  });
+
   it("ne restaure une session hors ligne que si elle est explicitement locale", () => {
     assert.match(authContext, /mode === "offline" \|\| offline\.uid\?\.startsWith\("offline-"\)/);
     assert.match(authContext, /mode === "offline" \|\| off\.uid\?\.startsWith\("offline-"\)/);
@@ -136,10 +154,10 @@ describe("session persistante : isolation des utilisateurs", () => {
 
   it("incrémente la version Android pour remplacer le build déjà installé", () => {
     const appConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), "app.json"), "utf8"));
-    assert.equal(appConfig.expo.version, "1.1.1");
-    assert.equal(appConfig.expo.android.versionCode, 3);
+    assert.equal(appConfig.expo.version, "1.1.2");
+    assert.equal(appConfig.expo.android.versionCode, 4);
     const gradle = fs.readFileSync(path.join(process.cwd(), "android", "app", "build.gradle"), "utf8");
-    assert.match(gradle, /versionCode 3/);
-    assert.match(gradle, /versionName "1\.1\.1"/);
+    assert.match(gradle, /versionCode 4/);
+    assert.match(gradle, /versionName "1\.1\.2"/);
   });
 });

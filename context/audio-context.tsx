@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from "react"
+import React, { createContext, useContext, useEffect, useState } from "react"
 import { Platform } from "react-native"
 import { useAudioPlayer } from "expo-audio"
+import { usePathname } from "expo-router"
 
 type AudioContextType = {
   muted: boolean
@@ -10,13 +11,17 @@ type AudioContextType = {
 const AudioContext = createContext<AudioContextType | null>(null)
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
-  const [muted, setMuted] = useState(false)
+  const [userMuted, setUserMuted] = useState(false)
+  const pathname = usePathname()
+  const authFormOpen = /\/(login|sign-up|forgot-password|reset-password)(\/|$)/.test(pathname ?? "")
+  const muted = userMuted || authFormOpen
   const player = useAudioPlayer(require("@/public/sounds/money-theme.wav"))
-  const played = useRef(false)
 
   useEffect(() => {
-    if (played.current || muted) return
-    played.current = true
+    if (muted) {
+      player.pause()
+      return
+    }
     try {
       player.loop = true
       player.volume = 0.35
@@ -45,11 +50,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         document.removeEventListener("keydown", unlock)
       }
     }
-  }, [muted])
+  }, [muted, player])
 
   const toggleSound = () => {
-    const next = !muted
-    setMuted(next)
+    if (authFormOpen) return
+    const next = !userMuted
+    setUserMuted(next)
     try {
       if (next) player.pause()
       else {

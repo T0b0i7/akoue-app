@@ -19,6 +19,7 @@ import { supabase } from "@/config/supabase";
 // Choix obligatoire une fois (page plein écran) : tant que l'utilisateur
 // n'a pas choisi, il est redirigé vers la page. Réinitialisable en paramètres.
 const BG_AT_KEY = "app_bg_at";
+const LEGACY_LOCK_DISABLED_KEY = "legacy_app_lock_disabled_v1";
 // Délai de grâce : si l'app revient dans les 60s, pas de reverrouillage
 // (fini l'impression d'être "déconnecté" à chaque aller-retour).
 const GRACE_MS = 60 * 1000;
@@ -102,6 +103,18 @@ export function useAppLock() {
       } catch {}
     }
     if (!hasAccount) {
+      setMethod("none");
+      setLocked(false);
+      setChecking(false);
+      setLockoutSecs(0);
+      return;
+    }
+    const legacyLockDisabled = await AsyncStorage.getItem(LEGACY_LOCK_DISABLED_KEY).catch(() => null);
+    if (legacyLockDisabled !== "1") {
+      await setAppLock("none");
+      await AsyncStorage.setItem(LEGACY_LOCK_DISABLED_KEY, "1");
+    }
+    if ((await AsyncStorage.getItem(LEGACY_LOCK_DISABLED_KEY).catch(() => null)) === "1") {
       setMethod("none");
       setLocked(false);
       setChecking(false);
@@ -199,6 +212,7 @@ export function useAppLock() {
       const r = await authenticateWithFace("Confirme pour activer le verrouillage");
       if (!r.success) return r;
     }
+    await AsyncStorage.removeItem(LEGACY_LOCK_DISABLED_KEY);
     const r = await setAppLock(m, secret);
     if (!r.success) return { success: false as const, error: r.msg };
     await markEnrollDone();
@@ -210,6 +224,7 @@ export function useAppLock() {
   // Réinitialise le verrou sans imposer de nouvelle configuration.
   const resetLock = useCallback(async () => {
     await setAppLock("none");
+    await AsyncStorage.setItem(LEGACY_LOCK_DISABLED_KEY, "1");
     setMethod("none");
     setLocked(false);
   }, []);
