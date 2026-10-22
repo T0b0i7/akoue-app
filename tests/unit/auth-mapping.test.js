@@ -101,9 +101,9 @@ describe("sign-up : constantes du flux lien magique", () => {
   it("mot de passe min 6, nom min 2", () => {
     const valid = (email, pw, name) =>
       email.includes("@") && pw.length >= 6 && name.trim().length >= 2;
-    assert.equal(valid("[REDACTED_EMAIL]", "123456", "Ab"), true);
-    assert.equal(valid("[REDACTED_EMAIL]", "123", "Ab"), false);
-    assert.equal(valid("[REDACTED_EMAIL]", "123456", "A"), false);
+    assert.equal(valid("a@b", "123456", "Ab"), true);
+    assert.equal(valid("a@b", "123", "Ab"), false);
+    assert.equal(valid("a@b", "123456", "A"), false);
   });
 });
 
