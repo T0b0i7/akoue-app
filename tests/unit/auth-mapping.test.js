@@ -75,15 +75,15 @@ describe("auth-context : classification erreurs", () => {
     assert.equal(mapVerifyCodeError("autre erreur"), "autre erreur");
   });
 
-  it("verifyCode : accepte le code OTP Supabase à 8 chiffres", () => {
+  it("verifyCode : accepte le code OTP Supabase à 5 chiffres", () => {
     assert.match(
       authContext,
-      /clean\.length !== 8[\s\S]*?verifyOtp\(\{\s*email,\s*token:\s*clean,\s*type:\s*"email"\s*\}\)/
+      /clean\.length !== 5[\s\S]*?verifyOtp\(\{\s*email,\s*token:\s*clean,\s*type:\s*"email"\s*\}\)/
     );
     const signUp = fs.readFileSync(path.join(process.cwd(), "app", "(auth)", "sign-up.tsx"), "utf8");
     const login = fs.readFileSync(path.join(process.cwd(), "app", "(auth)", "login.tsx"), "utf8");
-    assert.match(signUp, /maxLength=\{8\}/);
-    assert.match(login, /maxLength=\{8\}/);
+    assert.match(signUp, /maxLength=\{5\}/);
+    assert.match(login, /maxLength=\{5\}/);
   });
 });
 

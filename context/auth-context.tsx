@@ -325,7 +325,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         if (!error) {
           // Pas de session = email de confirmation en attente : ne pas faire croire que c'est connecté
           if (!data.session) {
-            return { success: false, needsVerification: true, msg: "Compte créé ! Saisis le code à 8 chiffres reçu par mail (pense aux spams)." };
+            return { success: false, needsVerification: true, msg: "Compte créé ! Saisis le code à 5 chiffres reçu par mail (pense aux spams)." };
           }
           if (data.user) {
             try { await supabase.from("profiles").insert({ id: data.user.id, name, email, image: null }); } catch {}
@@ -401,7 +401,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const verifyCode = async (email: string, code: string) => {
     if (!isSupabaseConfigured) return { success: false, msg: "Supabase non configuré" };
     const clean = code.trim().replace(/\s/g, "");
-    if (!email?.includes("@") || clean.length !== 8) return { success: false, msg: "Le code doit contenir 8 chiffres" };
+    if (!email?.includes("@") || clean.length !== 5) return { success: false, msg: "Le code doit contenir 5 chiffres" };
     try {
       await markPwaInstallPending(email);
       const { data, error } = await supabase.auth.verifyOtp({ email, token: clean, type: "email" });
