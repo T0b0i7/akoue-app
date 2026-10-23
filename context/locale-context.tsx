@@ -43,7 +43,7 @@ const translations: Record<Language, Record<string, string>> = {
     error: "Erreur",
     somethingWentWrong: "Une erreur est survenue",
     verifyEmailTitle: "Confirme ton compte",
-    verifyEmailMsg: "Saisis le code à 5 chiffres envoyé à ton email (pense aux spams).",
+    verifyEmailMsg: "Saisis le code à 6 chiffres envoyé à ton email (pense aux spams).",
     installAppTitle: "Installe Akouè",
     installAppDescription: "Ajoute Akouè à ton écran d’accueil pour retrouver tes finances plus facilement et profiter d’une expérience proche d’une application.",
     installAppButton: "Installer Akouè",
