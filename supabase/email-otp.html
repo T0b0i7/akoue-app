@@ -1,28 +1,35 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Votre code de confirmation Akouè</title>
 </head>
-<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif">
-<div style="padding:32px 16px">
-<div style="max-width:440px;margin:auto;background:#ffffff;border:1px solid #e4e4e7;border-radius:16px;overflow:hidden">
-<div style="padding:28px 32px;text-align:center;background:#171717">
-<div style="color:#fff;font-size:22px;font-weight:800">Akouè</div>
-<div style="color:#a3a3a3;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-top:4px">Maîtrise ton argent</div>
-</div>
-<div style="padding:28px 32px;text-align:center">
-<h2 style="color:#18181b;margin:0 0 8px;font-size:20px">Ton code de confirmation</h2>
-<p style="color:#52525b;font-size:14px;line-height:21px;margin:0">Entre ce code dans l'app pour activer ton compte.<br>Expire dans <b>3 minutes</b>.</p>
-<div style="margin:22px auto 6px;background:#f4f4f5;border:1px solid #e4e4e7;border-radius:12px;padding:16px;max-width:280px">
-<div style="font-size:34px;letter-spacing:8px;font-weight:800;color:#18181b;padding-left:8px">{{ .Token }}</div>
-</div>
-<div style="color:#71717a;font-size:12px;margin-top:8px">Ne partage ce code avec personne</div>
-</div>
-<div style="padding:16px 32px;text-align:center;background:#fafafa;border-top:1px solid #e4e4e7">
-<div style="color:#71717a;font-size:11px">Akoue par [redacted-email]</div>
-</div>
-</div>
-</div>
+<body style="margin:0;padding:0;background:#05070F;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#ffffff">
+  <table role="presentation" cellspacing="0" cellpadding="0" width="100%" style="max-width:620px;margin:auto;padding:24px 15px">
+    <tr><td align="center">
+      <img src="https://rquwmzgxcgpqrlskhwfb.supabase.co/storage/v1/object/public/emails/mono-akoue.png" alt="Akouè" width="48" height="48" style="display:block;border-radius:14px">
+    </td></tr>
+    <tr><td align="center" style="padding:26px 0 14px">
+      <h1 style="font-size:26px;margin:0 0 6px;font-weight:800;letter-spacing:-0.5px;color:#ffffff">Akouè</h1>
+      <p style="font-size:13px;margin:0;color:#818cf8">Maîtrise ton argent</p>
+    </td></tr>
+    <tr><td align="center">
+      <table role="presentation" cellspacing="0" cellpadding="0">
+        <tr><td style="background:#0B1530;border-radius:22px;padding:30px;text-align:center;border:1px solid #1f2937">
+          <p style="font-size:12px;letter-spacing:1.5px;color:#818cf8;text-transform:uppercase;margin:0 0 18px">Code de confirmation</p>
+          <div style="font-size:38px;font-weight:900;letter-spacing:10px;color:#ffffff;background:#111827;border-radius:12px;padding:18px 36px;display:inline-block;box-shadow:0 10px 30px rgba(0,0,0,.5)">{{ .Token }}</div>
+          <p style="font-size:13px;margin-top:22px;color:#9ca3af">Saisis ce code dans l'app Akouè pour activer ton compte.</p>
+          <p style="font-size:12px;margin-top:6px;color:#6b7280">Le code expire dans 3 minutes.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+    <tr><td align="center" style="padding:22px 0">
+      <p style="font-size:11px;color:#4b5563;line-height:1.6;margin:0">
+        Ne partagez ce code avec personne.<br>
+        © Akouè — gestion de tes finances.
+      </p>
+    </td></tr>
+  </table>
 </body>
 </html>

@@ -1,13 +1,10 @@
 /* eslint-env node */
-// Seed réel — compte démo [redacted-name] + données fictives (bannière publication).
-// Usage (depuis la racine projet): node scripts/seed-eucher.js
+// Seed de compte démo + données fictives (bannière publication).
+// Usage (depuis la racine projet): node scripts/seed-demo.js
+// Configure SEED_EMAIL, SEED_PASSWORD et SEED_NAME dans le fichier .env local.
 // Idempotent: si le compte existe déjà, connecte et remplace wallets/transactions.
 const fs = require("fs");
 const path = require("path");
-
-const DEMO_EMAIL = "[redacted-email]";
-const DEMO_PASSWORD = "[redacted-secret]";
-const DEMO_NAME = "[redacted-name]";
 
 function loadEnv() {
   const raw = fs.readFileSync(path.join(process.cwd(), ".env"), "utf8");
@@ -25,7 +22,13 @@ async function main() {
   const env = loadEnv();
   const URL = env.EXPO_PUBLIC_SUPABASE_URL;
   const ANON = env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+  const DEMO_EMAIL = env.SEED_EMAIL;
+  const DEMO_PASSWORD = env.SEED_PASSWORD;
+  const DEMO_NAME = env.SEED_NAME;
   if (!URL || !ANON) throw new Error(".env incomplet (URL / ANON_KEY manquants)");
+  if (!DEMO_EMAIL || !DEMO_PASSWORD || !DEMO_NAME) {
+    throw new Error(".env doit définir SEED_EMAIL, SEED_PASSWORD et SEED_NAME");
+  }
 
   const authHeaders = { apikey: ANON, "Content-Type": "application/json" };
 
@@ -54,7 +57,7 @@ async function main() {
   }
   const token = login.access_token;
   const uid = login.user.id;
-  console.log("Connecté:", uid, DEMO_EMAIL);
+  console.log("Connecté:", uid);
 
   const db = (table, method = "GET", body, prefer) => {
     const headers = { apikey: ANON, Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
@@ -68,7 +71,7 @@ async function main() {
     });
   };
 
-  // 2) Profil au nom de [redacted-name]
+  // 2) Profil du compte de démonstration
   await db("profiles", "POST", { id: uid, name: DEMO_NAME }, "resolution=merge-duplicates,return=representation");
   console.log("Profil OK:", DEMO_NAME);
 
@@ -92,7 +95,7 @@ async function main() {
   // 5) Transactions fictives
   const txs = [
     { walletId: wid["Compte Banque"], type: "income", amount: 500000, category: "Épargne", description: "Virement initial", date: daysAgo(6) },
-    { walletId: wid["Espèces"], type: "income", amount: 350000, category: "Salaire", description: "Salaire mensuel — [redacted-name]", date: daysAgo(5) },
+    { walletId: wid["Espèces"], type: "income", amount: 350000, category: "Salaire", description: "Salaire mensuel", date: daysAgo(5) },
     { walletId: wid["Espèces"], type: "expense", amount: 25000, category: "Alimentation", description: "Marché du mois", date: daysAgo(4) },
     { walletId: wid["Espèces"], type: "expense", amount: 8000, category: "Transport", description: "Taxi", date: daysAgo(3) },
     { walletId: wid["Mobile Money"], type: "income", amount: 120000, category: "Freelance", description: "Mission design logo", date: daysAgo(2) },
@@ -102,9 +105,7 @@ async function main() {
   await db("transactions", "POST", txs, "return=representation");
   console.log("Transactions OK: 7");
 
-  console.log("\nTERMINE — connecte-toi dans l'app avec:");
-  console.log("  email:", DEMO_EMAIL);
-  console.log("  mot de passe:", DEMO_PASSWORD);
+  console.log("\nTERMINE — le compte de démonstration et les données fictives sont prêts.");
 }
 
 main().catch((e) => { console.error("ECHEC:", e.message); process.exit(1); });

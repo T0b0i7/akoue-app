@@ -33,9 +33,6 @@
   <a href="https://www.typescriptlang.org/">
     <img src="https://img.shields.io/github/languages/top/T0b0i7/akoue-app?&logoColor=%23007ACC&label=TypeScript" alt="Top Language">
   </a>
-  <a href="https://github.com/T0b0i7/akoue-app/graphs/contributors">
-    <img src="https://img.shields.io/github/contributors/T0b0i7/akoue-app?style=flat&color=orange&label=Contributors" alt="Contributors">
-  </a>
   <a href="https://github.com/T0b0i7/akoue-app/commits/main">
     <img src="https://img.shields.io/github/commit-activity/t/T0b0i7/akoue-app?style=flat&logo=github" alt="Commits">
   </a>
@@ -199,7 +196,7 @@ Version web installable (PWA) : **[akoue-app sur le web](https://akoue-app--vtjb
     Une mise à jour OTA ne convient qu’aux changements compatibles avec le runtime natif déjà installé. Les changements natifs nécessitent un nouveau build. Les publications EAS nécessitent une configuration de compte et un jeton Expo.
  9. (Optionnel) Compte démo avec données fictives :
      ```bash
-     node scripts/seed-eucher.js
+     node scripts/seed-demo.js
      ```
 
 <a id="admin-dashboard"></a>
@@ -209,8 +206,6 @@ Version web installable (PWA) : **[akoue-app sur le web](https://akoue-app--vtjb
 Le tableau de bord web statique est dans [`admin-web/`](./admin-web/). Consulte [`admin-web/README.md`](./admin-web/README.md) pour la configuration Supabase et son utilisation. Il nécessite son propre compte Supabase et les règles d’accès administrateur décrites dans la documentation.
 
 ## 🔧 Contribuer
-
-[![contributors](https://contrib.rocks/image?repo=T0b0i7/akoue-app)](https://github.com/T0b0i7/akoue-app/graphs/contributors)
 
 Les contributions sont les bienvenues. Avant d’ouvrir une Pull Request :
 

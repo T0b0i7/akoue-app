@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("fs");
 const path = require("path");
 
-const tplPath = path.join(__dirname, "..", "..", "supabase", "email-otp.html");
+const tplPath = path.join(process.cwd(), "supabase", "email-otp.html");
 const html = fs.readFileSync(tplPath, "utf8");
 
 describe("email-otp.html (template OTP Supabase)", () => {
@@ -19,9 +19,9 @@ describe("email-otp.html (template OTP Supabase)", () => {
     assert.ok(/3 minutes/.test(html), "mention '3 minutes' manquante");
   });
 
-  it("branding Akoue + sender [redacted-email]", () => {
+  it("branding Akouè sans adresse e-mail personnelle", () => {
     assert.ok(html.includes("Akou"), "branding manquant");
-    assert.ok(html.includes("[redacted-email]"), "sender manquant");
+    assert.ok(!html.includes("@"), "l'adresse e-mail ne doit pas être intégrée au template");
   });
 
   it("structure HTML valide", () => {

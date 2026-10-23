@@ -54,9 +54,9 @@ module.exports = async function sendUpdateEmail(req, res) {
 
   const supabaseUrl = (process.env.EXPO_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "").replace(/\/+$/, "");
   const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-  const smtpUser = process.env.SMTP_USER || "[redacted-email]";
+  const smtpUser = process.env.SMTP_USER;
   const smtpPassword = process.env.SMTP_APP_PASSWORD?.replace(/\s/g, "");
-  if (!supabaseUrl || !anonKey || !smtpPassword) {
+  if (!supabaseUrl || !anonKey || !smtpUser || !smtpPassword) {
     return respond(res, 503, { error: "Configuration serveur incomplète. Vérifie les secrets Supabase et SMTP dans Vercel." });
   }
 
