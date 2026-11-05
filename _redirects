@@ -1,0 +1,16 @@
+# Netlify / static hosts — SPA fallback pour expo-router.
+# ORDRE DIRE : la première règle qui matche gagne → /_expo, /assets, favicon
+# AVANT le catch-all /* vers index.html.
+
+# Assets JS/static du build expo
+/_expo/*     /_expo/:splat     200
+
+# Pas d'accès aux fichiers sources
+/icons.tsx   /index.html       200
+
+# PWA
+/sw.js       /sw.js            200
+/manifest.webmanifest   /manifest.webmanifest   200
+
+# Fallback SPA (doit être EN DERNIER)
+/*           /index.html       200
