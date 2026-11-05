@@ -50,6 +50,7 @@
 - [Fonctionnalités](#-fonctionnalités)
 - [Technologies](#-technologies)
 - [Démarrage](#-installation-et-démarrage)
+- [Déploiement](#-déploiement)
 - [Tableau de bord admin](#admin-dashboard)
 - [Contribuer](#-contribuer)
 - [Licence](#-licence)
@@ -85,10 +86,15 @@ Akouè continue d’évoluer. Les contributions, retours d’expérience et sign
 
 ## 📥 Télécharger
 
-Dernier APK Android (preview) : **[akoue-app preview (.apk)](https://expo.dev/artifacts/eas/izERwe5ZsIhZ8Es70U5HxUJwU5lSjJrmKoo8PLHOUIU.apk)**
-Installe-le direct sur ton téléphone pour tester (autorise l'installation depuis cette source).
+| Cible | Lien |
+|---|---|
+| Web (production) | **[akoue-app.vercel.app](https://akoue-app.vercel.app)** |
+| Web (miroir PWA) | **[t0b0i7.github.io/akoue-app](https://t0b0i7.github.io/akoue-app/)** |
+| Android (APK preview) | **[builds EAS — profil preview](https://expo.dev/accounts/tobias07/projects/akoue-app/builds)** |
 
-Version web installable (PWA) : **[akoue-app sur le web](https://akoue-app--vtjbp6hmzm.expo.app)** — ouvrable dans Chrome Android puis "Ajouter à l'écran d'accueil" pour l'installer comme une app, utilisable hors ligne.
+Sur Chrome Android, ouvre la version web puis « Ajouter à l'écran d'accueil » : elle s'installe comme une app et reste utilisable hors ligne.
+
+L'APK se récupère sur la page du dernier build `preview` (version courante : `1.1.3`, `versionCode` 6). Autorise l'installation depuis cette source sur ton téléphone.
 
 ## 📷 Captures d’écran
 
@@ -198,6 +204,43 @@ Version web installable (PWA) : **[akoue-app sur le web](https://akoue-app--vtjb
      ```bash
      node scripts/seed-demo.js
      ```
+
+## 🚀 Déploiement
+
+Trois cibles sont publiées depuis ce dépôt : **Vercel** (web), **GitHub Pages** (web, miroir PWA) et **EAS Build** (Android).
+
+### Web — Vercel
+
+```bash
+npx vercel --prod --yes
+```
+
+Le build est défini dans [`vercel.json`](./vercel.json) (`npx expo export -p web`, dossier `dist`). Les variables `EXPO_PUBLIC_SUPABASE_URL` et `EXPO_PUBLIC_SUPABASE_ANON_KEY` doivent être renseignées dans les réglages du projet Vercel (`vercel env ls production`), car `.env` n'est jamais déployé.
+
+### Web — GitHub Pages
+
+- Workflow [`deploy-web-pages.yml`](./.github/workflows/deploy-web-pages.yml) : build puis publication sur la branche `gh-pages` (`peaceiris/actions-gh-pages`), à chaque `push` sur `main` ou via `workflow_dispatch`.
+- L'app est servie dans un sous-dossier (`/akoue-app/`). Le workflow injecte `EXPO_PUBLIC_BASE_PATH=/<repo>` ; [`app.config.js`](./app.config.js) le traduit en `experiments.baseUrl`, et [`utils/base-path.ts`](./utils/base-path.ts) préfixe les chemins de [`app/+html.tsx`](./app/+html.tsx) (manifest, icônes, splash, service worker).
+- `public/sw.js` déduit son périmètre de `self.registration.scope`, donc il fonctionne à la racine comme en sous-dossier.
+- Côté dépôt : Settings → Pages → *Deploy from a branch* → `gh-pages` / `/ (root)`. Les fichiers `.nojekyll` et `404.html` sont générés au build.
+
+> Sans `EXPO_PUBLIC_BASE_PATH`, le comportement reste inchangé (racine) pour Vercel, le local et le natif.
+
+### Android — EAS Build
+
+```bash
+pnpm build:android                      # APK, profil preview
+npx eas build -p android --profile production --non-interactive   # AAB
+pnpm update:android:preview             # mise à jour OTA (runtime inchangé)
+```
+
+Les secrets de build sont stockés sur EAS (`eas env:list --environment preview`), pas dans le dépôt.
+
+> Le dossier `android/` est versionné : `versionName` / `versionCode` font foi dans [`android/app/build.gradle`](./android/app/build.gradle). Une version déclarée seulement dans `app.json` est ignorée par EAS, même message « Specified value for android.package … is ignored ».
+
+### Protection de branche
+
+`main` est protégée : PR obligatoire, une approbation, et le check `attribution` requis (admins non exemptés). Les déploiements doivent donc passer par une branche + PR ; le workflow Pages ne se déclenche qu'après fusion sur `main`.
 
 <a id="admin-dashboard"></a>
 
