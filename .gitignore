@@ -9,6 +9,10 @@ dist/
 web-build/
 expo-env.d.ts
 
+# builds web locaux (GitHub Pages)
+dist-ghp*/
+ghp-build*.log
+
 # Native
 .kotlin/
 *.orig.*
