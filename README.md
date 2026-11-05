@@ -90,11 +90,11 @@ Akouè continue d’évoluer. Les contributions, retours d’expérience et sign
 |---|---|
 | Web (production) | **[akoue-app.vercel.app](https://akoue-app.vercel.app)** |
 | Web (miroir PWA) | **[t0b0i7.github.io/akoue-app](https://t0b0i7.github.io/akoue-app/)** |
-| Android (APK preview) | **[builds EAS — profil preview](https://expo.dev/accounts/tobias07/projects/akoue-app/builds)** |
+| Android (APK preview) | **[akoue-app-1.1.3.apk](https://expo.dev/artifacts/eas/k-xnMKdLIOMBf4ZK1amNVSEuek9y0t7m0nqP6tNj1AI.apk)** · [build](https://expo.dev/accounts/tobias07/projects/akoue-app/builds/1073931b-14b2-41fc-b1f6-c9650797f11f) |
 
 Sur Chrome Android, ouvre la version web puis « Ajouter à l'écran d'accueil » : elle s'installe comme une app et reste utilisable hors ligne.
 
-L'APK se récupère sur la page du dernier build `preview` (version courante : `1.1.3`, `versionCode` 6). Autorise l'installation depuis cette source sur ton téléphone.
+L'APK se télécharge directement via le lien ci-dessus (version `1.1.3`, `versionCode` 6, profil `preview`). Autorise l'installation depuis cette source sur ton téléphone.
 
 ## 📷 Captures d’écran
 
