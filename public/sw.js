@@ -1,6 +1,13 @@
 /* Akouè — Service Worker PWA : app installable + fonctionne hors ligne */
-const CACHE = "akoue-v2";
-const CORE = ["/", "/manifest.webmanifest", "/images/icon-192.png", "/images/icon-512.png"];
+/* BASE est déduit du scope d'enregistrement : "" à la racine, "/repo" sur GitHub Pages. */
+const BASE = new URL(self.registration.scope).pathname.replace(/\/+$/, "");
+const CACHE = "akoue-v3";
+const CORE = [
+  `${BASE}/`,
+  `${BASE}/manifest.webmanifest`,
+  `${BASE}/images/icon-192.png`,
+  `${BASE}/images/icon-512.png`,
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -23,10 +30,10 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return; // API Supabase : jamais cachée
   if (/^\/(auth|rest|storage|functions|realtime)\//.test(url.pathname)) return;
   if (request.mode === "navigate") {
-    event.respondWith(fetch(request).catch(() => caches.match("/")));
+    event.respondWith(fetch(request).catch(() => caches.match(`${BASE}/`)));
     return;
   }
-  if (url.search || !/^\/(images|assets|_expo\/static)\//.test(url.pathname)) return;
+  if (url.search || !new RegExp(`^${BASE}/(images|assets|_expo/static)/`).test(url.pathname)) return;
   event.respondWith(
     fetch(request).then((response) => {
       if (!response.ok || response.type !== "basic") return response;

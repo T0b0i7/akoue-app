@@ -34,11 +34,29 @@ describe("e-mail d'annonce de mise à jour", () => {
     assert.match(endpoint, /\/auth\/v1\/user/);
     assert.match(endpoint, /\/rest\/v1\/admin_users/);
     assert.match(endpoint, /Seul un administrateur Akouè/);
+    assert.match(endpoint, /const smtpUser = process\.env\.SMTP_USER;/);
+    assert.doesNotMatch(endpoint, /SMTP_USER\s*\|\|\s*["'][^"']+@/);
     assert.match(endpoint, /SMTP_APP_PASSWORD/);
     assert.match(endpoint, /const downloadUrl = actionUrl\?\.trim\(\) \|\| ""/);
     assert.match(endpoint, /const downloadButton = parsedUrl/);
     assert.doesNotMatch(endpoint, /SERVICE_ROLE|service_role/i);
     assert.match(endpoint, /bcc: batch/);
+  });
+
+  it("limite les comptes admin à leur propre ligne et n'embarque aucune adresse privée", () => {
+    const adminSql = read("admin-web/supabase-admin.sql");
+    assert.match(adminSql, /for select to authenticated\s+using \(lower\(email\) = lower\(auth\.jwt\(\) ->> 'email'\)\)/);
+    assert.doesNotMatch(adminSql, /insert into public\.admin_users/i);
+
+    for (const file of [
+      "admin-web/README.md",
+      "admin-web/supabase-admin.sql",
+      "scripts/seed-demo.js",
+      "supabase/email-otp.html",
+      "supabase/email-confirm.html",
+    ]) {
+      assert.doesNotMatch(read(file), /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i, `${file} ne doit pas contenir d'adresse e-mail`);
+    }
   });
 
   it("journalise et empêche le renvoi automatique d'une même annonce", () => {

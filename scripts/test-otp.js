@@ -1,5 +1,5 @@
-// Test OTP signup/resend vers [redacted-email]
-// node scripts/test-otp.js
+// Test OTP signup/resend pour l'adresse passée en argument.
+// node scripts/test-otp.js <email>
 const fs = require("fs");
 const { createClient } = require("@supabase/supabase-js");
 
@@ -15,7 +15,12 @@ const supabase = createClient(
 );
 
 (async () => {
-  const email = process.argv[2] || "[redacted-email]";
+  const email = process.argv[2]?.trim();
+  if (!email) {
+    console.error("Usage: node scripts/test-otp.js <email>");
+    process.exitCode = 1;
+    return;
+  }
   console.log("1) signUp tentative...");
   const s = await supabase.auth.signUp({
     email,
@@ -29,5 +34,5 @@ const supabase = createClient(
   console.log("2) resend OTP signup...");
   const r = await supabase.auth.resend({ type: "signup", email });
   console.log("   error:", r.error ? r.error.message : "(aucune)");
-  console.log(r.error ? "ECOUTE : renvoi echoue." : "OK : code renvoye. Verifie la boite [redacted-email] (spams inclus).");
+  console.log(r.error ? "ECOUTE : renvoi echoue." : `OK : code renvoye a ${email}. Verifie la boite et les spams.`);
 })();

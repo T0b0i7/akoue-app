@@ -75,15 +75,15 @@ describe("auth-context : classification erreurs", () => {
     assert.equal(mapVerifyCodeError("autre erreur"), "autre erreur");
   });
 
-  it("verifyCode : accepte le code OTP Supabase à 8 chiffres", () => {
+  it("verifyCode : accepte le code OTP Supabase à 6 chiffres", () => {
     assert.match(
       authContext,
-      /clean\.length !== 8[\s\S]*?verifyOtp\(\{\s*email,\s*token:\s*clean,\s*type:\s*"email"\s*\}\)/
+      /clean\.length !== 6[\s\S]*?verifyOtp\(\{\s*email,\s*token:\s*clean,\s*type:\s*"email"\s*\}\)/
     );
     const signUp = fs.readFileSync(path.join(process.cwd(), "app", "(auth)", "sign-up.tsx"), "utf8");
     const login = fs.readFileSync(path.join(process.cwd(), "app", "(auth)", "login.tsx"), "utf8");
-    assert.match(signUp, /maxLength=\{8\}/);
-    assert.match(login, /maxLength=\{8\}/);
+    assert.match(signUp, /maxLength=\{6\}/);
+    assert.match(login, /maxLength=\{6\}/);
   });
 });
 
@@ -101,9 +101,9 @@ describe("sign-up : constantes du flux lien magique", () => {
   it("mot de passe min 6, nom min 2", () => {
     const valid = (email, pw, name) =>
       email.includes("@") && pw.length >= 6 && name.trim().length >= 2;
-    assert.equal(valid("[REDACTED_EMAIL]", "123456", "Ab"), true);
-    assert.equal(valid("[REDACTED_EMAIL]", "123", "Ab"), false);
-    assert.equal(valid("[REDACTED_EMAIL]", "123456", "A"), false);
+    assert.equal(valid("a@b", "123456", "Ab"), true);
+    assert.equal(valid("a@b", "123", "Ab"), false);
+    assert.equal(valid("a@b", "123456", "A"), false);
   });
 });
 

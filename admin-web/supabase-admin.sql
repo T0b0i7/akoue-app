@@ -11,10 +11,8 @@ create table if not exists public.admin_users (
 alter table public.admin_users enable row level security;
 drop policy if exists "admin_users_read" on public.admin_users;
 create policy "admin_users_read" on public.admin_users
-  for select using (auth.role() = 'authenticated');
-
-insert into public.admin_users(email) values ('[redacted-email]')
-on conflict do nothing;
+  for select to authenticated
+  using (lower(email) = lower(auth.jwt() ->> 'email'));
 
 -- 2. Email visible dans les profils (rempli à l'inscription côté app)
 alter table public.profiles add column if not exists email text;
